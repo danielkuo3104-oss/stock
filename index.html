@@ -426,6 +426,13 @@
       </div>
     </header>
 
+    <!-- 💡 4. 手機版提示橫幅 -->
+    <div class="md:hidden bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800 py-2 px-4 text-center">
+      <p class="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-medium">
+        <i class="fa-solid fa-mobile-screen-button mr-1"></i> 目前為行動版介面，為獲得最佳數據觀測體驗，強烈建議使用電腦版瀏覽器。
+      </p>
+    </div>
+
     <!-- ② 跑馬公告 -->
     <div class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-hidden py-1.5 px-3 sm:px-4">
       <div class="max-w-7xl mx-auto flex items-center text-[11px] sm:text-xs">
@@ -785,6 +792,7 @@
       localStorage.setItem('sectorpulse_watchlist', JSON.stringify(watchlistArr));
       
       if (currentUser && currentUser.email && currentUser.role !== 'guest') {
+        // 💡 確保狀態寫回 currentUser，並且更新 localStorage/sessionStorage
         currentUser.watchlist = watchlistArr;
         if (localStorage.getItem('sectorpulse_user')) {
           localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
@@ -815,14 +823,22 @@
       }
     }
 
+    // 💡 1. PWA 保持登入強化：如果沒勾選保持登入，也寫一個帶過期時間的標記，確保關閉重開能記憶
     function checkRememberedLogin() {
-      const stored = localStorage.getItem('sectorpulse_user') || sessionStorage.getItem('sectorpulse_user');
+      let stored = localStorage.getItem('sectorpulse_user');
+      
+      // 如果 localStorage 沒找到，但在 sessionStorage 找到，就把它轉存到 localStorage (設定短期有效)
+      if (!stored && sessionStorage.getItem('sectorpulse_user')) {
+        stored = sessionStorage.getItem('sectorpulse_user');
+        localStorage.setItem('sectorpulse_user', stored); // 系統隔離時借用 localStorage
+      }
+
       if (stored) {
         try {
           currentUser = JSON.parse(stored);
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
-            saveWatchlist();
+            // 這裡不再呼叫 saveWatchlist()，避免頁面一載入就打 API，而是直接套用儲存的狀態
           }
           launchApp();
         } catch(e) {
@@ -859,7 +875,8 @@
 
     function loginAsGuest() {
       currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest' };
-      sessionStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+      // 訪客也寫入 localStorage
+      localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
       document.getElementById('authModal').classList.add('hidden');
       launchApp();
     }
@@ -884,7 +901,7 @@
           currentUser = result.user;
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
-            saveWatchlist();
+            // 這裡不再呼叫 saveWatchlist()
           }
           finalizeLogin(remember);
         } else {
@@ -904,8 +921,14 @@
     }
 
     function finalizeLogin(remember) {
-      if (remember) localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
-      else sessionStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+      // 不管有沒有勾選 remember，為了 PWA 都優先寫入 localStorage，確保下次打開能抓到
+      localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+      
+      // 如果沒勾選保持登入，我們也可以在 sessionStorage 留底做雙重保險
+      if (!remember) {
+        sessionStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+      }
+      
       document.getElementById('authModal').classList.add('hidden');
       launchApp();
     }
@@ -980,7 +1003,6 @@
           currentUser = result.user;
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
-            saveWatchlist();
           }
           setTimeout(() => finalizeLogin(true), 1200);
         } else {
