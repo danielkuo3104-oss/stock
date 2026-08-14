@@ -823,32 +823,41 @@
       }
     }
 
-    // 💡 1. PWA 保持登入強化：如果沒勾選保持登入，也寫一個帶過期時間的標記，確保關閉重開能記憶
     function checkRememberedLogin() {
-      let stored = localStorage.getItem('sectorpulse_user');
-      
-      // 如果 localStorage 沒找到，但在 sessionStorage 找到，就把它轉存到 localStorage (設定短期有效)
-      if (!stored && sessionStorage.getItem('sectorpulse_user')) {
-        stored = sessionStorage.getItem('sectorpulse_user');
-        localStorage.setItem('sectorpulse_user', stored); // 系統隔離時借用 localStorage
-      }
+    const authModal = document.getElementById('authModal');
+    const mainApp = document.getElementById('mainApp');
+    
+    // 1. 偵測：抓取資料並印出在 Console
+    const local = localStorage.getItem('sectorpulse_user');
+    const session = sessionStorage.getItem('sectorpulse_user');
+    
+    console.log("--- 登入檢查機制 ---");
+    console.log("Local Storage:", local);
+    console.log("Session Storage:", session);
+    
+    const stored = local || session;
 
-      if (stored) {
+    if (stored) {
         try {
-          currentUser = JSON.parse(stored);
-          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
-            userWatchlist = new Set(currentUser.watchlist);
-            // 這裡不再呼叫 saveWatchlist()，避免頁面一載入就打 API，而是直接套用儲存的狀態
-          }
-          launchApp();
+            currentUser = JSON.parse(stored);
+            console.log("✅ 成功解析暫存資料，使用者為:", currentUser.name);
+            
+            // 2. 強制隱藏 (直接覆蓋 style，不管 CSS class)
+            authModal.style.display = 'none'; 
+            mainApp.style.display = 'block';
+            mainApp.classList.remove('hidden');
+            
+            console.log("🚀 準備執行 launchApp()");
+            launchApp();
         } catch(e) {
-          showAuthModal();
+            console.error("❌ 資料解析失敗，準備顯示登入框", e);
+            showAuthModal();
         }
-      } else {
+    } else {
+        console.log("⚠️ 沒有找到任何登入暫存，強制顯示登入框");
         showAuthModal();
-      }
     }
-
+}
     function showAuthModal() {
       document.getElementById('authModal').classList.remove('hidden');
       document.getElementById('mainApp').classList.add('hidden');
