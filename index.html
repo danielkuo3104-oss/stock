@@ -40,7 +40,6 @@
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
-    /* 大字關懷模式覆蓋 */
     .large-font { font-size: 1.15rem !important; }
     .large-font .stock-price { font-size: 1.35rem !important; }
     .large-font .stock-name { font-size: 1.25rem !important; }
@@ -64,10 +63,55 @@
     </div>
   </div>
 
-  <!-- ================= 個股詳細資訊彈窗 Modal ================= -->
+  <!-- ================= 💡 管理員控制面板 Modal ================= -->
+  <div id="adminPanelModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-brand-500/40 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+          <i class="fa-solid fa-sliders text-brand-500"></i>
+          <span>管理員控制中樞 (郭丹騏)</span>
+        </h3>
+        <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <!-- 1. 調整今日日期 (模擬測試) -->
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 block">模擬系統「今日日期」：</label>
+          <div class="flex space-x-2">
+            <input type="date" id="adminCustomDate" class="flex-1 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono">
+            <button onclick="applyAdminDate()" class="px-3 py-2 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-500 transition">套用</button>
+            <button onclick="resetAdminDate()" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-300 transition">重設</button>
+          </div>
+          <p class="text-[10px] text-slate-500">自訂日期可立即驗證「當日資訊」、「非當日資訊」與「本日休市」之狀態切換。</p>
+        </div>
+
+        <!-- 2. 強制系統維護開關 -->
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 block">系統維護狀態控制 (寫入 AS11)：</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="setMaintenanceStatus(true)" class="py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-lock"></i>
+              <span>強制切換為「維護中」</span>
+            </button>
+            <button onclick="setMaintenanceStatus(false)" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-lock-open"></i>
+              <span>解除維護 (恢復正常)</span>
+            </button>
+          </div>
+          <p id="adminStatusMsg" class="text-[11px] font-medium text-center hidden"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 💡 個股詳細資訊彈窗 Modal (支援雙族群整合) ================= -->
   <div id="stockDetailModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
       
+      <!-- 頂部標頭與所屬族群列表 -->
       <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div class="flex items-center space-x-3">
@@ -76,9 +120,9 @@
             </button>
             <h3 id="modalStockName" class="text-2xl font-black text-slate-900 dark:text-slate-100">--</h3>
             <span id="modalStockId" class="text-sm font-mono text-slate-500 dark:text-slate-400">--</span>
-            <span id="modalStockGroup" class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-500 font-semibold">--</span>
           </div>
-          <div id="modalBadges" class="flex flex-wrap gap-1.5 mt-2"></div>
+          <!-- 雙族群徽章容器 -->
+          <div id="modalGroupsBadges" class="flex flex-wrap gap-1.5 mt-2"></div>
         </div>
         <button onclick="closeStockModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl self-start">
           <i class="fa-solid fa-xmark"></i>
@@ -105,19 +149,11 @@
         </div>
       </div>
 
-      <!-- 所屬族群加權漲跌卡片 -->
-      <div id="modalGroupHighlightCard" class="p-4 rounded-2xl border transition mb-4 flex items-center justify-between">
-        <div>
-          <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">所屬族群加權整體動向</span>
-          <span id="modalGroupCardTitle" class="text-sm font-bold text-slate-800 dark:text-slate-200">--</span>
-        </div>
-        <div class="text-right">
-          <span id="modalStockGroupChange" class="text-xl font-black font-mono">--</span>
-        </div>
-      </div>
+      <!-- 💡 雙族群整合加權卡片容器 -->
+      <div id="modalDoubleGroupContainer" class="space-y-2 mb-4"></div>
 
       <!-- 詳細權重與量能清單 -->
-      <div class="space-y-2.5 text-xs mb-5">
+      <div class="space-y-2 text-xs mb-5">
         <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
           <span class="text-slate-500 dark:text-slate-400 font-medium">預估交易總額</span>
           <span id="modalStockTurnover" class="font-bold font-mono text-amber-500">--</span>
@@ -125,14 +161,6 @@
         <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
           <span class="text-slate-500 dark:text-slate-400 font-medium">當前市值 (億)</span>
           <span id="modalStockCap" class="font-bold font-mono text-slate-700 dark:text-slate-200">--</span>
-        </div>
-        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-          <span class="text-slate-500 dark:text-slate-400 font-medium">佔族群權重比例</span>
-          <span id="modalStockWeight" class="font-bold font-mono text-slate-700 dark:text-slate-200">--</span>
-        </div>
-        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
-          <span class="text-slate-500 dark:text-slate-400 font-medium">對族群加權貢獻點數</span>
-          <span id="modalStockContribution" class="font-bold font-mono text-slate-700 dark:text-slate-200">--</span>
         </div>
       </div>
 
@@ -146,13 +174,13 @@
         <div class="text-slate-600 dark:text-slate-400 leading-relaxed" id="modalStockNote2"></div>
       </div>
 
-      <!-- 同族群成分股 -->
-      <div class="space-y-2">
+      <!-- 同族群成分股分組切換 -->
+      <div class="space-y-3">
         <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
           <i class="fa-solid fa-users text-brand-500"></i>
           <span>同族群其他成分股 (點擊切換查看)</span>
         </h4>
-        <div id="modalPeerStocks" class="flex flex-wrap gap-2 pt-1"></div>
+        <div id="modalPeerStocks" class="space-y-3"></div>
       </div>
 
     </div>
@@ -324,6 +352,12 @@
         </nav>
 
         <div class="flex items-center space-x-2 sm:space-x-3">
+          <!-- 💡 管理員控制台按鈕 (僅管理員可見) -->
+          <button id="btnAdminConsole" onclick="openAdminPanel()" class="px-2.5 py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition text-xs font-bold items-center space-x-1 hidden">
+            <i class="fa-solid fa-terminal text-[10px]"></i>
+            <span>控制台</span>
+          </button>
+
           <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-xs" title="切換深/淺色模式">
             <i id="themeIcon" class="fa-solid fa-sun"></i>
           </button>
@@ -341,10 +375,10 @@
       </div>
     </header>
 
-    <!-- ② 跑馬公告 (AS14 之後) -->
+    <!-- ② 跑馬公告 (AS14 之後 / 休市自動公告) -->
     <div class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-hidden py-1.5 px-4">
       <div class="max-w-7xl mx-auto flex items-center text-xs">
-        <span class="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold px-2 py-0.5 rounded mr-3 flex items-center space-x-1 shrink-0">
+        <span id="marqueeTag" class="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold px-2 py-0.5 rounded mr-3 flex items-center space-x-1 shrink-0">
           <i class="fa-solid fa-bullhorn"></i> <span>即時公告</span>
         </span>
         <div class="overflow-hidden relative w-full h-5">
@@ -358,14 +392,14 @@
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
 
-      <!-- ③ 大盤指數儀表板 (流線一體化、整合多空家數數線) -->
+      <!-- ③ 大盤指數儀表板 (💡 3種狀態：當日資訊 / 非當日資訊 / 本日休市) -->
       <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
         
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           <div class="flex items-center space-x-3">
-            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+            <div id="marketStatusDot" class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
             <h2 class="text-xl font-black text-slate-900 dark:text-slate-100">加權指數 (TAIEX)</h2>
-            <span id="marketStatusBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">交易正常</span>
+            <span id="marketStatusBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">當日資訊</span>
           </div>
 
           <div class="flex flex-wrap items-center gap-4 text-xs font-mono">
@@ -391,7 +425,7 @@
           </div>
         </div>
 
-        <!-- 多空結構分佈數線 -->
+        <!-- 💡 多空結構分佈數線 (來自 AT10 精準解析) -->
         <div class="space-y-2">
           <div class="flex items-center justify-between text-xs">
             <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
@@ -443,7 +477,7 @@
         </div>
       </section>
 
-      <!-- ⑤ 族群選股總覽 (單一標籤 + 點擊星號同步G欄) -->
+      <!-- ⑤ 族群選股總覽 -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -496,6 +530,8 @@
   <script>
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
     const CSV_MEMBERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=0&single=true&output=csv';
+    // 💡 休市日期表 CSV
+    const CSV_HOLIDAYS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=349903105&single=true&output=csv';
 
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec'; 
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
@@ -505,13 +541,17 @@
     let parsedStocks = [];
     let filteredStocks = [];
     let groupMap = {};
+    let stockMultiGroupMap = {}; // 💡 存放每檔股票對應的所有族群資料 { "2344": [groupObj1, groupObj2] }
     let memberListCache = [];
+    let holidaysList = []; // 休市表 [{ date: "2026/08/14", name: "端午節" }]
     let userWatchlist = new Set();
     let currentModalStockId = null;
+    let customSimulatedDate = null; // 管理員自訂模擬日期
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       preloadMembersFromSheet();
+      preloadHolidays();
       loadWatchlist();
       checkRememberedLogin();
     });
@@ -584,6 +624,24 @@
       } catch (e) {}
     }
 
+    // 💡 預先載入休市清單
+    async function preloadHolidays() {
+      try {
+        const res = await fetch(CSV_HOLIDAYS_URL);
+        const text = await res.text();
+        const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
+        holidaysList = lines.slice(1).map(l => {
+          const row = parseCsvRow(l);
+          return {
+            date: row[0] ? row[0].trim().replace(/-/g, '/') : '',
+            name: row[1] ? row[1].trim() : (row[2] ? row[2].trim() : '國定假日')
+          };
+        }).filter(h => h.date);
+      } catch (e) {
+        console.warn("載入休市表失敗", e);
+      }
+    }
+
     function loadWatchlist() {
       try {
         const stored = localStorage.getItem('sectorpulse_watchlist');
@@ -593,8 +651,6 @@
 
     function saveWatchlist() {
       localStorage.setItem('sectorpulse_watchlist', JSON.stringify(Array.from(userWatchlist)));
-      
-      // 💡 同步到後端 G 欄 (JSON)
       if (currentUser && currentUser.email && currentUser.role !== 'guest') {
         fetch(BACKEND_API_URL, {
           method: 'POST',
@@ -656,7 +712,7 @@
       launchApp();
     }
 
-    // ================= 1. 會員登入 / 開通 / 註冊 =================
+    // ================= 1. 會員認證邏輯 =================
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value.trim();
@@ -827,6 +883,12 @@
       const roleText = currentUser.role === 'admin' ? '管理員' : (currentUser.role === 'guest' ? '未登入' : '會員');
       document.getElementById('userBadge').textContent = `${currentUser.name} (${roleText})`;
 
+      // 管理員專屬控制台按鈕顯示
+      if (currentUser.role === 'admin') {
+        document.getElementById('btnAdminConsole').classList.remove('hidden');
+        document.getElementById('btnAdminConsole').classList.add('flex');
+      }
+
       showDisclaimerToast();
       await fetchAndParseCsv();
     }
@@ -861,6 +923,7 @@
 
       document.getElementById('dataTimestamp').textContent = at2Date || '即時資料';
 
+      // 💡 執行狀態檢核 (含休市、當日/非當日狀態切換)
       checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate, as11Val);
       renderMarketData();
       renderAnnouncements();
@@ -884,55 +947,65 @@
       return r;
     }
 
+    // ================= 3. 系統狀態檢驗 (當日資訊 / 非當日資訊 / 本日休市) =================
     function checkSystemIntegrity(at2, arHeader, ahHeader, as11) {
-      const today = new Date();
+      const today = customSimulatedDate ? new Date(customSimulatedDate) : new Date();
       const todayStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
       const todayMMDD = `${String(today.getMonth()+1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
+      const dayOfWeek = today.getDay(); // 0 是週日，6 是週六
       
+      const badge = document.getElementById('marketStatusBadge');
+      const dot = document.getElementById('marketStatusDot');
       const dateNotice = document.getElementById('dateNotice');
-      let statusWarning = "";
 
-      const isAt2Today = at2.includes(todayStr) || at2.includes(todayMMDD);
-      if (!isAt2Today) {
-        statusWarning = "當前資料並非本日股市資料，可能是尚未更新或週末休市。";
+      // 1. 檢查今日是否在休市表清單中或為週末
+      let holidayMatch = holidaysList.find(h => h.date === todayStr || h.date.includes(todayMMDD));
+      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
+      const isMarketHoliday = !!holidayMatch || isWeekend;
+
+      if (isMarketHoliday) {
+        const holidayName = holidayMatch ? holidayMatch.name : "例行週末休市";
+        badge.textContent = "本日休市";
+        badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20";
+        dot.className = "w-3 h-3 rounded-full bg-amber-500 animate-pulse";
+        
+        // 💡 休市自動更新跑馬燈公告
+        document.getElementById('marqueeContainer').textContent = `【今日休市公告】本日為台股休市日（${holidayName}），盤面維持前一交易日收盤行情。`;
+        dateNotice.textContent = `提示：今日為台股休市日（${holidayName}）。`;
+        dateNotice.classList.remove('hidden');
+      } else {
+        // 檢查 AT2 是否與今日一致
+        const isTodayData = at2.includes(todayStr) || at2.includes(todayMMDD);
+        if (isTodayData) {
+          badge.textContent = "當日資訊";
+          badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20";
+          dot.className = "w-3 h-3 rounded-full bg-emerald-500 animate-pulse";
+          dateNotice.classList.add('hidden');
+        } else {
+          badge.textContent = "非當日資訊";
+          badge.className = "text-xs px-2.5 py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold border border-slate-500/20";
+          dot.className = "w-3 h-3 rounded-full bg-slate-400";
+          dateNotice.textContent = "提示：當前資料並非本日股市資料（可能尚未刷新）。";
+          dateNotice.classList.remove('hidden');
+        }
       }
 
-      const isArToday = arHeader.includes(todayStr) || arHeader.includes(todayMMDD);
-      const isAhToday = ahHeader.includes(todayStr) || ahHeader.includes(todayMMDD);
-      if (isAt2Today && (!isArToday || !isAhToday)) {
-        statusWarning = "本日股市休市，資料維持前一交易日狀態。";
-      }
-
-      if (arHeader !== ahHeader && arHeader !== '' && ahHeader !== '') {
-        triggerSystemError(`時間不一致：成交量(${arHeader}) 不等於 加權(${ahHeader})`);
-      }
-
+      // 檢查維護中狀態
       if (as11 === '維護中') {
         if (currentUser && currentUser.email === ADMIN_EMAIL) {
           console.log("管理員登入：略過維護遮罩");
         } else {
           document.getElementById('maintenanceOverlay').classList.remove('hidden');
         }
-      }
-
-      if (statusWarning) {
-        dateNotice.textContent = `提示：${statusWarning}`;
-        dateNotice.classList.remove('hidden');
+      } else {
+        document.getElementById('maintenanceOverlay').classList.add('hidden');
       }
     }
 
-    function triggerSystemError(errMsg) {
-      if (currentUser && currentUser.email === ADMIN_EMAIL) console.warn(errMsg);
-      fetch(BACKEND_API_URL, {
-        method: 'POST',
-        body: JSON.stringify({ action: 'systemAlert', error: errMsg, admin: ADMIN_EMAIL })
-      }).catch(()=>{});
-    }
-
-    // ================= 3. 大盤資訊渲染 =================
+    // ================= 4. 大盤資訊渲染與 AT10 多空家數解析 =================
     function renderMarketData() {
       const dataMap = {};
-      for (let r = 1; r <= 8; r++) {
+      for (let r = 1; r <= 9; r++) {
         if (rawCsvGrid[r] && rawCsvGrid[r][44] && rawCsvGrid[r][45]) {
           dataMap[rawCsvGrid[r][44].trim()] = rawCsvGrid[r][45].trim();
         }
@@ -962,6 +1035,9 @@
       colorizeMarketItem('marketOpen', parseFloat(dataMap['開盤'] || '0'), prevClose);
       colorizeMarketItem('marketHigh', parseFloat(dataMap['最高'] || '0'), prevClose);
       colorizeMarketItem('marketLow', parseFloat(dataMap['最低'] || '0'), prevClose);
+
+      // 💡 亮點 2：從 AT10 (Row index 9, Col 45) 精準解析多空家數
+      parseAT10MarketCounts();
     }
 
     function colorizeMarketItem(elId, val, prev) {
@@ -973,6 +1049,48 @@
       else el.className = 'font-bold font-mono text-slate-500';
     }
 
+    // 💡 解析 AT10 多空家數格式：例如 "400 (18) / 854 (1)"
+    function parseAT10MarketCounts() {
+      let at10Raw = "";
+      if (rawCsvGrid[9] && rawCsvGrid[9][45]) at10Raw = rawCsvGrid[9][45].trim();
+      else if (rawCsvGrid[8] && rawCsvGrid[8][45]) at10Raw = rawCsvGrid[8][45].trim();
+
+      let up = 0, limitUp = 0, down = 0, limitDown = 0, flat = 0;
+      
+      // 正則匹配 "400 (18) / 854 (1)" 或含中文字
+      const match = at10Raw.match(/(\d+)\s*\(([\d]+)\)\s*[\/|\\]\s*(\d+)\s*\(([\d]+)\)/);
+      if (match) {
+        up = parseInt(match[1], 10);
+        limitUp = parseInt(match[2], 10);
+        down = parseInt(match[3], 10);
+        limitDown = parseInt(match[4], 10);
+      } else {
+        // fallback：由成分股實際統計
+        parsedStocks.forEach(s => {
+          if (s.isLimitUp) limitUp++;
+          else if (s.isLimitDown) limitDown++;
+          else if (s.change > 0) up++;
+          else if (s.change < 0) down++;
+          else flat++;
+        });
+      }
+
+      const total = limitUp + up + flat + down + limitDown;
+      document.getElementById('countLimitUp').textContent = limitUp;
+      document.getElementById('countUp').textContent = up;
+      document.getElementById('countFlat').textContent = flat;
+      document.getElementById('countDown').textContent = down;
+      document.getElementById('countLimitDown').textContent = limitDown;
+
+      if (total > 0) {
+        document.getElementById('barLimitUp').style.width = `${(limitUp / total) * 100}%`;
+        document.getElementById('barUp').style.width = `${(up / total) * 100}%`;
+        document.getElementById('barFlat').style.width = `${(flat / total) * 100}%`;
+        document.getElementById('barDown').style.width = `${(down / total) * 100}%`;
+        document.getElementById('barLimitDown').style.width = `${(limitDown / total) * 100}%`;
+      }
+    }
+
     function renderAnnouncements() {
       const list = [];
       for (let r = 13; r < rawCsvGrid.length; r++) {
@@ -981,19 +1099,19 @@
           if (item && item !== 'nan' && item !== '-') list.push(item);
         }
       }
-      if (list.length > 0) {
+      if (list.length > 0 && !document.getElementById('marketStatusBadge').textContent.includes('休市')) {
         document.getElementById('marqueeContainer').textContent = list.join(' ★ ');
       }
     }
 
-    // ================= 4. 個股解析、多空比例條與列表渲染 =================
+    // ================= 5. 個股解析 (💡 支援單一股票雙族群整合) =================
     function renderStockModules() {
       parsedStocks = [];
       groupMap = {};
+      stockMultiGroupMap = {};
       const stockMap = new Map();
 
-      let countLimitUp = 0, countUp = 0, countFlat = 0, countDown = 0, countLimitDown = 0;
-
+      // 第一輪：建立族群字典
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const group = row[0] ? row[0].trim() : '';
@@ -1008,6 +1126,7 @@
         }
       }
 
+      // 第二輪：解析每列資料並建立雙族群關聯
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const group = row[0] ? row[0].trim() : '';
@@ -1023,36 +1142,42 @@
         const note2 = row[13] ? row[13].trim() : '';
         const volume = parseFloat(row[43]) || 0;
 
-        if (id && id !== '-' && !stockMap.has(id)) {
+        if (id && id !== '-') {
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
-          
           const isLimitUp = (pctNum >= 9.5 && change > 0);
           const isLimitDown = (pctNum <= -9.5 && change < 0);
-
-          if (isLimitUp) countLimitUp++;
-          else if (isLimitDown) countLimitDown++;
-          else if (change > 0) countUp++;
-          else if (change < 0) countDown++;
-          else countFlat++;
-
           const sharedGroupChange = (groupMap[group] && groupMap[group].groupChange !== '-') ? groupMap[group].groupChange : (row[9] || '-');
 
-          const badges = [];
-          if (isLimitUp) badges.push({ text: '漲停', color: 'bg-red-500/10 text-red-500 border border-red-500/30' });
-          if (isLimitDown) badges.push({ text: '跌停', color: 'bg-green-500/10 text-green-500 border border-green-500/30' });
-          if (volume > 100000) badges.push({ text: '爆量', color: 'bg-amber-500/10 text-amber-500 border border-amber-500/30' });
-          if (pctNum >= 3.0 && pctNum < 9.5) badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/30' });
+          // 收集該檔股票的族群詳細資料
+          if (!stockMultiGroupMap[id]) {
+            stockMultiGroupMap[id] = [];
+          }
+          stockMultiGroupMap[id].push({
+            groupName: group,
+            weight: weight,
+            contribution: contribution,
+            groupChange: sharedGroupChange
+          });
 
-          const stock = {
-            group, id, name, price, change, pctStr, pctNum,
-            cap, weight, contribution, groupChange: sharedGroupChange,
-            note1, note2, volume, badges,
-            turnover: volume * price,
-            isLimitUp, isLimitDown
-          };
+          // 若尚未加入主列表 (去重複呈現)
+          if (!stockMap.has(id)) {
+            const badges = [];
+            if (isLimitUp) badges.push({ text: '漲停', color: 'bg-red-500/10 text-red-500 border border-red-500/30' });
+            if (isLimitDown) badges.push({ text: '跌停', color: 'bg-green-500/10 text-green-500 border border-green-500/30' });
+            if (volume > 100000) badges.push({ text: '爆量', color: 'bg-amber-500/10 text-amber-500 border border-amber-500/30' });
+            if (pctNum >= 3.0 && pctNum < 9.5) badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/30' });
 
-          stockMap.set(id, stock);
-          parsedStocks.push(stock);
+            const stock = {
+              group, id, name, price, change, pctStr, pctNum,
+              cap, weight, contribution, groupChange: sharedGroupChange,
+              note1, note2, volume, badges,
+              turnover: volume * price,
+              isLimitUp, isLimitDown
+            };
+
+            stockMap.set(id, stock);
+            parsedStocks.push(stock);
+          }
 
           if (groupMap[group]) {
             groupMap[group].members.push({ id, name, price, change, pctStr });
@@ -1060,26 +1185,9 @@
         }
       }
 
-      renderMarketRatioBar(countLimitUp, countUp, countFlat, countDown, countLimitDown, parsedStocks.length);
       renderHotCards(Array.from(stockMap.values()));
       filteredStocks = [...parsedStocks];
       renderStockTable();
-    }
-
-    function renderMarketRatioBar(limitUp, up, flat, down, limitDown, total) {
-      document.getElementById('countLimitUp').textContent = limitUp;
-      document.getElementById('countUp').textContent = up;
-      document.getElementById('countFlat').textContent = flat;
-      document.getElementById('countDown').textContent = down;
-      document.getElementById('countLimitDown').textContent = limitDown;
-
-      if (total > 0) {
-        document.getElementById('barLimitUp').style.width = `${(limitUp / total) * 100}%`;
-        document.getElementById('barUp').style.width = `${(up / total) * 100}%`;
-        document.getElementById('barFlat').style.width = `${(flat / total) * 100}%`;
-        document.getElementById('barDown').style.width = `${(down / total) * 100}%`;
-        document.getElementById('barLimitDown').style.width = `${(limitDown / total) * 100}%`;
-      }
     }
 
     function renderHotCards(stocks) {
@@ -1214,7 +1322,7 @@
       document.getElementById('groupSection').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // ================= 5. 個股詳細資訊彈窗 =================
+    // ================= 6. 💡 個股詳細資訊彈窗 (完整支援雙族群整合) =================
     function openStockModal(stockId) {
       const s = parsedStocks.find(item => item.id.toString() === stockId.toString());
       if (!s) return;
@@ -1224,15 +1332,19 @@
 
       document.getElementById('modalStockName').textContent = s.name;
       document.getElementById('modalStockId').textContent = s.id;
-      document.getElementById('modalStockGroup').textContent = s.group;
 
-      const badgesContainer = document.getElementById('modalBadges');
-      if (s.badges && s.badges.length > 0) {
-        badgesContainer.innerHTML = s.badges.map(b => `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${b.color}">${b.text}</span>`).join('');
-      } else {
-        badgesContainer.innerHTML = '<span class="text-xs text-slate-400">常規行情</span>';
-      }
+      // 取得該個股的所有所屬族群
+      const groupsData = stockMultiGroupMap[s.id] || [{ groupName: s.group, weight: s.weight, contribution: s.contribution, groupChange: s.groupChange }];
 
+      // 1. 頂部多族群標籤徽章
+      const grpBadges = document.getElementById('modalGroupsBadges');
+      grpBadges.innerHTML = groupsData.map(g => `
+        <span class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-500 font-semibold border border-brand-500/20">
+          ${g.groupName}
+        </span>
+      `).join('');
+
+      // 2. 行情數字
       const isUp = s.change >= 0;
       const colorClass = isUp ? 'text-stockRed' : 'text-stockGreen';
 
@@ -1251,74 +1363,131 @@
       document.getElementById('modalStockVolume').textContent = s.volume.toLocaleString();
 
       const turnoverInYi = (s.volume * 1000 * s.price) / 100000000;
-      if (turnoverInYi >= 1) {
-        document.getElementById('modalStockTurnover').textContent = `${turnoverInYi.toFixed(2)} 億元`;
-      } else {
-        const turnoverInWan = (s.volume * 1000 * s.price) / 10000;
-        document.getElementById('modalStockTurnover').textContent = `${turnoverInWan.toFixed(0)} 萬元`;
-      }
-
+      document.getElementById('modalStockTurnover').textContent = turnoverInYi >= 1 ? `${turnoverInYi.toFixed(2)} 億元` : `${((s.volume * 1000 * s.price) / 10000).toFixed(0)} 萬元`;
       document.getElementById('modalStockCap').textContent = `${s.cap.toFixed(2)} 億元`;
-      document.getElementById('modalStockWeight').textContent = s.weight;
-      document.getElementById('modalStockContribution').textContent = s.contribution;
 
-      const grpCard = document.getElementById('modalGroupHighlightCard');
-      const grpTitle = document.getElementById('modalGroupCardTitle');
-      const grpChangeEl = document.getElementById('modalStockGroupChange');
+      // 💡 3. 雙族群整合加權資訊卡片渲染
+      const doubleGrpContainer = document.getElementById('modalDoubleGroupContainer');
+      doubleGrpContainer.innerHTML = groupsData.map((g, idx) => {
+        const isGrpUp = g.groupChange.includes('+') || (!g.groupChange.includes('-') && parseFloat(g.groupChange) > 0);
+        const isGrpDown = g.groupChange.includes('-');
+        const grpColor = isGrpUp ? 'text-stockRed' : (isGrpDown ? 'text-stockGreen' : 'text-slate-400');
+        const grpBg = isGrpUp ? 'bg-red-500/10 border-red-500/20' : (isGrpDown ? 'bg-green-500/10 border-green-500/20' : 'bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800');
 
-      grpTitle.textContent = `${s.group} 加權整體漲跌`;
-      grpChangeEl.textContent = s.groupChange;
-
-      const isGrpUp = s.groupChange.includes('+') || (!s.groupChange.includes('-') && parseFloat(s.groupChange) > 0);
-      const isGrpDown = s.groupChange.includes('-');
-
-      if (isGrpUp) {
-        grpCard.className = 'p-4 rounded-2xl border transition mb-4 flex items-center justify-between bg-red-500/10 border-red-500/30';
-        grpChangeEl.className = 'text-2xl font-black font-mono text-stockRed';
-      } else if (isGrpDown) {
-        grpCard.className = 'p-4 rounded-2xl border transition mb-4 flex items-center justify-between bg-green-500/10 border-green-500/30';
-        grpChangeEl.className = 'text-2xl font-black font-mono text-stockGreen';
-      } else {
-        grpCard.className = 'p-4 rounded-2xl border transition mb-4 flex items-center justify-between bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800';
-        grpChangeEl.className = 'text-2xl font-black font-mono text-slate-400';
-      }
+        return `
+          <div class="p-3.5 rounded-2xl border ${grpBg} space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
+                <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                <span>所屬族群 ${idx + 1}：${g.groupName}</span>
+              </span>
+              <span class="text-base font-black font-mono ${grpColor}">${g.groupChange}</span>
+            </div>
+            <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
+              <div>佔該族群權重：<strong class="text-slate-700 dark:text-slate-200">${g.weight}</strong></div>
+              <div class="text-right">加權貢獻點數：<strong class="text-slate-700 dark:text-slate-200">${g.contribution}</strong></div>
+            </div>
+          </div>
+        `;
+      }).join('');
 
       document.getElementById('modalStockNote1').textContent = s.note1 ? `業務主軸：${s.note1}` : '暫無業務主軸資料';
       document.getElementById('modalStockNote2').textContent = s.note2 ? `產業題材：${s.note2}` : '';
 
+      // 💡 4. 同族群成分股分組呈現
       const peerContainer = document.getElementById('modalPeerStocks');
-      const peers = (groupMap[s.group] && groupMap[s.group].members) ? groupMap[s.group].members : [];
-
-      if (peers.length > 0) {
-        peerContainer.innerHTML = peers.map(p => {
-          const isCurrent = p.id.toString() === s.id.toString();
-          const pColor = p.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
-          
-          if (isCurrent) {
-            return `
-              <span class="px-2.5 py-1 rounded-xl bg-brand-500 text-white font-bold text-xs flex items-center space-x-1 shadow-sm">
-                <span>${p.name}</span>
-                <span class="font-mono text-[10px] opacity-90">${p.id}</span>
-              </span>
-            `;
-          } else {
-            return `
-              <button onclick="openStockModal('${p.id}')" class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-brand-500/10 hover:border-brand-500 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 transition flex items-center space-x-1.5">
-                <span class="font-semibold">${p.name}</span>
-                <span class="font-mono text-[10px] ${pColor}">${p.pctStr}</span>
-              </button>
-            `;
-          }
-        }).join('');
-      } else {
-        peerContainer.innerHTML = '<span class="text-slate-400 text-xs">該族群僅有此單一檔個股</span>';
-      }
+      peerContainer.innerHTML = groupsData.map(g => {
+        const peers = (groupMap[g.groupName] && groupMap[g.groupName].members) ? groupMap[g.groupName].members : [];
+        return `
+          <div class="space-y-1.5">
+            <div class="text-[11px] font-bold text-slate-400">【${g.groupName}】其他成分股：</div>
+            <div class="flex flex-wrap gap-2">
+              ${peers.map(p => {
+                const isCurrent = p.id.toString() === s.id.toString();
+                const pColor = p.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+                if (isCurrent) {
+                  return `<span class="px-2.5 py-1 rounded-xl bg-brand-500 text-white font-bold text-xs shadow-sm">${p.name} <span class="text-[10px] opacity-90">${p.id}</span></span>`;
+                } else {
+                  return `
+                    <button onclick="openStockModal('${p.id}')" class="px-2.5 py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:border-brand-500 border border-slate-200 dark:border-slate-700 text-xs text-slate-700 dark:text-slate-300 transition flex items-center space-x-1.5">
+                      <span>${p.name}</span>
+                      <span class="font-mono text-[10px] ${pColor}">${p.pctStr}</span>
+                    </button>
+                  `;
+                }
+              }).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
 
       document.getElementById('stockDetailModal').classList.remove('hidden');
     }
 
     function closeStockModal() {
       document.getElementById('stockDetailModal').classList.add('hidden');
+    }
+
+    // ================= 7. 💡 管理員控制台功能 =================
+    function openAdminPanel() {
+      document.getElementById('adminPanelModal').classList.remove('hidden');
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('adminPanelModal').classList.add('hidden');
+    }
+
+    function applyAdminDate() {
+      const val = document.getElementById('adminCustomDate').value;
+      if (val) {
+        customSimulatedDate = val.replace(/-/g, '/');
+        const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
+        const arHeader = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
+        const ahHeader = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
+        const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
+        checkSystemIntegrity(at2Date, arHeader, ahHeader, as11Val);
+        alert(`已切換模擬日期為：${customSimulatedDate}，大盤狀態已即時重新計算！`);
+      }
+    }
+
+    function resetAdminDate() {
+      customSimulatedDate = null;
+      document.getElementById('adminCustomDate').value = "";
+      const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
+      const arHeader = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
+      const ahHeader = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
+      const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
+      checkSystemIntegrity(at2Date, arHeader, ahHeader, as11Val);
+      alert("已重設為真實當前系統日期！");
+    }
+
+    async function setMaintenanceStatus(isMaintenance) {
+      const msgBox = document.getElementById('adminStatusMsg');
+      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
+      msgBox.textContent = isMaintenance ? "正在將試算表 AS11 寫入「維護中」..." : "正在解除「維護中」狀態...";
+
+      try {
+        const res = await fetch(BACKEND_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'setMaintenance',
+            status: isMaintenance ? '維護中' : '',
+            admin: ADMIN_EMAIL
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+          msgBox.textContent = isMaintenance ? "已成功切換為「維護中」狀態！" : "已成功解除維護！";
+          if (rawCsvGrid[10]) rawCsvGrid[10][44] = isMaintenance ? '維護中' : '';
+        } else {
+          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+          msgBox.textContent = "操作失敗：" + result.message;
+        }
+      } catch (e) {
+        msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+        msgBox.textContent = "請求發生異常，請確認後端部署。";
+      }
     }
   </script>
 </body>
