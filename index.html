@@ -375,7 +375,7 @@
         <nav class="hidden md:flex items-center space-x-6 text-sm">
           <a href="#" class="text-brand-500 font-semibold flex items-center space-x-1.5"><i class="fa-solid fa-house text-xs"></i><span>首頁</span></a>
           <a href="#groupSection" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
-          <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenter" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>關注清單</span></a>
+          <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenter" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>個人化</span></a>
           <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-regular fa-envelope text-xs"></i><span>聯絡管理員</span></a>
         </nav>
 
@@ -383,6 +383,11 @@
           <button id="btnAdminConsole" onclick="openAdminPanel()" class="px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition text-[10px] sm:text-xs font-bold items-center space-x-1 hidden">
             <i class="fa-solid fa-terminal"></i>
             <span class="hidden sm:inline">控制台</span>
+          </button>
+
+          <!-- 💡 3. 新增手動刷新按鈕 -->
+          <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="手動刷新資料">
+            <i id="refreshIcon" class="fa-solid fa-rotate-right"></i>
           </button>
 
           <button onclick="toggleTheme()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="切換深/淺色模式">
@@ -401,12 +406,12 @@
         </div>
       </div>
       
-      <!-- 手機版導覽列 (只有小螢幕顯示) -->
-      <div class="flex md:hidden items-center justify-between mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
+      <!-- 💡 1. 手機版導覽列修改：距離拉近、文字更新、信箱只留 Icon -->
+      <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
         <a href="#" class="text-brand-500 font-semibold flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
-        <a href="#groupSection" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>選股</span></a>
-        <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenterMobile" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>關注</span></a>
-        <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-regular fa-envelope"></i><span>信箱</span></a>
+        <a href="#groupSection" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
+        <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenterMobile" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>個人化</span></a>
+        <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center"><i class="fa-regular fa-envelope text-lg"></i></a>
       </div>
     </header>
 
@@ -437,25 +442,34 @@
             <span id="marketStatusBadge" class="text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center shrink-0">當日資訊</span>
           </div>
 
-          <div class="flex flex-wrap items-center gap-2 sm:gap-4 text-xs font-mono">
-            <div class="flex items-baseline space-x-1 sm:space-x-2">
+          <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-4 text-xs font-mono">
+            <!-- 收盤價區塊 -->
+            <div class="flex items-baseline space-x-1 sm:space-x-2 w-full lg:w-auto">
               <span class="text-slate-400">收盤</span>
               <span id="marketIndex" class="market-val text-xl sm:text-2xl font-black">--</span>
               <span id="marketChange" class="text-sm sm:text-base font-bold">--</span>
               <span id="marketPct" class="text-sm sm:text-base font-bold">--</span>
             </div>
-            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+            
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden lg:block"></div>
+            
+            <!-- 成交量區塊 -->
             <div class="flex items-center space-x-1 text-amber-500 font-bold bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded sm:bg-transparent sm:p-0">
               <i class="fa-solid fa-coins text-[10px]"></i>
               <span class="text-slate-500 dark:text-slate-400 sm:text-slate-400">成交</span>
               <span id="marketVolume" class="text-sm sm:text-base">--</span>
             </div>
-            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1 sm:mt-0">
-              <span>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></span>
-              <span>開 <strong id="marketOpen">--</strong></span>
-              <span>高 <strong id="marketHigh">--</strong></span>
-              <span>低 <strong id="marketLow">--</strong></span>
+            
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden lg:block"></div>
+            
+            <!-- 💡 2. 開高低收區塊 (修改為 flex-col 上下兩行) -->
+            <div class="flex flex-col items-start space-y-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto mt-2 sm:mt-0">
+              <div>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></div>
+              <div class="flex items-center space-x-3">
+                <span>開 <strong id="marketOpen">--</strong></span>
+                <span>高 <strong id="marketHigh">--</strong></span>
+                <span>低 <strong id="marketLow">--</strong></span>
+              </div>
             </div>
           </div>
         </div>
@@ -599,7 +613,25 @@
       checkRememberedLogin();
     });
 
-    // 💡 聯絡管理員 Modal 邏輯
+    // 💡 3. 手動刷新按鈕邏輯
+    async function handleRefresh() {
+      const icon = document.getElementById('refreshIcon');
+      if (icon) icon.classList.add('fa-spin');
+      
+      try {
+        await fetchAndParseCsv();
+      } catch(e) {
+        console.warn("手動刷新失敗", e);
+      } finally {
+        if (icon) {
+          setTimeout(() => {
+            icon.classList.remove('fa-spin');
+          }, 600); // 確保轉圈動畫至少顯示一下
+        }
+      }
+    }
+
+    // 聯絡管理員 Modal 邏輯
     function openContactModal() {
       document.getElementById('contactModal').classList.remove('hidden');
     }
@@ -649,7 +681,7 @@
       }
     }
 
-    // 💡 深淺色主題持久化
+    // 深淺色主題持久化
     function initTheme() {
       const isDark = localStorage.getItem('theme') !== 'light';
       if (isDark) {
@@ -1039,7 +1071,6 @@
       const ahHeaderDate = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
       const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
 
-      // 💡 1. 資訊更新時間精確到秒：加上瀏覽器載入解析當下的時分秒
       const now = new Date();
       const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
       document.getElementById('dataTimestamp').textContent = at2Date ? `${at2Date} ${timeStr}` : `即時資料 (${timeStr})`;
@@ -1171,7 +1202,6 @@
       else el.className = 'font-bold font-mono text-slate-500';
     }
 
-    // 💡 2. 移除平盤數據
     function parseAT10MarketCounts() {
       let at10Raw = "";
       if (rawCsvGrid[9] && rawCsvGrid[9][45]) at10Raw = rawCsvGrid[9][45].trim();
@@ -1194,7 +1224,6 @@
         });
       }
 
-      // 不計算平盤家數
       const total = limitUp + up + down + limitDown;
       document.getElementById('countLimitUp').textContent = limitUp;
       document.getElementById('countUp').textContent = up;
@@ -1335,7 +1364,6 @@
       }).join('');
     }
 
-    // 💡 3. 手機版列表優化、精簡資訊與防爆
     function renderStockTable() {
       const tbody = document.getElementById('stockTableBody');
 
@@ -1357,7 +1385,6 @@
           badgeHtml = `<span class="inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap ${firstBadge.color}">${firstBadge.text}</span>${morePill}`;
         }
 
-        // 行內加入 hidden 類別實現自適應縮放
         return `
           <tr onclick="openStockModal('${s.id}')" class="hover:bg-slate-100/70 dark:hover:bg-slate-800/50 cursor-pointer transition border-b border-slate-100 dark:border-slate-800/40 last:border-0">
             <td class="py-2.5 sm:py-3 px-1.5 sm:px-3 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
