@@ -1,15 +1,24 @@
 <!DOCTYPE html>
 <html lang="zh-TW" class="dark">
 <head>
+  <!-- 🍎 App Icon 與名稱設定 -->
   <link rel="icon" href="/icon.png" type="image/png">
   <link rel="apple-touch-icon" href="/icon.png">
   <meta name="apple-mobile-web-app-title" content="股市助手">
   <meta name="application-name" content="股市助手">
+  
+  <!-- 🚀 讓網頁像 App 一樣全螢幕執行 (隱藏網址列) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>股市助手 SectorPulse - 族群趨勢觀察系統</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -389,7 +398,6 @@
             <span class="hidden sm:inline">控制台</span>
           </button>
 
-          <!-- 💡 3. 新增手動刷新按鈕 -->
           <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="手動刷新資料">
             <i id="refreshIcon" class="fa-solid fa-rotate-right"></i>
           </button>
@@ -410,7 +418,6 @@
         </div>
       </div>
       
-      <!-- 💡 1. 手機版導覽列修改：距離拉近、文字更新、信箱只留 Icon -->
       <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
         <a href="#" class="text-brand-500 font-semibold flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
         <a href="#groupSection" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
@@ -441,7 +448,6 @@
         
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           
-          <!-- 💡 修正：將標題與指數數值整合在同一個左側區塊，縮短間距 -->
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
             <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
               <div id="marketStatusDot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
@@ -449,7 +455,6 @@
               <span id="marketStatusBadge" class="text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center shrink-0">當日資訊</span>
             </div>
 
-            <!-- 指數數值 -->
             <div class="flex flex-col sm:flex-row sm:items-baseline sm:space-x-2">
               <span id="marketIndex" class="market-val text-xl sm:text-2xl font-black">--</span>
               <div class="flex items-baseline space-x-1.5 mt-1 sm:mt-0">
@@ -459,9 +464,7 @@
             </div>
           </div>
 
-          <!-- 右側：成交量與開高低收 -->
           <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 text-xs font-mono mt-2 lg:mt-0">
-            <!-- 成交量區塊 -->
             <div class="flex items-center space-x-1 text-amber-500 font-bold bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded sm:bg-transparent sm:p-0 shrink-0">
               <i class="fa-solid fa-coins text-[10px]"></i>
               <span class="text-slate-500 dark:text-slate-400 sm:text-slate-400">成交</span>
@@ -470,7 +473,6 @@
             
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
             
-            <!-- 開高低收區塊 -->
             <div class="flex flex-col items-start space-y-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto">
               <div>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></div>
               <div class="flex items-center space-x-3">
@@ -622,7 +624,6 @@
       checkRememberedLogin();
     });
 
-    // 💡 3. 手動刷新按鈕邏輯
     async function handleRefresh() {
       const icon = document.getElementById('refreshIcon');
       if (icon) icon.classList.add('fa-spin');
@@ -635,12 +636,11 @@
         if (icon) {
           setTimeout(() => {
             icon.classList.remove('fa-spin');
-          }, 600); // 確保轉圈動畫至少顯示一下
+          }, 600); 
         }
       }
     }
 
-    // 聯絡管理員 Modal 邏輯
     function openContactModal() {
       document.getElementById('contactModal').classList.remove('hidden');
     }
@@ -690,7 +690,6 @@
       }
     }
 
-    // 深淺色主題持久化
     function initTheme() {
       const isDark = localStorage.getItem('theme') !== 'light';
       if (isDark) {
