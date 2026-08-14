@@ -40,12 +40,12 @@
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
 
-    /* 大字關懷模式 */
+    /* 大字關懷模式覆蓋 */
     .large-font { font-size: 1.15rem !important; }
     .large-font .stock-price { font-size: 1.35rem !important; }
     .large-font .stock-name { font-size: 1.25rem !important; }
-    .large-font .market-val { font-size: 2rem !important; }
-    .large-font table { font-size: 0.95rem !important; }
+    .large-font .market-val { font-size: 2.2rem !important; }
+    .large-font table { font-size: 0.98rem !important; }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
@@ -68,15 +68,16 @@
   <div id="stockDetailModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
       
-      <!-- 頂部標頭與預留特徵標籤 -->
       <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
-          <div class="flex items-baseline space-x-3">
+          <div class="flex items-center space-x-3">
+            <button id="modalStarBtn" onclick="toggleModalStar()" class="text-lg text-slate-300 dark:text-slate-700 hover:text-amber-400 transition" title="加入個人關注 (同步至G欄)">
+              <i class="fa-regular fa-star"></i>
+            </button>
             <h3 id="modalStockName" class="text-2xl font-black text-slate-900 dark:text-slate-100">--</h3>
             <span id="modalStockId" class="text-sm font-mono text-slate-500 dark:text-slate-400">--</span>
             <span id="modalStockGroup" class="text-xs px-2.5 py-0.5 rounded-full bg-brand-500/10 text-brand-500 font-semibold">--</span>
           </div>
-          <!-- 💡 預留動態特徵標籤列 -->
           <div id="modalBadges" class="flex flex-wrap gap-1.5 mt-2"></div>
         </div>
         <button onclick="closeStockModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl self-start">
@@ -104,7 +105,7 @@
         </div>
       </div>
 
-      <!-- 💡 亮點 1：所屬族群加權漲跌 (重點強調卡片) -->
+      <!-- 所屬族群加權漲跌卡片 -->
       <div id="modalGroupHighlightCard" class="p-4 rounded-2xl border transition mb-4 flex items-center justify-between">
         <div>
           <span class="text-[11px] text-slate-500 dark:text-slate-400 font-semibold block">所屬族群加權整體動向</span>
@@ -145,7 +146,7 @@
         <div class="text-slate-600 dark:text-slate-400 leading-relaxed" id="modalStockNote2"></div>
       </div>
 
-      <!-- 同族群成分股 (支援超連結切換) -->
+      <!-- 同族群成分股 -->
       <div class="space-y-2">
         <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
           <i class="fa-solid fa-users text-brand-500"></i>
@@ -209,6 +210,13 @@
         <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm shadow-lg shadow-brand-600/30">
           登入系統
         </button>
+
+        <div class="pt-2">
+          <button type="button" onclick="loginAsGuest()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl transition text-xs flex items-center justify-center space-x-1.5 border border-slate-200 dark:border-slate-700">
+            <i class="fa-regular fa-user"></i>
+            <span>以訪客身份直接瀏覽 (免登入)</span>
+          </button>
+        </div>
       </form>
 
       <!-- 2. 已訂閱快報會員 開通表單 -->
@@ -309,23 +317,24 @@
           </div>
         </div>
 
-        <!-- 導航選單 (電腦版) -->
         <nav class="hidden md:flex items-center space-x-6 text-sm">
           <a href="#" class="text-brand-500 font-semibold flex items-center space-x-1.5"><i class="fa-solid fa-house text-xs"></i><span>首頁</span></a>
           <a href="#groupSection" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
-          <a href="#userCenter" class="text-slate-400 cursor-not-allowed flex items-center space-x-1.5" title="個人中心功能即將開放"><i class="fa-solid fa-user-gear text-xs"></i><span>個人中心 (預留)</span></a>
+          <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenter" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>個人中心 (關注清單)</span></a>
         </nav>
 
-        <!-- 工具按鈕 (深淺色 / 大字模式 / 使用者) -->
         <div class="flex items-center space-x-2 sm:space-x-3">
           <button onclick="toggleTheme()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-xs" title="切換深/淺色模式">
             <i id="themeIcon" class="fa-solid fa-sun"></i>
           </button>
-          <button onclick="toggleLargeFont()" id="btnLargeFont" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-xs font-bold" title="大字關懷模式">
-            大字
+          
+          <button onclick="toggleLargeFont()" id="btnLargeFont" class="px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-xs font-bold flex items-center space-x-1 border border-transparent">
+            <i class="fa-solid fa-text-height text-[10px]"></i>
+            <span id="largeFontText">大字</span>
           </button>
-          <span id="userBadge" class="text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full border border-slate-200 dark:border-slate-700 font-medium"></span>
-          <button onclick="logout()" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-red-500/20 hover:text-red-500 text-slate-500 px-3 py-1.5 rounded-lg transition border border-slate-200 dark:border-slate-700">
+
+          <span id="userBadge" class="text-xs text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 px-3 py-1.5 rounded-full border border-slate-200 dark:border-slate-700 font-medium"></span>
+          <button onclick="logout()" class="text-xs bg-slate-100 dark:bg-slate-800 hover:bg-red-500/20 hover:text-red-500 text-slate-500 px-3 py-1.5 rounded-lg transition border border-slate-200 dark:border-slate-700" title="登出系統">
             <i class="fa-solid fa-right-from-bracket"></i>
           </button>
         </div>
@@ -349,60 +358,67 @@
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-8 space-y-6">
 
-      <!-- ③ 大盤指數儀表板 (緊湊黃金比例、開高低依昨收著色) -->
-      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-5 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-100 dark:border-slate-800 gap-2">
+      <!-- ③ 大盤指數儀表板 (流線一體化、整合多空家數數線) -->
+      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-5">
+        
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           <div class="flex items-center space-x-3">
-            <h2 class="text-lg font-black text-slate-900 dark:text-slate-100">加權指數 (TAIEX)</h2>
+            <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+            <h2 class="text-xl font-black text-slate-900 dark:text-slate-100">加權指數 (TAIEX)</h2>
             <span id="marketStatusBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20">交易正常</span>
           </div>
-          <span class="text-xs text-slate-500 dark:text-slate-400 font-mono">行情日期：<strong id="marketDate" class="text-slate-800 dark:text-slate-200">--</strong></span>
+
+          <div class="flex flex-wrap items-center gap-4 text-xs font-mono">
+            <div class="flex items-baseline space-x-2">
+              <span class="text-slate-400">收盤</span>
+              <span id="marketIndex" class="market-val text-2xl font-black">--</span>
+              <span id="marketChange" class="text-base font-bold">--</span>
+              <span id="marketPct" class="text-base font-bold">--</span>
+            </div>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+            <div class="flex items-center space-x-1 text-amber-500 font-bold">
+              <i class="fa-solid fa-coins text-[10px]"></i>
+              <span class="text-slate-400">成交</span>
+              <span id="marketVolume" class="text-base">--</span>
+            </div>
+            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
+            <div class="flex items-center space-x-3 text-slate-500 dark:text-slate-400">
+              <span>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></span>
+              <span>開 <strong id="marketOpen">--</strong></span>
+              <span>高 <strong id="marketHigh">--</strong></span>
+              <span>低 <strong id="marketLow">--</strong></span>
+            </div>
+          </div>
         </div>
 
-        <!-- 3 大主指標橫排 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
-          <!-- 1. 最新收盤價 -->
-          <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80">
-            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-0.5">加權指數收盤 (昨收: <span id="marketPrevClose">--</span>)</span>
-            <span id="marketIndex" class="market-val text-2xl font-black font-mono">--</span>
-          </div>
-
-          <!-- 2. 當日漲跌 -->
-          <div class="bg-slate-50 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80">
-            <span class="text-[11px] font-semibold text-slate-500 dark:text-slate-400 block mb-0.5">當日漲跌點數 / 漲跌幅</span>
-            <div class="flex items-baseline space-x-2">
-              <span id="marketChange" class="market-val text-2xl font-black font-mono">--</span>
-              <span id="marketPct" class="text-base font-bold font-mono">--</span>
+        <!-- 多空結構分佈數線 -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
+              <i class="fa-solid fa-chart-column text-brand-500"></i>
+              <span>全市場個股多空結構分佈</span>
+            </span>
+            <div class="flex items-center space-x-3 font-mono text-[11px]">
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-limitUp"></span><span>漲停 <strong id="countLimitUp" class="text-red-500">0</strong></span></span>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-stockRed"></span><span>上漲 <strong id="countUp" class="text-red-500">0</strong></span></span>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span><span>平盤 <strong id="countFlat" class="text-slate-400">0</strong></span></span>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-stockGreen"></span><span>下跌 <strong id="countDown" class="text-green-500">0</strong></span></span>
+              <span class="flex items-center space-x-1"><span class="w-2 h-2 rounded-full bg-limitDown"></span><span>跌停 <strong id="countLimitDown" class="text-green-500">0</strong></span></span>
             </div>
           </div>
 
-          <!-- 3. 市場成交金額 -->
-          <div class="bg-amber-500/5 dark:bg-slate-950 p-4 rounded-2xl border border-amber-500/30 dark:border-slate-800/80">
-            <span class="text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center space-x-1 mb-0.5">
-              <i class="fa-solid fa-coins"></i> <span>市場總成交金額</span>
-            </span>
-            <span id="marketVolume" class="market-val text-2xl font-black font-mono text-amber-600 dark:text-amber-400">--</span>
+          <div class="w-full h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex p-0.5 space-x-0.5 shadow-inner" id="marketRatioBar">
+            <div id="barLimitUp" class="h-full bg-limitUp rounded-l-full transition-all duration-500" style="width: 0%" title="漲停"></div>
+            <div id="barUp" class="h-full bg-stockRed transition-all duration-500" style="width: 0%" title="上漲"></div>
+            <div id="barFlat" class="h-full bg-slate-400 dark:bg-slate-600 transition-all duration-500" style="width: 0%" title="平盤"></div>
+            <div id="barDown" class="h-full bg-stockGreen transition-all duration-500" style="width: 0%" title="下跌"></div>
+            <div id="barLimitDown" class="h-full bg-limitDown rounded-r-full transition-all duration-500" style="width: 0%" title="跌停"></div>
           </div>
         </div>
 
-        <!-- 開盤 / 最高 / 最低 -->
-        <div class="grid grid-cols-3 gap-2.5 pt-1">
-          <div class="bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">開盤指數</span>
-            <span id="marketOpen" class="text-sm font-bold font-mono">--</span>
-          </div>
-          <div class="bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">最高指數</span>
-            <span id="marketHigh" class="text-sm font-bold font-mono">--</span>
-          </div>
-          <div class="bg-slate-50 dark:bg-slate-950/60 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-center">
-            <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">最低指數</span>
-            <span id="marketLow" class="text-sm font-bold font-mono">--</span>
-          </div>
-        </div>
       </section>
 
-      <!-- ④ 今日熱門 Top 10 方塊 (含算法說明 i 按鈕) -->
+      <!-- ④ 今日熱門 Top 10 方塊 -->
       <section>
         <div class="flex items-center justify-between mb-3">
           <div class="flex items-center space-x-2">
@@ -410,7 +426,6 @@
               <i class="fa-solid fa-fire text-amber-500"></i>
               <span>今日熱門焦點 (Top 10 成交排行)</span>
             </h2>
-            <!-- 💡 亮點 4：算法說明 i 提示鈕 -->
             <div class="relative group">
               <button class="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-brand-500 flex items-center justify-center text-[10px] transition">
                 <i class="fa-solid fa-info"></i>
@@ -428,7 +443,7 @@
         </div>
       </section>
 
-      <!-- ⑤ 族群選股總覽 (移除核心備註、預留標籤位置、嚴謹漲跌停底色) -->
+      <!-- ⑤ 族群選股總覽 (單一標籤 + 點擊星號同步G欄) -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -444,7 +459,8 @@
           <table class="w-full text-left text-xs border-collapse">
             <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
               <tr>
-                <th class="py-3.5 px-4">族群類別</th>
+                <th class="py-3.5 px-3 text-center w-10">關注</th>
+                <th class="py-3.5 px-3">族群類別</th>
                 <th class="py-3.5 px-3">代號</th>
                 <th class="py-3.5 px-3">名稱</th>
                 <th class="py-3.5 px-3 text-right">收盤價</th>
@@ -452,7 +468,7 @@
                 <th class="py-3.5 px-4 text-right">當日漲跌幅</th>
                 <th class="py-3.5 px-3 text-right">成交量 (張)</th>
                 <th class="py-3.5 px-3 text-right">市值 (億)</th>
-                <th class="py-3.5 px-4 text-center">動態特徵標籤</th>
+                <th class="py-3.5 px-4 text-center">動態特徵</th>
               </tr>
             </thead>
             <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
@@ -490,10 +506,13 @@
     let filteredStocks = [];
     let groupMap = {};
     let memberListCache = [];
+    let userWatchlist = new Set();
+    let currentModalStockId = null;
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       preloadMembersFromSheet();
+      loadWatchlist();
       checkRememberedLogin();
     });
 
@@ -507,10 +526,8 @@
         document.getElementById('themeIcon').className = 'fa-solid fa-moon';
       }
 
-      if (localStorage.getItem('largeFont') === 'true') {
-        document.documentElement.classList.add('large-font');
-        document.getElementById('btnLargeFont').classList.add('text-brand-500', 'bg-brand-500/10');
-      }
+      const isLarge = localStorage.getItem('largeFont') === 'true';
+      applyLargeFontState(isLarge);
     }
 
     function toggleTheme() {
@@ -522,9 +539,21 @@
     function toggleLargeFont() {
       const isLarge = document.documentElement.classList.toggle('large-font');
       localStorage.setItem('largeFont', isLarge ? 'true' : 'false');
+      applyLargeFontState(isLarge);
+    }
+
+    function applyLargeFontState(isLarge) {
       const btn = document.getElementById('btnLargeFont');
-      if (isLarge) btn.classList.add('text-brand-500', 'bg-brand-500/10');
-      else btn.classList.remove('text-brand-500', 'bg-brand-500/10');
+      const text = document.getElementById('largeFontText');
+      if (isLarge) {
+        document.documentElement.classList.add('large-font');
+        btn.className = "px-2.5 py-1.5 rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/30 transition text-xs font-bold flex items-center space-x-1 border border-brand-400";
+        text.textContent = "標準";
+      } else {
+        document.documentElement.classList.remove('large-font');
+        btn.className = "px-2.5 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-xs font-bold flex items-center space-x-1 border border-transparent";
+        text.textContent = "大字";
+      }
     }
 
     function togglePassVisibility(inputId) {
@@ -555,11 +584,38 @@
       } catch (e) {}
     }
 
+    function loadWatchlist() {
+      try {
+        const stored = localStorage.getItem('sectorpulse_watchlist');
+        if (stored) userWatchlist = new Set(JSON.parse(stored));
+      } catch (e) {}
+    }
+
+    function saveWatchlist() {
+      localStorage.setItem('sectorpulse_watchlist', JSON.stringify(Array.from(userWatchlist)));
+      
+      // 💡 同步到後端 G 欄 (JSON)
+      if (currentUser && currentUser.email && currentUser.role !== 'guest') {
+        fetch(BACKEND_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'updateWatchlist',
+            email: currentUser.email,
+            watchlist: Array.from(userWatchlist)
+          })
+        }).catch(err => console.warn("關注同步至G欄失敗", err));
+      }
+    }
+
     function checkRememberedLogin() {
       const stored = localStorage.getItem('sectorpulse_user') || sessionStorage.getItem('sectorpulse_user');
       if (stored) {
         try {
           currentUser = JSON.parse(stored);
+          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
+            userWatchlist = new Set(currentUser.watchlist);
+            saveWatchlist();
+          }
           launchApp();
         } catch(e) {
           showAuthModal();
@@ -593,6 +649,13 @@
       document.getElementById('authAlert').classList.add('hidden');
     }
 
+    function loginAsGuest() {
+      currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest' };
+      sessionStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+      document.getElementById('authModal').classList.add('hidden');
+      launchApp();
+    }
+
     // ================= 1. 會員登入 / 開通 / 註冊 =================
     async function handleLogin(e) {
       e.preventDefault();
@@ -604,12 +667,6 @@
       btn.disabled = true;
       btn.textContent = "驗證中...";
 
-      if (email === ADMIN_EMAIL) {
-        currentUser = { name: '超級管理員', email: email, role: 'admin' };
-        finalizeLogin(remember);
-        return;
-      }
-
       try {
         const res = await fetch(BACKEND_API_URL, {
           method: 'POST',
@@ -618,12 +675,21 @@
         const result = await res.json();
         if (result.success) {
           currentUser = result.user;
+          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
+            userWatchlist = new Set(currentUser.watchlist);
+            saveWatchlist();
+          }
           finalizeLogin(remember);
         } else {
           showAuthMsg(result.message || '帳號未開通或密碼不符', true);
         }
       } catch (err) {
-        showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
+        if (email === ADMIN_EMAIL && pass) {
+          currentUser = { name: '郭丹騏', email: email, role: 'admin' };
+          finalizeLogin(remember);
+        } else {
+          showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
+        }
       } finally {
         btn.disabled = false;
         btn.textContent = "登入系統";
@@ -705,6 +771,10 @@
         if (result.success) {
           showAuthMsg('開通成功！確認信件已寄出，登入中...', false);
           currentUser = result.user;
+          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
+            userWatchlist = new Set(currentUser.watchlist);
+            saveWatchlist();
+          }
           setTimeout(() => finalizeLogin(true), 1200);
         } else {
           showAuthMsg(result.message || '信箱與登記紀錄不一致，請確認或全新註冊。', true);
@@ -753,7 +823,9 @@
     // ================= 2. 主應用程式啟動與數據讀取 =================
     async function launchApp() {
       document.getElementById('mainApp').classList.remove('hidden');
-      document.getElementById('userBadge').textContent = `${currentUser.name} (${currentUser.role === 'admin' ? '管理員' : '會員'})`;
+
+      const roleText = currentUser.role === 'admin' ? '管理員' : (currentUser.role === 'guest' ? '未登入' : '會員');
+      document.getElementById('userBadge').textContent = `${currentUser.name} (${roleText})`;
 
       showDisclaimerToast();
       await fetchAndParseCsv();
@@ -866,7 +938,6 @@
         }
       }
 
-      document.getElementById('marketDate').textContent = dataMap['更新日期'] || '--';
       document.getElementById('marketVolume').textContent = dataMap['成交金額'] || '--';
 
       const closePrice = parseFloat(dataMap['收盤價'] || '0');
@@ -883,9 +954,9 @@
 
       closeEl.className = `market-val text-2xl font-black font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
       changeEl.textContent = `${isUp ? '+' : ''}${dataMap['漲跌'] || '0'}`;
-      changeEl.className = `market-val text-2xl font-black font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
+      changeEl.className = `text-base font-bold font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
 
-      pctEl.textContent = `${isUp ? '+' : ''}${dataMap['漲跌福'] || dataMap['當日漲跌幅'] || '0%'}`;
+      pctEl.textContent = `(${isUp ? '+' : ''}${dataMap['漲跌福'] || dataMap['當日漲跌幅'] || '0%'})`;
       pctEl.className = `text-base font-bold font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
 
       colorizeMarketItem('marketOpen', parseFloat(dataMap['開盤'] || '0'), prevClose);
@@ -897,9 +968,9 @@
       const el = document.getElementById(elId);
       if (!val || isNaN(val)) { el.textContent = '--'; return; }
       el.textContent = val.toFixed(2);
-      if (val > prev) el.className = 'text-sm font-bold font-mono text-stockRed';
-      else if (val < prev) el.className = 'text-sm font-bold font-mono text-stockGreen';
-      else el.className = 'text-sm font-bold font-mono text-slate-500';
+      if (val > prev) el.className = 'font-bold font-mono text-stockRed';
+      else if (val < prev) el.className = 'font-bold font-mono text-stockGreen';
+      else el.className = 'font-bold font-mono text-slate-500';
     }
 
     function renderAnnouncements() {
@@ -915,13 +986,14 @@
       }
     }
 
-    // ================= 4. 個股模組、Top 10 熱門、手動滾動清單與彈窗 =================
+    // ================= 4. 個股解析、多空比例條與列表渲染 =================
     function renderStockModules() {
       parsedStocks = [];
       groupMap = {};
       const stockMap = new Map();
 
-      // 第一輪：建立族群字典 (擷取加權漲跌與成員)
+      let countLimitUp = 0, countUp = 0, countFlat = 0, countDown = 0, countLimitDown = 0;
+
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const group = row[0] ? row[0].trim() : '';
@@ -936,7 +1008,6 @@
         }
       }
 
-      // 第二輪：解析個股資料與預留標籤
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const group = row[0] ? row[0].trim() : '';
@@ -958,14 +1029,19 @@
           const isLimitUp = (pctNum >= 9.5 && change > 0);
           const isLimitDown = (pctNum <= -9.5 && change < 0);
 
+          if (isLimitUp) countLimitUp++;
+          else if (isLimitDown) countLimitDown++;
+          else if (change > 0) countUp++;
+          else if (change < 0) countDown++;
+          else countFlat++;
+
           const sharedGroupChange = (groupMap[group] && groupMap[group].groupChange !== '-') ? groupMap[group].groupChange : (row[9] || '-');
 
-          // 💡 亮點 2：動態特徵標籤預留邏輯 (可隨時擴充)
           const badges = [];
           if (isLimitUp) badges.push({ text: '漲停', color: 'bg-red-500/10 text-red-500 border border-red-500/30' });
           if (isLimitDown) badges.push({ text: '跌停', color: 'bg-green-500/10 text-green-500 border border-green-500/30' });
-          if (volume > 100000) badges.push({ text: '量能爆量', color: 'bg-amber-500/10 text-amber-500 border border-amber-500/30' });
-          if (pctNum >= 3.0 && pctNum < 9.5) badges.push({ text: '強勢攻高', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/30' });
+          if (volume > 100000) badges.push({ text: '爆量', color: 'bg-amber-500/10 text-amber-500 border border-amber-500/30' });
+          if (pctNum >= 3.0 && pctNum < 9.5) badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/30' });
 
           const stock = {
             group, id, name, price, change, pctStr, pctNum,
@@ -984,9 +1060,26 @@
         }
       }
 
+      renderMarketRatioBar(countLimitUp, countUp, countFlat, countDown, countLimitDown, parsedStocks.length);
       renderHotCards(Array.from(stockMap.values()));
       filteredStocks = [...parsedStocks];
       renderStockTable();
+    }
+
+    function renderMarketRatioBar(limitUp, up, flat, down, limitDown, total) {
+      document.getElementById('countLimitUp').textContent = limitUp;
+      document.getElementById('countUp').textContent = up;
+      document.getElementById('countFlat').textContent = flat;
+      document.getElementById('countDown').textContent = down;
+      document.getElementById('countLimitDown').textContent = limitDown;
+
+      if (total > 0) {
+        document.getElementById('barLimitUp').style.width = `${(limitUp / total) * 100}%`;
+        document.getElementById('barUp').style.width = `${(up / total) * 100}%`;
+        document.getElementById('barFlat').style.width = `${(flat / total) * 100}%`;
+        document.getElementById('barDown').style.width = `${(down / total) * 100}%`;
+        document.getElementById('barLimitDown').style.width = `${(limitDown / total) * 100}%`;
+      }
     }
 
     function renderHotCards(stocks) {
@@ -1032,22 +1125,27 @@
         else if (s.change < 0) priceBadgeClass = "text-stockGreen font-bold";
 
         const changeTextColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
+        const isStarred = userWatchlist.has(s.id);
 
-        // 預留標籤渲染
-        const badgeHtml = s.badges && s.badges.length > 0 
-          ? s.badges.map(b => `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${b.color}">${b.text}</span>`).join(' ')
-          : '<span class="text-slate-300 dark:text-slate-700">-</span>';
+        let badgeHtml = '<span class="text-slate-300 dark:text-slate-700">-</span>';
+        if (s.badges && s.badges.length > 0) {
+          const firstBadge = s.badges[0];
+          const moreCount = s.badges.length - 1;
+          const morePill = moreCount > 0 ? `<span onclick="event.stopPropagation(); openStockModal('${s.id}')" class="ml-1 px-1.5 py-0.5 rounded-full text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold hover:text-brand-500 cursor-pointer">+${moreCount}</span>` : '';
+          badgeHtml = `<span class="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${firstBadge.color}">${firstBadge.text}</span>${morePill}`;
+        }
 
         return `
           <tr onclick="openStockModal('${s.id}')" class="hover:bg-slate-100/70 dark:hover:bg-slate-800/50 cursor-pointer transition">
-            <td class="py-3 px-4 font-sans text-slate-700 dark:text-slate-300 font-medium">${s.group}</td>
+            <td class="py-3 px-3 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
+              <button class="text-sm transition ${isStarred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-700 hover:text-amber-400'}">
+                <i class="${isStarred ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
+              </button>
+            </td>
+            <td class="py-3 px-3 font-sans text-slate-700 dark:text-slate-300 font-medium">${s.group}</td>
             <td class="py-3 px-3 text-slate-500">${s.id}</td>
             <td class="py-3 px-3 font-sans font-bold text-slate-900 dark:text-slate-100">${s.name}</td>
-            <td class="py-3 px-3 text-right">
-              <span class="${priceBadgeClass}">
-                ${s.price.toFixed(2)}
-              </span>
-            </td>
+            <td class="py-3 px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
             <td class="py-3 px-3 text-right font-bold ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
             <td class="py-3 px-4 text-right font-bold font-mono ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.pctStr}</td>
             <td class="py-3 px-3 text-right text-slate-700 dark:text-slate-300">${s.volume.toLocaleString()}</td>
@@ -1070,21 +1168,69 @@
       renderStockTable();
     }
 
+    function handleStarClick(stockId) {
+      if (currentUser && currentUser.role === 'guest') {
+        alert("🔒 訪客模式無法使用個人關注功能，請登入或開通會員！");
+        return;
+      }
+      if (userWatchlist.has(stockId)) {
+        userWatchlist.delete(stockId);
+      } else {
+        userWatchlist.add(stockId);
+      }
+      saveWatchlist();
+      renderStockTable();
+      if (currentModalStockId === stockId) updateModalStarUI(stockId);
+    }
+
+    function toggleModalStar() {
+      if (currentModalStockId) handleStarClick(currentModalStockId);
+    }
+
+    function updateModalStarUI(stockId) {
+      const isStarred = userWatchlist.has(stockId);
+      const btn = document.getElementById('modalStarBtn');
+      if (isStarred) {
+        btn.className = "text-lg text-amber-400 transition";
+        btn.innerHTML = '<i class="fa-solid fa-star"></i>';
+      } else {
+        btn.className = "text-lg text-slate-300 dark:text-slate-700 hover:text-amber-400 transition";
+        btn.innerHTML = '<i class="fa-regular fa-star"></i>';
+      }
+    }
+
+    function handleUserCenterClick() {
+      if (currentUser && currentUser.role === 'guest') {
+        alert("🔒 訪客模式不支援個人中心，請登入會員！");
+        return;
+      }
+      const q = Array.from(userWatchlist);
+      if (q.length === 0) {
+        alert("您目前尚未加入任何星號關注個股，請點擊清單左側 ⭐ 進行關注！");
+        return;
+      }
+      filteredStocks = parsedStocks.filter(s => userWatchlist.has(s.id));
+      renderStockTable();
+      document.getElementById('groupSection').scrollIntoView({ behavior: 'smooth' });
+    }
+
     // ================= 5. 個股詳細資訊彈窗 =================
     function openStockModal(stockId) {
       const s = parsedStocks.find(item => item.id.toString() === stockId.toString());
       if (!s) return;
 
+      currentModalStockId = s.id;
+      updateModalStarUI(s.id);
+
       document.getElementById('modalStockName').textContent = s.name;
       document.getElementById('modalStockId').textContent = s.id;
       document.getElementById('modalStockGroup').textContent = s.group;
 
-      // 渲染標籤
       const badgesContainer = document.getElementById('modalBadges');
       if (s.badges && s.badges.length > 0) {
-        badgesContainer.innerHTML = s.badges.map(b => `<span class="px-2 py-0.5 rounded-full text-[10px] font-semibold ${b.color}">${b.text}</span>`).join('');
+        badgesContainer.innerHTML = s.badges.map(b => `<span class="px-2.5 py-0.5 rounded-full text-xs font-semibold ${b.color}">${b.text}</span>`).join('');
       } else {
-        badgesContainer.innerHTML = '';
+        badgesContainer.innerHTML = '<span class="text-xs text-slate-400">常規行情</span>';
       }
 
       const isUp = s.change >= 0;
@@ -1104,7 +1250,6 @@
 
       document.getElementById('modalStockVolume').textContent = s.volume.toLocaleString();
 
-      // 預估交易總額
       const turnoverInYi = (s.volume * 1000 * s.price) / 100000000;
       if (turnoverInYi >= 1) {
         document.getElementById('modalStockTurnover').textContent = `${turnoverInYi.toFixed(2)} 億元`;
@@ -1117,12 +1262,11 @@
       document.getElementById('modalStockWeight').textContent = s.weight;
       document.getElementById('modalStockContribution').textContent = s.contribution;
 
-      // 💡 亮點 1：所屬族群加權漲跌卡片強化著色
       const grpCard = document.getElementById('modalGroupHighlightCard');
       const grpTitle = document.getElementById('modalGroupCardTitle');
       const grpChangeEl = document.getElementById('modalStockGroupChange');
 
-      grpTitle.textContent = `${s.group} 加權平均漲跌`;
+      grpTitle.textContent = `${s.group} 加權整體漲跌`;
       grpChangeEl.textContent = s.groupChange;
 
       const isGrpUp = s.groupChange.includes('+') || (!s.groupChange.includes('-') && parseFloat(s.groupChange) > 0);
@@ -1139,11 +1283,9 @@
         grpChangeEl.className = 'text-2xl font-black font-mono text-slate-400';
       }
 
-      // 產業題材
       document.getElementById('modalStockNote1').textContent = s.note1 ? `業務主軸：${s.note1}` : '暫無業務主軸資料';
       document.getElementById('modalStockNote2').textContent = s.note2 ? `產業題材：${s.note2}` : '';
 
-      // 同族群成分股
       const peerContainer = document.getElementById('modalPeerStocks');
       const peers = (groupMap[s.group] && groupMap[s.group].members) ? groupMap[s.group].members : [];
 
