@@ -924,20 +924,19 @@ function checkRememberedLogin() {
       }
     }
 
-    // 1. 登入處理：確保確實執行「存一個、刪另一個」
-function finalizeLogin(remember) {
+    function finalizeLogin(remember) {
+    // 存入前，先把舊的全部清空，避免髒資料
+    localStorage.removeItem('sectorpulse_user');
+    sessionStorage.removeItem('sectorpulse_user');
+    
     const userJson = JSON.stringify(currentUser);
     
     if (remember) {
-        // 選擇永久：存 Local，並且「徹底刪除 Session」
         localStorage.setItem('sectorpulse_user', userJson);
-        sessionStorage.removeItem('sectorpulse_user');
-        console.log("【儲存】已鎖定在 LocalStorage (永久)");
+        console.log("【存入】已寫入永久儲存");
     } else {
-        // 選擇不保持：存 Session，並且「徹底刪除 Local」
         sessionStorage.setItem('sectorpulse_user', userJson);
-        localStorage.removeItem('sectorpulse_user');
-        console.log("【儲存】已鎖定在 SessionStorage (本次有效)");
+        console.log("【存入】已寫入暫時儲存");
     }
     
     document.getElementById('authModal').classList.add('hidden');
