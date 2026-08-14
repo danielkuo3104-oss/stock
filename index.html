@@ -823,38 +823,33 @@
       }
     }
 
-    function checkRememberedLogin() {
-    const authModal = document.getElementById('authModal');
-    const mainApp = document.getElementById('mainApp');
-    
-    // 1. 偵測：抓取資料並印出在 Console
-    const local = localStorage.getItem('sectorpulse_user');
-    const session = sessionStorage.getItem('sectorpulse_user');
-    
-    console.log("--- 登入檢查機制 ---");
-    console.log("Local Storage:", local);
-    console.log("Session Storage:", session);
-    
-    const stored = local || session;
+    // 2. 檢查登入：增加「互斥檢查」，避免兩邊都有導致的狀態混亂
+function checkRememberedLogin() {
+    const localData = localStorage.getItem('sectorpulse_user');
+    const sessionData = sessionStorage.getItem('sectorpulse_user');
+
+    // 衝突處理：如果兩邊都有，且我們現在已經確認沒勾「保持」，要強制以 Session 為準
+    // 這段邏輯能確保當你選擇不保持時，就算 Local 有舊資料也會被邊緣化
+    let stored = null;
+
+    if (sessionData) {
+        console.log("偵測到 Session 登入狀態，以暫存為準");
+        stored = sessionData;
+        localStorage.removeItem('sectorpulse_user'); // 強制清理 Local
+    } else if (localData) {
+        console.log("偵測到 Local 登入狀態，以永久儲存為準");
+        stored = localData;
+    }
 
     if (stored) {
         try {
             currentUser = JSON.parse(stored);
-            console.log("✅ 成功解析暫存資料，使用者為:", currentUser.name);
-            
-            // 2. 強制隱藏 (直接覆蓋 style，不管 CSS class)
-            authModal.style.display = 'none'; 
-            mainApp.style.display = 'block';
-            mainApp.classList.remove('hidden');
-            
-            console.log("🚀 準備執行 launchApp()");
+            document.getElementById('authModal').classList.add('hidden');
             launchApp();
         } catch(e) {
-            console.error("❌ 資料解析失敗，準備顯示登入框", e);
-            showAuthModal();
+            logout(); // 解析失敗就強制登出
         }
     } else {
-        console.log("⚠️ 沒有找到任何登入暫存，強制顯示登入框");
         showAuthModal();
     }
 }
@@ -929,18 +924,25 @@
       }
     }
 
-    function finalizeLogin(remember) {
-      // 不管有沒有勾選 remember，為了 PWA 都優先寫入 localStorage，確保下次打開能抓到
-      localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
-      
-      // 如果沒勾選保持登入，我們也可以在 sessionStorage 留底做雙重保險
-      if (!remember) {
-        sessionStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
-      }
-      
-      document.getElementById('authModal').classList.add('hidden');
-      launchApp();
+    // 1. 登入處理：確保確實執行「存一個、刪另一個」
+function finalizeLogin(remember) {
+    const userJson = JSON.stringify(currentUser);
+    
+    if (remember) {
+        // 選擇永久：存 Local，並且「徹底刪除 Session」
+        localStorage.setItem('sectorpulse_user', userJson);
+        sessionStorage.removeItem('sectorpulse_user');
+        console.log("【儲存】已鎖定在 LocalStorage (永久)");
+    } else {
+        // 選擇不保持：存 Session，並且「徹底刪除 Local」
+        sessionStorage.setItem('sectorpulse_user', userJson);
+        localStorage.removeItem('sectorpulse_user');
+        console.log("【儲存】已鎖定在 SessionStorage (本次有效)");
     }
+    
+    document.getElementById('authModal').classList.add('hidden');
+    launchApp();
+}
 
     function logout() {
       localStorage.removeItem('sectorpulse_user');
