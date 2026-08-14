@@ -601,12 +601,45 @@
       document.getElementById('contactModal').classList.add('hidden');
     }
 
-    function sendContactEmail() {
+    async function sendContactEmail() {
       const subject = document.getElementById('contactSubject').value;
       const body = document.getElementById('contactBody').value;
-      const mailtoLink = `mailto:${ADMIN_EMAIL}?subject=${encodeURIComponent('【SectorPulse】' + subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailtoLink;
-      closeContactModal();
+      const btn = document.querySelector('#contactModal button[onclick="sendContactEmail()"]');
+      
+      if (!body.trim()) {
+        alert("信件內容不能為空喔！");
+        return;
+      }
+
+      const originalBtnText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>寄送中...</span>';
+
+      try {
+        const res = await fetch(BACKEND_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'sendContactEmail',
+            subject: subject,
+            body: body,
+            userEmail: currentUser ? currentUser.email : '',
+            userName: currentUser ? currentUser.name : ''
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          alert("信件已成功寄出，謝謝您的回饋！");
+          document.getElementById('contactBody').value = ""; // 清空內容
+          closeContactModal();
+        } else {
+          alert("寄送失敗，請稍後再試。錯誤訊息：" + result.message);
+        }
+      } catch (err) {
+        alert("寄送失敗，請確認網路連線。");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalBtnText;
+      }
     }
 
     // 💡 深淺色主題持久化
