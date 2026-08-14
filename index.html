@@ -61,7 +61,7 @@
     <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md p-6 sm:p-8 shadow-2xl">
       
       <div class="flex items-center space-x-3 mb-6">
-        <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center">
+        <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30">
           <i class="fa-solid fa-chart-pie text-white text-lg"></i>
         </div>
         <div>
@@ -99,7 +99,7 @@
             <span>保持登入狀態</span>
           </label>
         </div>
-        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm shadow-lg shadow-brand-600/30">
+        <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm shadow-lg shadow-brand-600/30">
           登入系統
         </button>
       </form>
@@ -109,20 +109,20 @@
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">訂閱時登記名稱 (輸入任一字模糊搜尋)</label>
           <div class="flex space-x-2">
-            <input type="text" id="subSearchName" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white" placeholder="例如：郭、老師...">
+            <input type="text" id="subSearchName" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm text-white focus:outline-none focus:border-brand-500" placeholder="例如：郭、老師、海龍...">
             <button type="button" onclick="searchSubscribers()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-xs font-semibold">搜尋</button>
           </div>
           <select id="subNameSelect" class="w-full mt-2 bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white hidden"></select>
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">驗證電子信箱 (須與訂閱時完全一致)</label>
-          <input type="email" id="subEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white" placeholder="驗證電子郵件">
+          <input type="email" id="subEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500" placeholder="驗證電子郵件">
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">設定登入密碼 (寫入試算表 F 欄)</label>
-          <input type="password" id="subPass" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white" placeholder="設定至少 6 位數密碼">
+          <input type="password" id="subPass" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white focus:outline-none focus:border-brand-500" placeholder="設定至少 6 位數密碼">
         </div>
-        <button type="submit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition text-sm">
+        <button type="submit" id="btnSubSubmit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition text-sm">
           驗證並開通帳號
         </button>
       </form>
@@ -131,11 +131,11 @@
       <form id="formRegNew" onsubmit="handleRegNew(event)" class="space-y-3 hidden">
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">名稱 / 暱稱</label>
-          <input type="text" id="newName" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white" placeholder="您的稱呼">
+          <input type="text" id="newName" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-500" placeholder="您的稱呼">
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">電子信箱</label>
-          <input type="email" id="newEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white" placeholder="your@email.com">
+          <input type="email" id="newEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-500" placeholder="your@email.com">
         </div>
         <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-2 text-xs text-slate-300">
           <p class="font-semibold text-slate-200">免費快報訂閱：</p>
@@ -150,9 +150,9 @@
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-400 mb-1">設定登入密碼</label>
-          <input type="password" id="newPass" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white" placeholder="••••••••">
+          <input type="password" id="newPass" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-brand-500" placeholder="••••••••">
         </div>
-        <button type="submit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm">
+        <button type="submit" id="btnNewSubmit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm">
           立即註冊開通
         </button>
       </form>
@@ -331,13 +331,14 @@
     </footer>
   </div>
 
-  <!-- ================= 核心邏輯腳本 (完全對齊試算表欄位) ================= -->
+  <!-- ================= 核心邏輯腳本 (完全對齊試算表真實資料) ================= -->
   <script>
+    // 🌐 試算表發布端點
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
-    const CSV_MEMBERS_HTML_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pubhtml?gid=0&single=true';
-    
-    // 請填入 Google Apps Script 佈署產生的 Web App 網址
-    const BACKEND_API_URL = 'YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL'; 
+    const CSV_MEMBERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=0&single=true&output=csv';
+
+    // 💡 後端 Google Apps Script 佈署網址
+    const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec'; 
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
 
     let currentUser = null;
@@ -345,10 +346,31 @@
     let parsedStocks = [];
     let visibleStockCount = 10;
     let filteredStocks = [];
+    let memberListCache = []; // 會員中心快取
 
     window.addEventListener('DOMContentLoaded', () => {
+      preloadMembersFromSheet();
       checkRememberedLogin();
     });
+
+    // 💡 預先直接載入「會員中心」CSV，確保搜尋 100% 取自真實名冊
+    async function preloadMembersFromSheet() {
+      try {
+        const res = await fetch(CSV_MEMBERS_URL);
+        const text = await res.text();
+        const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
+        memberListCache = lines.slice(1).map(line => {
+          const row = parseCsvRow(line);
+          return {
+            name: row[0] ? row[0].trim() : '',
+            email: row[1] ? row[1].trim() : '',
+            hasPass: !!(row[5] && row[5].trim())
+          };
+        }).filter(m => m.name && m.email);
+      } catch (e) {
+        console.warn("直接載入會員 CSV 失敗，將轉向 Apps Script API 查詢", e);
+      }
+    }
 
     function checkRememberedLogin() {
       const stored = localStorage.getItem('sectorpulse_user') || sessionStorage.getItem('sectorpulse_user');
@@ -385,13 +407,19 @@
         document.getElementById('tabRegisterNew').className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
         document.getElementById('formRegNew').classList.remove('hidden');
       }
+      document.getElementById('authAlert').classList.add('hidden');
     }
 
+    // ================= 1. 會員認證邏輯 (完全使用後端試算表真實資料) =================
     async function handleLogin(e) {
       e.preventDefault();
       const email = document.getElementById('loginEmail').value.trim();
       const pass = document.getElementById('loginPass').value.trim();
       const remember = document.getElementById('loginRemember').checked;
+      const btn = document.getElementById('btnLoginSubmit');
+
+      btn.disabled = true;
+      btn.textContent = "驗證中...";
 
       if (email === ADMIN_EMAIL) {
         currentUser = { name: '超級管理員', email: email, role: 'admin' };
@@ -412,8 +440,10 @@
           showAuthMsg(result.message || '帳號未開通或密碼不符', true);
         }
       } catch (err) {
-        currentUser = { name: email.split('@')[0], email: email, role: 'member' };
-        finalizeLogin(remember);
+        showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "登入系統";
       }
     }
 
@@ -437,31 +467,56 @@
       alertBox.classList.remove('hidden');
     }
 
+    // 💡 模糊搜尋真實會員名單 (完全取自「會員中心」真實欄位)
     async function searchSubscribers() {
       const kw = document.getElementById('subSearchName').value.trim();
       if (!kw) return;
       const select = document.getElementById('subNameSelect');
-      select.innerHTML = '<option>搜尋中...</option>';
+      select.innerHTML = '<option>查詢中...</option>';
       select.classList.remove('hidden');
 
-      try {
-        const res = await fetch(`${BACKEND_API_URL}?action=searchSub&kw=${encodeURIComponent(kw)}`);
-        const list = await res.json();
-        if (list && list.length > 0) {
-          select.innerHTML = list.map(item => `<option value="${item.name}">${item.name} (${item.maskedEmail})</option>`).join('');
-        } else {
-          select.innerHTML = '<option value="">查無相符訂閱者，建議直接全新註冊</option>';
-        }
-      } catch (e) {
-        select.innerHTML = `<option value="${kw}">${kw} (測試選取)</option>`;
+      let matched = [];
+
+      // 1. 先從本地快取搜尋
+      if (memberListCache.length > 0) {
+        matched = memberListCache.filter(m => m.name.toLowerCase().includes(kw.toLowerCase()));
+      }
+
+      // 2. 若快取未命中或無資料，向後端 API 查詢
+      if (matched.length === 0) {
+        try {
+          const res = await fetch(`${BACKEND_API_URL}?action=searchSub&kw=${encodeURIComponent(kw)}`);
+          const list = await res.json();
+          if (Array.isArray(list)) matched = list;
+        } catch (e) {}
+      }
+
+      // 3. 渲染真實搜尋結果 (不含任何測試或假資料)
+      if (matched.length > 0) {
+        select.innerHTML = matched.map(item => {
+          const maskedEmail = item.email ? (item.email.slice(0, 2) + '***@' + (item.email.split('@')[1] || '')) : '';
+          return `<option value="${item.name}">${item.name} (${maskedEmail})</option>`;
+        }).join('');
+      } else {
+        select.innerHTML = '<option value="">查無相符訂閱者，建議直接點選「全新註冊」</option>';
       }
     }
 
     async function handleRegSub(e) {
       e.preventDefault();
-      const name = document.getElementById('subNameSelect').value || document.getElementById('subSearchName').value;
+      const select = document.getElementById('subNameSelect');
+      const name = (select && !select.classList.contains('hidden') && select.value) ? select.value : document.getElementById('subSearchName').value.trim();
       const email = document.getElementById('subEmail').value.trim();
       const pass = document.getElementById('subPass').value;
+      const btn = document.getElementById('btnSubSubmit');
+
+      if (!name) {
+        showAuthMsg('請先搜尋並選取您的登記名稱', true);
+        return;
+      }
+
+      btn.disabled = true;
+      btn.textContent = "開通中...";
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -470,15 +525,17 @@
         });
         const result = await res.json();
         if (result.success) {
-          showAuthMsg('開通成功！登入中...', false);
+          showAuthMsg('開通成功！正在為您自動登入...', false);
           currentUser = result.user;
-          setTimeout(() => finalizeLogin(true), 1000);
+          setTimeout(() => finalizeLogin(true), 1200);
         } else {
-          showAuthMsg(result.message || '信箱驗證失敗', true);
+          showAuthMsg(result.message || '信箱與登記紀錄不一致，請確認或全新註冊。', true);
         }
       } catch (e) {
-        currentUser = { name: name, email: email, role: 'member' };
-        finalizeLogin(true);
+        showAuthMsg('開通請求失敗，請稍後再試。', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "驗證並開通帳號";
       }
     }
 
@@ -489,6 +546,10 @@
       const pass = document.getElementById('newPass').value;
       const morning = document.getElementById('optMorning').checked ? 'Y' : 'N';
       const evening = document.getElementById('optEvening').checked ? 'Y' : 'N';
+      const btn = document.getElementById('btnNewSubmit');
+
+      btn.disabled = true;
+      btn.textContent = "建立帳號中...";
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -500,11 +561,13 @@
           currentUser = { name, email, role: 'member' };
           finalizeLogin(true);
         } else {
-          showAuthMsg(result.message, true);
+          showAuthMsg(result.message || '該信箱已存在，請直接登入或開通', true);
         }
       } catch (e) {
-        currentUser = { name, email, role: 'member' };
-        finalizeLogin(true);
+        showAuthMsg('註冊連線失敗，請稍後再試。', true);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "立即註冊開通";
       }
     }
 
@@ -542,27 +605,27 @@
 
       rawCsvGrid = lines.map(line => parseCsvRow(line));
 
-      // 💡 1. 取得時間與關鍵位置
-      // AT2 = Row 1, Col 45
+      // 💡 取得時間與關鍵位置
+      // AT2 = Row 1, Col 45 (第2列, 第46欄)
       const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
       // AR1 Header = Row 0, Col 43; AH1 Header = Row 0, Col 33
       const arHeaderDate = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
       const ahHeaderDate = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
-      // AS11 = Row 10, Col 44 (第11列，第45欄)
+      // AS11 = Row 10, Col 44 (第11列, 第45欄)
       const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
 
       document.getElementById('dataTimestamp').textContent = at2Date || '即時資料';
 
-      // 💡 2. 嚴謹校驗與維護邏輯
+      // 嚴謹校驗與維護邏輯
       checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate, as11Val);
 
-      // 💡 3. 解析大盤資訊 (AS2:AT9)
+      // 解析大盤資訊 (AS2:AT9)
       renderMarketData();
 
-      // 💡 4. 解析跑馬公告 (AS14 之後)
+      // 解析跑馬公告 (AS14 之後)
       renderAnnouncements();
 
-      // 💡 5. 解析個股、Top 10 熱門排序、去重與清單渲染
+      // 解析個股、Top 10 熱門排序、去重與清單渲染
       renderStockModules();
     }
 
@@ -592,25 +655,21 @@
       const dateNotice = document.getElementById('dateNotice');
       let statusWarning = "";
 
-      // 1. 確認 AT2 是否是今日
       const isAt2Today = at2.includes(todayStr) || at2.includes(todayMMDD);
       if (!isAt2Today) {
         statusWarning = "當前資料並非本日股市資料，可能是尚未更新或週末休市。";
       }
 
-      // 2. 若 AT2 是今日，但 AR 或 AH 不是今日代表休市
       const isArToday = arHeader.includes(todayStr) || arHeader.includes(todayMMDD);
       const isAhToday = ahHeader.includes(todayStr) || ahHeader.includes(todayMMDD);
       if (isAt2Today && (!isArToday || !isAhToday)) {
         statusWarning = "本日股市休市，資料維持前一交易日狀態。";
       }
 
-      // 3. AR 不等於 AH 代表系統故障，通知後端寫入 AS11 維護中
       if (arHeader !== ahHeader && arHeader !== '' && ahHeader !== '') {
         triggerSystemError(`時間不一致：成交量(${arHeader}) 不等於 加權(${ahHeader})`);
       }
 
-      // 4. 檢查 AS11 是否為維護中
       if (as11 === '維護中') {
         if (currentUser && currentUser.email === ADMIN_EMAIL) {
           console.log("管理員登入：略過維護遮罩");
@@ -637,7 +696,6 @@
 
     // ================= 4. 大盤與公告渲染 =================
     function renderMarketData() {
-      // 讀取第 2 列至第 9 列 (Row index 1 到 8) 的 AS (44) 與 AT (45)
       const dataMap = {};
       for (let r = 1; r <= 8; r++) {
         if (rawCsvGrid[r] && rawCsvGrid[r][44] && rawCsvGrid[r][45]) {
@@ -667,7 +725,6 @@
     }
 
     function renderAnnouncements() {
-      // AS14 之後 (Row index 13 起)
       const list = [];
       for (let r = 13; r < rawCsvGrid.length; r++) {
         if (rawCsvGrid[r] && rawCsvGrid[r][44]) {
@@ -683,9 +740,8 @@
     // ================= 5. 個股資料、Top 10 熱門與去重複清單 =================
     function renderStockModules() {
       parsedStocks = [];
-      const stockMap = new Map(); // 用於跨族群去除重複個股
+      const stockMap = new Map();
 
-      // 從第 2 列 (Row index 1) 開始遍歷
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const group = row[0] ? row[0].trim() : '';
@@ -701,14 +757,13 @@
         if (id && id !== '-' && !stockMap.has(id)) {
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
           
-          // 漲跌停絕對判定
           const isLimitUp = (pctNum >= 9.5 && change > 0);
           const isLimitDown = (pctNum <= -9.5 && change < 0);
 
           const stock = {
             group, id, name, price, change, pctStr, pctNum,
             cap, note, volume,
-            turnover: volume * price, // 成交金額估算 (AR * D)
+            turnover: volume * price,
             isLimitUp, isLimitDown
           };
           stockMap.set(id, stock);
@@ -716,14 +771,12 @@
         }
       }
 
-      // 渲染 Top 10 熱門
       renderHotCards(Array.from(stockMap.values()));
       filteredStocks = [...parsedStocks];
       renderStockTable(true);
     }
 
     function renderHotCards(stocks) {
-      // 依 turnover 排序前 10
       const top10 = stocks.sort((a, b) => b.turnover - a.turnover).slice(0, 10);
       const container = document.getElementById('hotCardsContainer');
 
