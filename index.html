@@ -443,12 +443,13 @@
           </div>
 
           <div class="flex flex-wrap lg:flex-nowrap items-center gap-2 sm:gap-4 text-xs font-mono">
-            <!-- 收盤價區塊 -->
-            <div class="flex items-baseline space-x-1 sm:space-x-2 w-full lg:w-auto">
-              <span class="text-slate-400">收盤</span>
-              <span id="marketIndex" class="market-val text-xl sm:text-2xl font-black">--</span>
-              <span id="marketChange" class="text-sm sm:text-base font-bold">--</span>
-              <span id="marketPct" class="text-sm sm:text-base font-bold">--</span>
+            <!-- 💡 修正：移除「收盤」文字，並在手機版讓漲跌數值換行 -->
+            <div class="flex flex-col sm:flex-row sm:items-baseline sm:space-x-2 w-full lg:w-auto">
+              <span id="marketIndex" class="market-val text-2xl sm:text-3xl font-black leading-none tracking-tight">--</span>
+              <div class="flex items-baseline space-x-1.5 mt-1 sm:mt-0">
+                <span id="marketChange" class="text-sm sm:text-base font-bold">--</span>
+                <span id="marketPct" class="text-sm sm:text-base font-bold">--</span>
+              </div>
             </div>
             
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden lg:block"></div>
@@ -462,7 +463,7 @@
             
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden lg:block"></div>
             
-            <!-- 💡 2. 開高低收區塊 (修改為 flex-col 上下兩行) -->
+            <!-- 開高低收區塊 (flex-col 上下兩行) -->
             <div class="flex flex-col items-start space-y-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto mt-2 sm:mt-0">
               <div>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></div>
               <div class="flex items-center space-x-3">
