@@ -94,8 +94,12 @@
       </div>
 
       <div class="space-y-4 text-xs">
+        <!-- 💡 當前核心狀態卡片 (每 5 秒自動靜默輪詢) -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
-          <span class="font-bold text-slate-700 dark:text-slate-300">當前核心狀態：</span>
+          <div>
+            <span class="font-bold text-slate-700 dark:text-slate-300 block">當前核心狀態：</span>
+            <span class="text-[10px] text-slate-400">面板開啟中每 5 秒自動同步</span>
+          </div>
           <span id="adminCurrentStatusBadge" class="px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span id="adminCurrentStatusText">正常運行</span>
@@ -230,10 +234,10 @@
         </div>
       </div>
 
-      <!-- ① 族群歸屬卡片 (主/子族群拆分，圓點與漲跌同色) -->
+      <!-- ① 族群歸屬卡片 -->
       <div id="modalDoubleGroupContainer" class="space-y-3"></div>
 
-      <!-- ② 近十日漲跌趨勢 (提供直方柱狀圖 / 累積波段走勢線 / 列表) -->
+      <!-- ② 近十日漲跌趨勢 -->
       <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div class="flex items-center space-x-2">
@@ -260,7 +264,7 @@
         </div>
       </div>
 
-      <!-- ③ 近十日成交量能趨勢 (直方圖 / 列表) -->
+      <!-- ③ 近十日成交量能趨勢 -->
       <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
         <div class="flex items-center justify-between">
           <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
@@ -462,8 +466,8 @@
   <!-- ================= 主頁內容區 ================= -->
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full overflow-x-hidden">
     
-    <!-- ① Header 標頭容器 (包含主要 Header 與 縮小置頂條) -->
-    <div class="sticky top-0 z-40 w-full">
+    <!-- ① Header 標頭容器 -->
+    <div class="sticky top-0 z-40 w-full shadow-sm">
       <header id="mainHeader" class="bg-white/90 dark:bg-slate-900/90 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
           <div class="flex items-center space-x-2 sm:space-x-3">
@@ -520,9 +524,9 @@
         </div>
       </header>
 
-      <!-- 💡 滑動時緊貼 Header 下方的縮小置頂條 (不覆蓋任何卡片) -->
-      <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 max-h-0 opacity-0 overflow-hidden px-4">
-        <div class="max-w-7xl mx-auto flex items-center justify-between py-2 text-xs sm:text-sm font-mono">
+      <!-- 💡 加權縮小置頂條 (平滑滑出，絕對不擋住卡片) -->
+      <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 -translate-y-full opacity-0 pointer-events-none px-3 sm:px-8 py-2 w-full">
+        <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
           <div class="flex items-center space-x-2">
             <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
             <span class="font-sans font-black text-slate-800 dark:text-slate-100">加權指數</span>
@@ -743,6 +747,7 @@
     let tenDayVolDatesHeaders = [];
     let isCurrentMaintenance = false;
     let currentPctTrendMode = 'bar'; // 'bar' | 'cum' | 'list'
+    let adminStatusPollInterval = null; // 控制台 5 秒輪詢計時器
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
@@ -750,27 +755,27 @@
       preloadHolidays();
       loadWatchlist();
       checkRememberedLogin();
-      initStickyScrollObserver();
+      initStickyScrollHandler();
     });
 
-    // 💡 監聽滾動以展開/收合緊貼 Header 下方的 Mini Bar
-    function initStickyScrollObserver() {
+    // 💡 堅固的滾動計算：精準收放縮小置頂條
+    function initStickyScrollHandler() {
       const target = document.getElementById('mainMarketSection');
       const miniBar = document.getElementById('stickyMiniBar');
-      
-      const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
-            miniBar.classList.remove('max-h-0', 'opacity-0');
-            miniBar.classList.add('max-h-16', 'opacity-100');
-          } else {
-            miniBar.classList.add('max-h-0', 'opacity-0');
-            miniBar.classList.remove('max-h-16', 'opacity-100');
-          }
-        });
-      }, { threshold: 0.05 });
 
-      if (target) observer.observe(target);
+      window.addEventListener('scroll', () => {
+        if (!target || !miniBar) return;
+        const rect = target.getBoundingClientRect();
+        
+        // 當加權指數儀表板頂部滑出導航欄時滑出
+        if (rect.bottom < 80) {
+          miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
+          miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        } else {
+          miniBar.classList.add('-translate-y-full', 'opacity-0', 'pointer-events-none');
+          miniBar.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+        }
+      }, { passive: true });
     }
 
     async function handleRefresh() {
@@ -1306,21 +1311,20 @@
       document.getElementById('toastDisclaimer').classList.add('translate-y-28', 'opacity-0');
     }
 
-    async function fetchAndParseCsv() {
+    async function fetchAndParseCsv(isSilent = false) {
       try {
         const res = await fetch(CSV_STOCKS_URL);
         const text = await res.text();
-        parseCsvData(text);
+        parseCsvData(text, isSilent);
       } catch (e) {}
     }
 
-    function parseCsvData(csvText) {
+    function parseCsvData(csvText, isSilent = false) {
       const lines = csvText.split(/\r\n|\n/).filter(l => l.trim() !== '');
       if (lines.length < 2) return;
 
       rawCsvGrid = lines.map(line => parseCsvRow(line));
 
-      // 解析第 1 列的 10 日漲跌幅標頭 (AU=46 ~ BD=55)
       tenDayDatesHeaders = [];
       if (rawCsvGrid[0]) {
         for (let c = 46; c <= 55; c++) {
@@ -1328,7 +1332,6 @@
         }
       }
 
-      // 解析第 1 列的 10 日成交量標頭 (AI=34 ~ AR=43)
       tenDayVolDatesHeaders = [];
       if (rawCsvGrid[0]) {
         for (let c = 34; c <= 43; c++) {
@@ -1347,8 +1350,10 @@
 
       renderAnnouncements();
       checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate, as11Val);
-      renderMarketData();
-      renderStockModules();
+      if (!isSilent) {
+        renderMarketData();
+        renderStockModules();
+      }
     }
 
     function parseCsvRow(text) {
@@ -1484,7 +1489,7 @@
       pctEl.textContent = `(${formattedPct})`;
       pctEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
 
-      // 同步到縮小置頂條
+      // 💡 同步到加權縮小置頂條
       const miniIndex = document.getElementById('miniMarketIndex');
       const miniChange = document.getElementById('miniMarketChange');
       const miniPct = document.getElementById('miniMarketPct');
@@ -1836,7 +1841,6 @@
       document.getElementById('groupSection').scrollIntoView({ behavior: 'smooth' });
     }
 
-    // 💡 切換 漲跌趨勢（單日柱狀 / 累積走勢 / 列表）
     function switchTrendView(type, mode) {
       if (type === 'pct') {
         currentPctTrendMode = mode;
@@ -1884,7 +1888,6 @@
       }
     }
 
-    // 💡 渲染十日漲跌趨勢（直方柱狀圖 vs 累積走勢線 vs 列表）
     function renderStockTrend(stock) {
       const history = stock.tenDayHistory || [];
       const svgWrapper = document.getElementById('trendSvgWrapper_pct');
@@ -1892,7 +1895,6 @@
       const listGrid = document.getElementById('trendListGrid_pct');
       const cumBadge = document.getElementById('trendCumPctBadge');
 
-      // 1. 計算累積漲跌
       let cumSum = 0;
       let validCount = 0;
       history.forEach(h => {
@@ -1912,7 +1914,6 @@
         cumBadge.textContent = '';
       }
 
-      // 2. 列表渲染
       listGrid.innerHTML = history.map(item => {
         const isUp = item.numVal > 0;
         const isDown = item.numVal < 0;
@@ -1941,7 +1942,6 @@
       const padY = 18;
       const stepX = (svgWidth - padX * 2) / Math.max(history.length - 1, 1);
 
-      // 💡 模式 A: 每日漲跌幅 雙向直方柱狀圖 (零軸上下分色)
       if (currentPctTrendMode === 'bar') {
         const maxAbs = Math.max(...validPoints.map(p => Math.abs(p.numVal)), 3);
         const zeroY = svgHeight / 2;
@@ -1971,9 +1971,7 @@
             ${barsHtml}
           </svg>
         `;
-      } 
-      // 💡 模式 B: 累積淨值走勢圖 (以首日為基準的真實連續走勢)
-      else if (currentPctTrendMode === 'cum') {
+      } else if (currentPctTrendMode === 'cum') {
         let runningTotal = 0;
         const cumPoints = history.map(h => {
           if (h.hasData) runningTotal += h.numVal;
@@ -2036,7 +2034,6 @@
       `;
     }
 
-    // 💡 渲染十日成交量直方圖
     function renderStockVolTrend(stock) {
       const history = stock.tenDayVolHistory || [];
       const svgWrapper = document.getElementById('trendSvgWrapper_vol');
@@ -2143,7 +2140,6 @@
       document.getElementById('modalStockTurnover').textContent = turnoverInYi >= 1 ? `${turnoverInYi.toFixed(2)} 億元` : `${((s.volume * 1000 * s.price) / 10000).toFixed(0)} 萬元`;
       document.getElementById('modalStockCap').textContent = `${s.cap.toFixed(2)} 億元`;
 
-      // 族群卡片：圓點與漲跌同色，並劃分主/子族群
       const doubleGrpContainer = document.getElementById('modalDoubleGroupContainer');
       doubleGrpContainer.innerHTML = groupsData.map((g, idx) => {
         const isMainUp = g.mainGroupChange.includes('+') || (!g.mainGroupChange.includes('-') && parseFloat(g.mainGroupChange) > 0);
@@ -2229,13 +2225,28 @@
       document.getElementById('stockDetailModal').classList.add('hidden');
     }
 
+    // 💡 打開控制台：立即檢查並開啟 5 秒靜默輪詢
     function openAdminPanel() {
       updateAdminStatusIndicator(isCurrentMaintenance);
       document.getElementById('adminPanelModal').classList.remove('hidden');
+      
+      // 先默默刷新一次
+      fetchAndParseCsv(true);
+
+      // 每 5 秒默默刷新狀態
+      if (adminStatusPollInterval) clearInterval(adminStatusPollInterval);
+      adminStatusPollInterval = setInterval(() => {
+        fetchAndParseCsv(true);
+      }, 5000);
     }
 
+    // 💡 關閉控制台：清除輪詢以省資源
     function closeAdminPanel() {
       document.getElementById('adminPanelModal').classList.add('hidden');
+      if (adminStatusPollInterval) {
+        clearInterval(adminStatusPollInterval);
+        adminStatusPollInterval = null;
+      }
     }
 
     function applyAdminDate() {
