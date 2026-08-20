@@ -65,21 +65,27 @@
 
   <!-- ================= 系統維護中 霧面遮罩 ================= -->
   <div id="maintenanceOverlay" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-lg flex flex-col items-center justify-center hidden">
-    <div class="bg-white dark:bg-slate-900 border border-amber-500/50 p-6 sm:p-8 rounded-2xl max-w-md text-center shadow-2xl mx-4">
-      <i class="fa-solid fa-screwdriver-wrench text-amber-500 text-5xl mb-4 animate-bounce"></i>
-      <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100 mb-2">系統維護中</h2>
-      <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+    <div class="bg-white dark:bg-slate-900 border border-amber-500/50 p-6 sm:p-8 rounded-2xl max-w-md text-center shadow-2xl mx-4 space-y-4">
+      <i class="fa-solid fa-screwdriver-wrench text-amber-500 text-5xl mb-2 animate-bounce"></i>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">系統維護中</h2>
+      <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
         試算表資料正進行同步或核心排程維護，暫時停止前台存取。請稍後再試。
       </p>
-      <button onclick="logout()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm transition">
-        返回重新登入
-      </button>
+      <div class="pt-2 flex flex-col sm:flex-row items-center justify-center gap-3">
+        <button onclick="openContactModal()" class="w-full sm:w-auto px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition flex items-center justify-center space-x-1.5 shadow-lg shadow-brand-500/30">
+          <i class="fa-regular fa-envelope"></i>
+          <span>回報 / 寄信給管理員</span>
+        </button>
+        <button onclick="logout()" class="w-full sm:w-auto px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm transition">
+          返回重新登入
+        </button>
+      </div>
     </div>
   </div>
 
   <!-- ================= 管理員控制面板 Modal ================= -->
   <div id="adminPanelModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-slate-900 border border-brand-500/40 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5">
+    <div class="bg-white dark:bg-slate-900 border border-brand-500/40 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
           <i class="fa-solid fa-sliders text-brand-500"></i>
@@ -91,6 +97,7 @@
       </div>
 
       <div class="space-y-4 text-xs">
+        <!-- 模擬日期 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 border border-slate-200 dark:border-slate-800">
           <label class="font-bold text-slate-700 dark:text-slate-300 block">模擬系統「今日日期」：</label>
           <div class="flex space-x-2">
@@ -101,6 +108,32 @@
           <p class="text-[10px] text-slate-500">自訂日期可立即驗證「當日資訊」、「非當日資訊」與「本日休市」之狀態切換。</p>
         </div>
 
+        <!-- 會員分級授予 -->
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+            <span>會員權限等級授予：</span>
+            <span class="text-[10px] font-normal text-slate-400">預設：銀星會員</span>
+          </label>
+          <div class="space-y-2">
+            <input type="text" id="adminMemberSearch" placeholder="搜尋會員名稱或 Email..." oninput="adminFilterMembers()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white">
+            <select id="adminMemberSelect" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white">
+              <option value="">-- 請選取目標會員 --</option>
+            </select>
+            <div class="flex space-x-2 pt-1">
+              <select id="adminTierSelect" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white flex-1 font-bold">
+                <option value="銀星會員">銀星會員 (限20檔)</option>
+                <option value="金級會員">金級會員 (限50檔)</option>
+                <option value="尊榮會員">尊榮會員 (無限制)</option>
+              </select>
+              <button onclick="updateMemberTier()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition">
+                授予等級
+              </button>
+            </div>
+          </div>
+          <p id="adminTierMsg" class="text-[11px] font-medium text-center hidden"></p>
+        </div>
+
+        <!-- 系統維護開關 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
           <label class="font-bold text-slate-700 dark:text-slate-300 block">系統維護狀態控制 (寫入 AS11)：</label>
           <div class="grid grid-cols-2 gap-2">
@@ -136,13 +169,15 @@
           <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">主旨分類</label>
           <select id="contactSubject" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
             <option value="錯誤回報">錯誤回報</option>
+            <option value="維護通報詢問">維護通報詢問</option>
+            <option value="會員升級申請">會員升級申請</option>
             <option value="特別感謝">特別感謝</option>
             <option value="想法提案">想法提案</option>
           </select>
         </div>
         <div>
           <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">信件內容</label>
-          <textarea id="contactBody" rows="5" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-500" placeholder="請在此輸入您的建議或回報內容..."></textarea>
+          <textarea id="contactBody" rows="5" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-brand-500" placeholder="請在此輸入您的建議、升級需求或回報內容..."></textarea>
         </div>
         <button onclick="sendContactEmail()" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm flex items-center justify-center space-x-2 shadow-lg shadow-brand-600/30">
           <i class="fa-solid fa-paper-plane"></i>
@@ -159,7 +194,7 @@
       <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div class="flex items-center space-x-3">
-            <button id="modalStarBtn" onclick="toggleModalStar()" class="text-lg text-slate-300 dark:text-slate-700 hover:text-amber-400 transition" title="加入個人關注 (同步至G欄)">
+            <button id="modalStarBtn" onclick="toggleModalStar()" class="text-lg text-slate-300 dark:text-slate-700 hover:text-amber-400 transition" title="加入個人關注">
               <i class="fa-regular fa-star"></i>
             </button>
             <h3 id="modalStockName" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">--</h3>
@@ -492,7 +527,7 @@
 
         </div>
 
-        <!-- 多空結構分佈數線 (移除平盤) -->
+        <!-- 多空結構分佈數線 -->
         <div class="space-y-2">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] sm:text-xs gap-y-2">
             <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
@@ -537,9 +572,7 @@
           </div>
           <span class="text-[10px] sm:text-xs text-slate-400">點擊卡片可查看完整題材</span>
         </div>
-        <div id="hotCardsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3">
-          <!-- 卡片動態填充 -->
-        </div>
+        <div id="hotCardsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
       </section>
 
       <!-- ⑤ 族群選股總覽 -->
@@ -564,7 +597,6 @@
           </div>
         </div>
 
-        <!-- 表格外層加入 overflow-x-auto 防爆 -->
         <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[580px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
           <table class="w-full text-left text-[11px] sm:text-xs border-collapse min-w-[320px]">
             <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
@@ -581,7 +613,7 @@
               </tr>
             </thead>
             <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
-              <!-- 動態渲染所有個股 -->
+              <!-- 動態渲染個股 -->
             </tbody>
           </table>
         </div>
@@ -609,6 +641,13 @@
 
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec'; 
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
+
+    // 會員等級關注限制
+    const TIER_LIMITS = {
+      '銀星會員': 20,
+      '金級會員': 50,
+      '尊榮會員': Infinity
+    };
 
     let currentUser = null;
     let rawCsvGrid = [];
@@ -677,8 +716,8 @@
             action: 'sendContactEmail',
             subject: subject,
             body: body,
-            userEmail: currentUser ? currentUser.email : '',
-            userName: currentUser ? currentUser.name : ''
+            userEmail: currentUser ? currentUser.email : 'guest@sectorpulse.local',
+            userName: currentUser ? (currentUser.name || '訪客/使用者') : '訪客'
           })
         });
         const result = await res.json();
@@ -687,7 +726,7 @@
           document.getElementById('contactBody').value = "";
           closeContactModal();
         } else {
-          alert("寄送失敗，請稍後再試。錯誤訊息：" + result.message);
+          alert("寄送失敗，請稍後再試。錯誤訊息：" + (result.message || '未知錯誤'));
         }
       } catch (err) {
         alert("寄送失敗，請確認網路連線。");
@@ -759,10 +798,68 @@
           return {
             name: row[0] ? row[0].trim() : '',
             email: row[1] ? row[1].trim() : '',
-            hasPass: !!(row[5] && row[5].trim())
+            tier: row[5] ? row[5].trim() : '銀星會員', // F 欄索引 5
+            hasPass: !!(row[6] && row[6].trim())       // G 欄索引 6
           };
         }).filter(m => m.name && m.email);
-      } catch (e) {}
+        populateAdminMemberSelect(memberListCache);
+      } catch (e) {
+        console.error("預載會員清單失敗", e);
+      }
+    }
+
+    function populateAdminMemberSelect(members) {
+      const select = document.getElementById('adminMemberSelect');
+      if (!select) return;
+      select.innerHTML = '<option value="">-- 請選取目標會員 --</option>' + members.map(m => {
+        return `<option value="${m.email}">${m.name} (${m.email}) - [${m.tier || '銀星會員'}]</option>`;
+      }).join('');
+    }
+
+    function adminFilterMembers() {
+      const kw = document.getElementById('adminMemberSearch').value.trim().toLowerCase();
+      const filtered = memberListCache.filter(m => m.name.toLowerCase().includes(kw) || m.email.toLowerCase().includes(kw));
+      populateAdminMemberSelect(filtered);
+    }
+
+    async function updateMemberTier() {
+      const select = document.getElementById('adminMemberSelect');
+      const email = select.value;
+      const tier = document.getElementById('adminTierSelect').value;
+      const msgBox = document.getElementById('adminTierMsg');
+
+      if (!email) {
+        alert("請先選取要設定的會員！");
+        return;
+      }
+
+      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
+      msgBox.textContent = `正在將 ${email} 設置為【${tier}】...`;
+
+      try {
+        const res = await fetch(BACKEND_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ action: 'setMemberTier', email, tier, admin: ADMIN_EMAIL })
+        });
+        const result = await res.json();
+        if (result.success) {
+          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+          msgBox.textContent = `成功！已授予 ${email} 為 ${tier}`;
+          const target = memberListCache.find(m => m.email === email);
+          if (target) target.tier = tier;
+          populateAdminMemberSelect(memberListCache);
+          if (currentUser && currentUser.email === email) {
+            currentUser.tier = tier;
+            finalizeLogin(!!localStorage.getItem('sectorpulse_user'));
+          }
+        } else {
+          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+          msgBox.textContent = "更新失敗：" + (result.message || '後端回傳錯誤');
+        }
+      } catch(e) {
+        msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+        msgBox.textContent = "更新異常，請檢查網路連線。";
+      }
     }
 
     async function preloadHolidays() {
@@ -792,7 +889,6 @@
       localStorage.setItem('sectorpulse_watchlist', JSON.stringify(watchlistArr));
       
       if (currentUser && currentUser.email && currentUser.role !== 'guest') {
-        // 💡 確保狀態寫回 currentUser，並且更新 localStorage/sessionStorage
         currentUser.watchlist = watchlistArr;
         if (localStorage.getItem('sectorpulse_user')) {
           localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
@@ -813,7 +909,7 @@
         })
         .then(res => res.json())
         .then(data => {
-          countInfoBox.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 已同步</span>';
+          countInfoBox.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 已同步關注清單</span>';
           setTimeout(() => { countInfoBox.textContent = `共收錄 ${filteredStocks.length} 檔個股`; }, 2000);
         })
         .catch(err => {
@@ -823,36 +919,35 @@
       }
     }
 
-    // 2. 檢查登入：增加「互斥檢查」，避免兩邊都有導致的狀態混亂
-function checkRememberedLogin() {
-    const localData = localStorage.getItem('sectorpulse_user');
-    const sessionData = sessionStorage.getItem('sectorpulse_user');
+    function checkRememberedLogin() {
+      const localData = localStorage.getItem('sectorpulse_user');
+      const sessionData = sessionStorage.getItem('sectorpulse_user');
 
-    // 衝突處理：如果兩邊都有，且我們現在已經確認沒勾「保持」，要強制以 Session 為準
-    // 這段邏輯能確保當你選擇不保持時，就算 Local 有舊資料也會被邊緣化
-    let stored = null;
-
-    if (sessionData) {
-        console.log("偵測到 Session 登入狀態，以暫存為準");
+      let stored = null;
+      if (sessionData) {
         stored = sessionData;
-        localStorage.removeItem('sectorpulse_user'); // 強制清理 Local
-    } else if (localData) {
-        console.log("偵測到 Local 登入狀態，以永久儲存為準");
+        localStorage.removeItem('sectorpulse_user');
+      } else if (localData) {
         stored = localData;
+      }
+
+      if (stored) {
+        try {
+          currentUser = JSON.parse(stored);
+          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
+            userWatchlist = new Set(currentUser.watchlist);
+          }
+          if (!currentUser.tier) currentUser.tier = '銀星會員';
+          document.getElementById('authModal').classList.add('hidden');
+          launchApp();
+        } catch(e) {
+          logout();
+        }
+      } else {
+        showAuthModal();
+      }
     }
 
-    if (stored) {
-        try {
-            currentUser = JSON.parse(stored);
-            document.getElementById('authModal').classList.add('hidden');
-            launchApp();
-        } catch(e) {
-            logout(); // 解析失敗就強制登出
-        }
-    } else {
-        showAuthModal();
-    }
-}
     function showAuthModal() {
       document.getElementById('authModal').classList.remove('hidden');
       document.getElementById('mainApp').classList.add('hidden');
@@ -878,8 +973,7 @@ function checkRememberedLogin() {
     }
 
     function loginAsGuest() {
-      currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest' };
-      // 訪客也寫入 localStorage
+      currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest', tier: '銀星會員' };
       localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
       document.getElementById('authModal').classList.add('hidden');
       launchApp();
@@ -903,9 +997,10 @@ function checkRememberedLogin() {
         const result = await res.json();
         if (result.success) {
           currentUser = result.user;
+          if (!currentUser.tier) currentUser.tier = '銀星會員';
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
-            // 這裡不再呼叫 saveWatchlist()
+            localStorage.setItem('sectorpulse_watchlist', JSON.stringify(currentUser.watchlist));
           }
           finalizeLogin(remember);
         } else {
@@ -913,7 +1008,7 @@ function checkRememberedLogin() {
         }
       } catch (err) {
         if (email === ADMIN_EMAIL && pass) {
-          currentUser = { name: '郭丹騏', email: email, role: 'admin' };
+          currentUser = { name: '郭丹騏', email: email, role: 'admin', tier: '尊榮會員' };
           finalizeLogin(remember);
         } else {
           showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
@@ -925,41 +1020,31 @@ function checkRememberedLogin() {
     }
 
     function finalizeLogin(remember) {
-    // 存入前，先把舊的全部清空，避免髒資料
-    localStorage.removeItem('sectorpulse_user');
-    sessionStorage.removeItem('sectorpulse_user');
-    
-    const userJson = JSON.stringify(currentUser);
-    
-    if (remember) {
+      localStorage.removeItem('sectorpulse_user');
+      sessionStorage.removeItem('sectorpulse_user');
+      
+      const userJson = JSON.stringify(currentUser);
+      if (remember) {
         localStorage.setItem('sectorpulse_user', userJson);
-        console.log("【存入】已寫入永久儲存");
-    } else {
+      } else {
         sessionStorage.setItem('sectorpulse_user', userJson);
-        console.log("【存入】已寫入暫時儲存");
+      }
+      
+      document.getElementById('authModal').classList.add('hidden');
+      launchApp();
     }
-    
-    document.getElementById('authModal').classList.add('hidden');
-    launchApp();
-}
 
     function logout() {
-    console.log("【登出】執行徹底清理...");
-    
-    // 1. 清除所有可能的儲存鍵值
-    localStorage.removeItem('sectorpulse_user');
-    sessionStorage.removeItem('sectorpulse_user');
-    localStorage.removeItem('sectorpulse_watchlist'); // 如果有存清單也一併清
-    
-    // 2. 清除所有 Cookie (防止某些瀏覽器自動補回 Session)
-    document.cookie.split(";").forEach(function(c) { 
+      localStorage.removeItem('sectorpulse_user');
+      sessionStorage.removeItem('sectorpulse_user');
+      localStorage.removeItem('sectorpulse_watchlist');
+      
+      document.cookie.split(";").forEach(function(c) { 
         document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
-    });
+      });
 
-    // 3. 強制跳轉並重新載入，確保記憶體被完全釋放
-    window.location.href = window.location.pathname; 
-    // 或者用 location.reload(true) 強制從伺服器重載
-}
+      window.location.href = window.location.pathname; 
+    }
 
     function showAuthMsg(msg, isError) {
       const alertBox = document.getElementById('authAlert');
@@ -1023,6 +1108,7 @@ function checkRememberedLogin() {
         if (result.success) {
           showAuthMsg('開通成功！確認信件已寄出，登入中...', false);
           currentUser = result.user;
+          if (!currentUser.tier) currentUser.tier = '銀星會員';
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
           }
@@ -1058,7 +1144,7 @@ function checkRememberedLogin() {
         const result = await res.json();
         if (result.success) {
           showAuthMsg('註冊成功！歡迎信已寄送至您的信箱。', false);
-          currentUser = { name, email, role: 'member' };
+          currentUser = { name, email, role: 'member', tier: '銀星會員' };
           setTimeout(() => finalizeLogin(true), 1200);
         } else {
           showAuthMsg(result.message || '該信箱已被使用', true);
@@ -1075,15 +1161,22 @@ function checkRememberedLogin() {
       document.getElementById('mainApp').classList.remove('hidden');
 
       const badgeEl = document.getElementById('userBadge');
+      const tierName = currentUser.tier || '銀星會員';
+      
+      let tierColor = 'bg-slate-500/10 text-slate-400 border-slate-500/30';
+      if (tierName === '尊榮會員') tierColor = 'bg-purple-500/10 text-purple-400 border-purple-500/30';
+      else if (tierName === '金級會員') tierColor = 'bg-amber-500/10 text-amber-400 border-amber-500/30';
+      else if (tierName === '銀星會員') tierColor = 'bg-blue-500/10 text-blue-400 border-blue-500/30';
+
       if (currentUser.role === 'admin') {
-        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved sm:hidden"></i><span class="hidden sm:inline">${currentUser.name} (管理員)</span>`;
+        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved sm:hidden"></i><span class="hidden sm:inline">${currentUser.name} (管理員 · 尊榮)</span>`;
         badgeEl.className = "text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-500/10 text-blue-500 border border-blue-500/30 whitespace-nowrap";
       } else if (currentUser.role === 'guest') {
         badgeEl.innerHTML = `<i class="fa-solid fa-user-secret sm:hidden"></i><span class="hidden sm:inline">訪客</span>`;
         badgeEl.className = "text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-500/10 text-slate-400 border border-slate-500/30 whitespace-nowrap";
       } else {
-        badgeEl.innerHTML = `<i class="fa-solid fa-user sm:hidden"></i><span class="hidden sm:inline">${currentUser.name}</span>`;
-        badgeEl.className = "text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30 whitespace-nowrap";
+        badgeEl.innerHTML = `<i class="fa-solid fa-user sm:hidden"></i><span class="hidden sm:inline">${currentUser.name} (${tierName})</span>`;
+        badgeEl.className = `text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold ${tierColor} border whitespace-nowrap`;
       }
 
       if (currentUser.role === 'admin') {
@@ -1477,11 +1570,20 @@ function checkRememberedLogin() {
         alert("🔒 訪客模式無法使用個人關注功能，請登入或開通會員！");
         return;
       }
+
       if (userWatchlist.has(stockId)) {
         userWatchlist.delete(stockId);
       } else {
+        const currentTier = currentUser ? (currentUser.tier || '銀星會員') : '銀星會員';
+        const limit = TIER_LIMITS[currentTier] ?? 20;
+
+        if (userWatchlist.size >= limit) {
+          alert(`⚠️ 您目前的等級為【${currentTier}】，關注上限為 ${limit} 檔標的。\n若需增加關注容量，請透過「寫信給管理員」申請升級！`);
+          return;
+        }
         userWatchlist.add(stockId);
       }
+      
       saveWatchlist();
       renderStockTable();
       if (currentModalStockId === stockId) updateModalStarUI(stockId);
