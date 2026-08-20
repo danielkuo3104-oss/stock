@@ -94,11 +94,11 @@
       </div>
 
       <div class="space-y-4 text-xs">
-        <!-- 💡 當前核心狀態卡片 (支援即時切換與定時輪詢) -->
+        <!-- 💡 當前核心狀態卡片 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span class="font-bold text-slate-700 dark:text-slate-300 block">當前核心狀態：</span>
-            <span class="text-[10px] text-slate-400">面板開啟中每 5 秒自動同步</span>
+            <span class="text-[10px] text-slate-400">面板開啟中每 5 秒即時同步</span>
           </div>
           <span id="adminCurrentStatusBadge" class="px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
@@ -345,7 +345,6 @@
         </button>
       </div>
 
-      <!-- 1. 登入表單 -->
       <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
           <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">電子信箱</label>
@@ -379,7 +378,6 @@
         </div>
       </form>
 
-      <!-- 2. 已訂閱快報會員 開通表單 -->
       <form id="formRegSub" onsubmit="handleRegSub(event)" class="space-y-4 hidden">
         <div>
           <label class="block text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">訂閱時登記名稱 (模糊搜尋)</label>
@@ -407,7 +405,6 @@
         </button>
       </form>
 
-      <!-- 3. 全新會員 註冊表單 -->
       <form id="formRegNew" onsubmit="handleRegNew(event)" class="space-y-3 hidden">
         <div>
           <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">名稱 / 暱稱</label>
@@ -462,10 +459,9 @@
   </div>
 
   <!-- ================= 主頁內容區 ================= -->
-  <!-- 💡 移除 overflow-x-hidden，解鎖所有吸頂 Sticky 限制 -->
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
     
-    <!-- ① Header 標頭容器 -->
+    <!-- ① Header 標頭吸頂容器 -->
     <div class="sticky top-0 z-40 w-full shadow-sm">
       <header id="mainHeader" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
@@ -523,7 +519,7 @@
         </div>
       </header>
 
-      <!-- 💡 加權縮小置頂條 (平滑滑出，絕對不擋住卡片) -->
+      <!-- 💡 加權縮小置頂條 (平滑滑出) -->
       <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 -translate-y-full opacity-0 pointer-events-none px-3 sm:px-8 py-2 w-full">
         <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
           <div class="flex items-center space-x-2">
@@ -695,7 +691,6 @@
               </tr>
             </thead>
             <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">
-              <!-- 動態渲染個股 -->
             </tbody>
           </table>
         </div>
@@ -745,7 +740,7 @@
     let tenDayDatesHeaders = []; 
     let tenDayVolDatesHeaders = [];
     let isCurrentMaintenance = false;
-    let currentPctTrendMode = 'bar'; // 'bar' | 'cum' | 'list'
+    let currentPctTrendMode = 'bar';
     let adminStatusPollInterval = null;
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -757,7 +752,7 @@
       initStickyScrollHandler();
     });
 
-    // 💡 堅固的滾動計算：精準收放縮小置頂條
+    // 💡 監聽滾動：精準收放縮小置頂條
     function initStickyScrollHandler() {
       const target = document.getElementById('mainMarketSection');
       const miniBar = document.getElementById('stickyMiniBar');
@@ -766,8 +761,7 @@
         if (!target || !miniBar) return;
         const rect = target.getBoundingClientRect();
         
-        // 當加權指數儀表板頂部滑出導航欄時滑出
-        if (rect.bottom < 80) {
+        if (rect.bottom < 60) {
           miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
           miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
         } else {
@@ -1299,6 +1293,8 @@
     
       showDisclaimerToast();
       await fetchAndParseCsv();
+      // 同步一次即時維護狀態
+      pollAdminMaintenanceStatus();
     }
 
     function showDisclaimerToast() {
@@ -1312,7 +1308,6 @@
 
     async function fetchAndParseCsv(isSilent = false) {
       try {
-        // 💡 加入隨機時間戳參數，強制略過任何瀏覽器本地快取
         const cacheBuster = '&_t=' + new Date().getTime();
         const res = await fetch(CSV_STOCKS_URL + cacheBuster);
         const text = await res.text();
@@ -1343,14 +1338,13 @@
       const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
       const arHeaderDate = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
       const ahHeaderDate = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
-      const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
 
       const now = new Date();
       const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
       document.getElementById('dataTimestamp').textContent = at2Date ? `${at2Date} ${timeStr}` : `即時資料 (${timeStr})`;
 
       renderAnnouncements();
-      checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate, as11Val);
+      checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate);
       if (!isSilent) {
         renderMarketData();
         renderStockModules();
@@ -1374,7 +1368,7 @@
       return r;
     }
 
-    function checkSystemIntegrity(at2, arHeader, ahHeader, as11) {
+    function checkSystemIntegrity(at2, arHeader, ahHeader) {
       const today = customSimulatedDate ? new Date(customSimulatedDate) : new Date();
       const todayStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
       const todayMMDD = `${String(today.getMonth()+1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
@@ -1420,19 +1414,6 @@
         if (originalAnnouncements.length > 0) {
           document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
         }
-      }
-
-      isCurrentMaintenance = (as11 === '維護中');
-      updateAdminStatusIndicator(isCurrentMaintenance);
-
-      if (isCurrentMaintenance) {
-        if (currentUser && currentUser.email === ADMIN_EMAIL) {
-          console.log("管理員登入：略過維護遮罩");
-        } else {
-          document.getElementById('maintenanceOverlay').classList.remove('hidden');
-        }
-      } else {
-        document.getElementById('maintenanceOverlay').classList.add('hidden');
       }
     }
 
@@ -2225,17 +2206,15 @@
       document.getElementById('stockDetailModal').classList.add('hidden');
     }
 
-    // 💡 打開控制台：立即檢查並開啟 5 秒靜默輪詢
+    // 💡 打開控制台：直連後端確認狀態，並啟動 5 秒定時靜默輪詢
     function openAdminPanel() {
       updateAdminStatusIndicator(isCurrentMaintenance);
       document.getElementById('adminPanelModal').classList.remove('hidden');
       
-      fetchAndParseCsv(true);
+      pollAdminMaintenanceStatus();
 
       if (adminStatusPollInterval) clearInterval(adminStatusPollInterval);
-      adminStatusPollInterval = setInterval(() => {
-        fetchAndParseCsv(true);
-      }, 5000);
+      adminStatusPollInterval = setInterval(pollAdminMaintenanceStatus, 5000);
     }
 
     function closeAdminPanel() {
@@ -2253,8 +2232,7 @@
         const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
         const arHeader = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
         const ahHeader = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
-        const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
-        checkSystemIntegrity(at2Date, arHeader, ahHeader, as11Val);
+        checkSystemIntegrity(at2Date, arHeader, ahHeader);
         alert(`已切換模擬日期為：${customSimulatedDate}，大盤狀態已即時重新計算！`);
       }
     }
@@ -2265,12 +2243,11 @@
       const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
       const arHeader = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
       const ahHeader = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
-      const as11Val = (rawCsvGrid[10] && rawCsvGrid[10][44]) ? rawCsvGrid[10][44].trim() : '';
-      checkSystemIntegrity(at2Date, arHeader, ahHeader, as11Val);
+      checkSystemIntegrity(at2Date, arHeader, ahHeader);
       alert("已重設為真實當前系統日期！");
     }
 
-    // 💡 點擊切換維護狀態：直連後端寫入並即時更新介面
+    // 💡 點擊切換維護狀態：後端立即 flush 並即時更新
     async function setMaintenanceStatus(isMaintenance) {
       const msgBox = document.getElementById('adminStatusMsg');
       msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
@@ -2294,7 +2271,6 @@
           msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
           msgBox.textContent = result.message || (isMaintenance ? "已成功切換為「維護中」狀態！" : "已成功切換為「正常運行」！");
           
-          // 如果是非管理員，立即切換遮罩
           if (currentUser && currentUser.email !== ADMIN_EMAIL) {
             document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isCurrentMaintenance);
           }
@@ -2308,7 +2284,7 @@
       }
     }
 
-    // 💡 靜默輪詢向後端直連查詢 AS11
+    // 💡 靜默輪詢直連後端 API 查詢 AS11
     async function pollAdminMaintenanceStatus() {
       try {
         const res = await fetch(`${BACKEND_API_URL}?action=getMaintenance&_t=${Date.now()}`);
@@ -2321,23 +2297,6 @@
           }
         }
       } catch (e) {}
-    }
-
-    function openAdminPanel() {
-      updateAdminStatusIndicator(isCurrentMaintenance);
-      document.getElementById('adminPanelModal').classList.remove('hidden');
-      
-      pollAdminMaintenanceStatus();
-      if (adminStatusPollInterval) clearInterval(adminStatusPollInterval);
-      adminStatusPollInterval = setInterval(pollAdminMaintenanceStatus, 5000);
-    }
-
-    function closeAdminPanel() {
-      document.getElementById('adminPanelModal').classList.add('hidden');
-      if (adminStatusPollInterval) {
-        clearInterval(adminStatusPollInterval);
-        adminStatusPollInterval = null;
-      }
     }
   </script>
 </body>
