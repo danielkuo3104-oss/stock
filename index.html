@@ -2270,16 +2270,11 @@
       alert("已重設為真實當前系統日期！");
     }
 
-    // 💡 點擊切換維護狀態：立即樂觀更新（無需等 Google CSV 快取）
+    // 💡 點擊切換維護狀態：直連後端寫入並即時更新介面
     async function setMaintenanceStatus(isMaintenance) {
       const msgBox = document.getElementById('adminStatusMsg');
       msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
       msgBox.textContent = isMaintenance ? "正在將試算表 AS11 寫入「維護中」..." : "正在解除「維護中」狀態...";
-
-      // 立即更新前端當前狀態
-      isCurrentMaintenance = isMaintenance;
-      updateAdminStatusIndicator(isMaintenance);
-      if (rawCsvGrid[10]) rawCsvGrid[10][44] = isMaintenance ? '維護中' : '';
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -2291,16 +2286,57 @@
           })
         });
         const result = await res.json();
+        
         if (result.success) {
+          isCurrentMaintenance = result.isMaintenance;
+          updateAdminStatusIndicator(isCurrentMaintenance);
+          
           msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-          msgBox.textContent = isMaintenance ? "已成功切換為「維護中」狀態！" : "已成功切換為「正常運行」！";
+          msgBox.textContent = result.message || (isMaintenance ? "已成功切換為「維護中」狀態！" : "已成功切換為「正常運行」！");
+          
+          // 如果是非管理員，立即切換遮罩
+          if (currentUser && currentUser.email !== ADMIN_EMAIL) {
+            document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isCurrentMaintenance);
+          }
         } else {
           msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
           msgBox.textContent = "操作失敗：" + result.message;
         }
       } catch (e) {
         msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-        msgBox.textContent = "請求發生異常，請確認後端部署。";
+        msgBox.textContent = "請求發生異常，請確認網路或後端部署。";
+      }
+    }
+
+    // 💡 靜默輪詢向後端直連查詢 AS11
+    async function pollAdminMaintenanceStatus() {
+      try {
+        const res = await fetch(`${BACKEND_API_URL}?action=getMaintenance&_t=${Date.now()}`);
+        const data = await res.json();
+        if (data.success) {
+          isCurrentMaintenance = data.isMaintenance;
+          updateAdminStatusIndicator(isCurrentMaintenance);
+          if (currentUser && currentUser.email !== ADMIN_EMAIL) {
+            document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isCurrentMaintenance);
+          }
+        }
+      } catch (e) {}
+    }
+
+    function openAdminPanel() {
+      updateAdminStatusIndicator(isCurrentMaintenance);
+      document.getElementById('adminPanelModal').classList.remove('hidden');
+      
+      pollAdminMaintenanceStatus();
+      if (adminStatusPollInterval) clearInterval(adminStatusPollInterval);
+      adminStatusPollInterval = setInterval(pollAdminMaintenanceStatus, 5000);
+    }
+
+    function closeAdminPanel() {
+      document.getElementById('adminPanelModal').classList.add('hidden');
+      if (adminStatusPollInterval) {
+        clearInterval(adminStatusPollInterval);
+        adminStatusPollInterval = null;
       }
     }
   </script>
