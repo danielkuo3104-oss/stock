@@ -1158,46 +1158,46 @@
     }
 
     async function launchApp() {
-  document.getElementById('mainApp').classList.remove('hidden');
-
-  const badgeEl = document.getElementById('userBadge');
-  const tierName = currentUser.tier || '銀星會員';
-  
-  if (currentUser.role === 'admin') {
-    // 🛡️ 管理員
-    badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-400"></i><span>${currentUser.name} (管理員 · 尊榮)</span>`;
-    badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-500/15 text-blue-400 border border-blue-500/40 shadow-sm shadow-blue-500/20 whitespace-nowrap inline-flex items-center";
-  } else if (currentUser.role === 'guest') {
-    // 👤 訪客
-    badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-400"></i><span>訪客 (唯讀)</span>`;
-    badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-700/20 text-slate-400 border border-slate-700/40 whitespace-nowrap inline-flex items-center";
-  } else {
-    // 👑 會員依等級分色
-    if (tierName === '尊榮會員') {
-      badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
-      badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-gradient-to-r from-purple-500/20 via-pink-500/20 to-purple-500/20 text-purple-300 border border-purple-400/50 shadow-md shadow-purple-500/20 whitespace-nowrap inline-flex items-center";
-    } else if (tierName === '金級會員') {
-      badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
-      badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-500/15 text-amber-400 border border-amber-500/40 shadow-sm shadow-amber-500/15 whitespace-nowrap inline-flex items-center";
-    } else {
-      // 銀星會員 (預設)
-      badgeEl.innerHTML = `<i class="fa-solid fa-star mr-1.5 text-slate-300"></i><span>${currentUser.name} (${tierName})</span>`;
-      badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-500/15 text-slate-200 border border-slate-400/30 whitespace-nowrap inline-flex items-center";
+      document.getElementById('mainApp').classList.remove('hidden');
+    
+      const badgeEl = document.getElementById('userBadge');
+      const tierName = currentUser.tier || '銀星會員';
+      
+      if (currentUser.role === 'admin') {
+        // 🛡️ 管理員 (藍色系)
+        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 尊榮)</span>`;
+        badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+      } else if (currentUser.role === 'guest') {
+        // 👤 訪客 (灰色系)
+        badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (唯讀)</span>`;
+        badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
+      } else {
+        // 👑 會員等級分色
+        if (tierName === '尊榮會員') {
+          badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+        } else if (tierName === '金級會員') {
+          badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+        } else {
+          // 銀星會員 (銀灰/深藍灰色系)
+          badgeEl.innerHTML = `<i class="fa-solid fa-star mr-1.5 text-slate-500 dark:text-slate-300"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
+        }
+      }
+    
+      // 管理員控制台按鈕顯示
+      if (currentUser.role === 'admin') {
+        const adminBtn = document.getElementById('btnAdminConsole');
+        if (adminBtn) {
+          adminBtn.classList.remove('hidden');
+          adminBtn.classList.add('flex');
+        }
+      }
+    
+      showDisclaimerToast();
+      await fetchAndParseCsv();
     }
-  }
-
-  // 管理員控制台按鈕顯示判斷
-  if (currentUser.role === 'admin') {
-    const adminBtn = document.getElementById('btnAdminConsole');
-    if (adminBtn) {
-      adminBtn.classList.remove('hidden');
-      adminBtn.classList.add('flex');
-    }
-  }
-
-  showDisclaimerToast();
-  await fetchAndParseCsv();
-}
 
     function showDisclaimerToast() {
       const toast = document.getElementById('toastDisclaimer');
