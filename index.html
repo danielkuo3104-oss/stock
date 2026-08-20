@@ -97,6 +97,15 @@
       </div>
 
       <div class="space-y-4 text-xs">
+        <!-- 當前運行狀態顯示卡片 -->
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <span class="font-bold text-slate-700 dark:text-slate-300">當前核心狀態：</span>
+          <span id="adminCurrentStatusBadge" class="px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="adminCurrentStatusText">正常運行</span>
+          </span>
+        </div>
+
         <!-- 模擬日期 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 border border-slate-200 dark:border-slate-800">
           <label class="font-bold text-slate-700 dark:text-slate-300 block">模擬系統「今日日期」：</label>
@@ -133,17 +142,17 @@
           <p id="adminTierMsg" class="text-[11px] font-medium text-center hidden"></p>
         </div>
 
-        <!-- 系統維護開關 -->
+        <!-- 系統維護狀態開關 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
           <label class="font-bold text-slate-700 dark:text-slate-300 block">系統維護狀態控制 (寫入 AS11)：</label>
           <div class="grid grid-cols-2 gap-2">
             <button onclick="setMaintenanceStatus(true)" class="py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1.5">
               <i class="fa-solid fa-lock"></i>
-              <span>強制維護</span>
+              <span>切換維護中</span>
             </button>
             <button onclick="setMaintenanceStatus(false)" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1.5">
               <i class="fa-solid fa-lock-open"></i>
-              <span>解除維護</span>
+              <span>切換正常運行</span>
             </button>
           </div>
           <p id="adminStatusMsg" class="text-[11px] font-medium text-center hidden"></p>
@@ -187,11 +196,12 @@
     </div>
   </div>
 
-  <!-- ================= 個股詳細資訊彈窗 Modal ================= -->
+  <!-- ================= 個股詳細資訊彈窗 Modal (含十日趨勢) ================= -->
   <div id="stockDetailModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4">
       
-      <div class="flex items-center justify-between pb-4 mb-4 border-b border-slate-200 dark:border-slate-800">
+      <!-- 標頭 -->
+      <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div class="flex items-center space-x-3">
             <button id="modalStarBtn" onclick="toggleModalStar()" class="text-lg text-slate-300 dark:text-slate-700 hover:text-amber-400 transition" title="加入個人關注">
@@ -207,7 +217,8 @@
         </button>
       </div>
 
-      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3 mb-4">
+      <!-- 四宮格數據 -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
         <div class="bg-slate-100 dark:bg-slate-950 p-2.5 sm:p-3 rounded-2xl">
           <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mb-1">收盤價</span>
           <span id="modalStockPrice" class="text-base sm:text-lg font-black font-mono">--</span>
@@ -226,9 +237,38 @@
         </div>
       </div>
 
-      <div id="modalDoubleGroupContainer" class="space-y-2 mb-4"></div>
+      <!-- 💡 個股十日趨勢 (AU欄 - BD欄) -->
+      <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
+            <i class="fa-solid fa-chart-line text-brand-500"></i>
+            <span>十日漲跌幅趨勢 (AU ~ BD)</span>
+          </h4>
+          <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 text-[10px]">
+            <button id="btnTrendChart" onclick="switchTrendView('chart')" class="px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition">圖表</button>
+            <button id="btnTrendList" onclick="switchTrendView('list')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">列表</button>
+          </div>
+        </div>
 
-      <div class="space-y-2 text-xs mb-5">
+        <!-- 圖表模式 -->
+        <div id="trendChartContainer" class="w-full">
+          <div id="trendSvgWrapper" class="w-full h-32 flex items-center justify-center">
+            <!-- 動態生成 SVG 折線圖 -->
+          </div>
+          <div id="trendDatesLegend" class="flex justify-between text-[9px] text-slate-400 font-mono mt-1 px-1"></div>
+        </div>
+
+        <!-- 列表模式 -->
+        <div id="trendListContainer" class="w-full hidden overflow-x-auto">
+          <div id="trendListGrid" class="flex items-center gap-1.5 min-w-[340px] py-1"></div>
+        </div>
+      </div>
+
+      <!-- 族群歸屬卡片 -->
+      <div id="modalDoubleGroupContainer" class="space-y-2"></div>
+
+      <!-- 交易金額與市值 -->
+      <div class="space-y-2 text-xs">
         <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
           <span class="text-slate-500 dark:text-slate-400 font-medium">預估交易總額</span>
           <span id="modalStockTurnover" class="font-bold font-mono text-amber-500">--</span>
@@ -239,7 +279,8 @@
         </div>
       </div>
 
-      <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 text-xs mb-5">
+      <!-- 核心業務與題材 -->
+      <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 text-xs">
         <h4 class="font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
           <i class="fa-solid fa-lightbulb text-amber-500"></i>
           <span>核心業務與產業題材</span>
@@ -248,6 +289,7 @@
         <div class="text-slate-600 dark:text-slate-400 leading-relaxed" id="modalStockNote2"></div>
       </div>
 
+      <!-- 同族群其他成分股 -->
       <div class="space-y-3">
         <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
           <i class="fa-solid fa-users text-brand-500"></i>
@@ -461,6 +503,21 @@
       </div>
     </header>
 
+    <!-- 💡 滑動時縮小置頂條 (Sticky Mini Market Bar) -->
+    <div id="stickyMiniBar" class="fixed top-[57px] left-0 right-0 z-20 bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 transform -translate-y-full opacity-0 pointer-events-none px-4 py-2">
+      <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
+        <div class="flex items-center space-x-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+          <span class="font-sans font-bold text-slate-800 dark:text-slate-200">加權指數</span>
+        </div>
+        <div class="flex items-center space-x-3 sm:space-x-6">
+          <span id="miniMarketIndex" class="font-black text-sm sm:text-base">--</span>
+          <span id="miniMarketChange" class="font-bold">--</span>
+          <span id="miniMarketPct" class="font-bold">--</span>
+        </div>
+      </div>
+    </div>
+
     <!-- 💡 4. 手機版提示橫幅 -->
     <div class="md:hidden bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800 py-2 px-4 text-center">
       <p class="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-medium">
@@ -485,8 +542,8 @@
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
 
-      <!-- ③ 大盤指數儀表板 -->
-      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
+      <!-- ③ 大盤指數儀表板 (被觀察元素) -->
+      <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           
@@ -642,7 +699,6 @@
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec'; 
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
 
-    // 會員等級關注限制
     const TIER_LIMITS = {
       '銀星會員': 20,
       '金級會員': 50,
@@ -661,6 +717,8 @@
     let userWatchlist = new Set();
     let currentModalStockId = null;
     let customSimulatedDate = null;
+    let tenDayDatesHeaders = []; // AU 到 BD 欄的日期標頭
+    let isCurrentMaintenance = false;
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
@@ -668,7 +726,30 @@
       preloadHolidays();
       loadWatchlist();
       checkRememberedLogin();
+      initStickyScrollObserver();
     });
+
+    // 💡 監聽滾動以縮小置頂加權指數
+    function initStickyScrollObserver() {
+      const target = document.getElementById('mainMarketSection');
+      const miniBar = document.getElementById('stickyMiniBar');
+      
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (!entry.isIntersecting && entry.boundingClientRect.top < 0) {
+            // 儀表板滾出上方視窗，顯示 Mini Bar
+            miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
+            miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+          } else {
+            // 儀表板回到視窗中，隱藏 Mini Bar
+            miniBar.classList.add('-translate-y-full', 'opacity-0', 'pointer-events-none');
+            miniBar.classList.remove('translate-y-0', 'opacity-100', 'pointer-events-auto');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      if (target) observer.observe(target);
+    }
 
     async function handleRefresh() {
       const icon = document.getElementById('refreshIcon');
@@ -1164,15 +1245,12 @@
       const tierName = currentUser.tier || '銀星會員';
       
       if (currentUser.role === 'admin') {
-        // 🛡️ 管理員 (藍色系)
         badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 尊榮)</span>`;
         badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
       } else if (currentUser.role === 'guest') {
-        // 👤 訪客 (灰色系)
         badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (唯讀)</span>`;
         badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
       } else {
-        // 👑 會員等級分色
         if (tierName === '尊榮會員') {
           badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
           badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
@@ -1180,13 +1258,11 @@
           badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
           badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
         } else {
-          // 銀星會員 (銀灰/深藍灰色系)
           badgeEl.innerHTML = `<i class="fa-solid fa-star mr-1.5 text-slate-500 dark:text-slate-300"></i><span>${currentUser.name} (${tierName})</span>`;
           badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
         }
       }
     
-      // 管理員控制台按鈕顯示
       if (currentUser.role === 'admin') {
         const adminBtn = document.getElementById('btnAdminConsole');
         if (adminBtn) {
@@ -1221,6 +1297,14 @@
       if (lines.length < 2) return;
 
       rawCsvGrid = lines.map(line => parseCsvRow(line));
+
+      // 解析第 1 列的 10 日日期標頭 (AU 欄為索引 46，BD 欄為索引 55)
+      tenDayDatesHeaders = [];
+      if (rawCsvGrid[0]) {
+        for (let c = 46; c <= 55; c++) {
+          tenDayDatesHeaders.push(rawCsvGrid[0][c] ? rawCsvGrid[0][c].trim() : `D-${55 - c + 1}`);
+        }
+      }
 
       const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
       const arHeaderDate = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
@@ -1302,7 +1386,11 @@
         }
       }
 
-      if (as11 === '維護中') {
+      // 控制台狀態與維護遮罩同步
+      isCurrentMaintenance = (as11 === '維護中');
+      updateAdminStatusIndicator(isCurrentMaintenance);
+
+      if (isCurrentMaintenance) {
         if (currentUser && currentUser.email === ADMIN_EMAIL) {
           console.log("管理員登入：略過維護遮罩");
         } else {
@@ -1310,6 +1398,19 @@
         }
       } else {
         document.getElementById('maintenanceOverlay').classList.add('hidden');
+      }
+    }
+
+    function updateAdminStatusIndicator(isMaint) {
+      const badge = document.getElementById('adminCurrentStatusBadge');
+      const text = document.getElementById('adminCurrentStatusText');
+      if (!badge || !text) return;
+      if (isMaint) {
+        badge.className = "px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-rose-500/10 text-rose-500 border-rose-500/20";
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500 animate-bounce"></span><span>系統維護中</span>';
+      } else {
+        badge.className = "px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+        badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span><span>正常運行</span>';
       }
     }
 
@@ -1324,23 +1425,48 @@
       document.getElementById('marketVolume').textContent = dataMap['成交金額'] || '--';
 
       const closePrice = parseFloat(dataMap['收盤價'] || '0');
-      const changeVal = parseFloat(dataMap['漲跌'] || '0');
+      const rawChangeStr = dataMap['漲跌'] || '0';
+      const changeVal = parseFloat(rawChangeStr.replace(/\+/g, ''));
       const prevClose = closePrice - changeVal;
 
       document.getElementById('marketPrevClose').textContent = prevClose.toFixed(2);
       document.getElementById('marketIndex').textContent = closePrice.toFixed(2);
 
-      const isUp = changeVal >= 0;
+      const isUp = changeVal > 0;
+      const isDown = changeVal < 0;
+      const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-400');
+
+      // 💡 修正重複 ++ 號的問題
+      let formattedChange = rawChangeStr.trim();
+      if (isUp && !formattedChange.startsWith('+')) formattedChange = '+' + formattedChange;
+
+      let rawPctStr = (dataMap['漲跌福'] || dataMap['當日漲跌幅'] || '0%').trim();
+      let formattedPct = rawPctStr;
+      if (isUp && !formattedPct.startsWith('+')) formattedPct = '+' + formattedPct;
+
       const changeEl = document.getElementById('marketChange');
       const pctEl = document.getElementById('marketPct');
       const closeEl = document.getElementById('marketIndex');
 
-      closeEl.className = `market-val text-xl sm:text-2xl font-black font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
-      changeEl.textContent = `${isUp ? '+' : ''}${dataMap['漲跌'] || '0'}`;
-      changeEl.className = `text-sm sm:text-base font-bold font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
+      closeEl.className = `market-val text-xl sm:text-2xl font-black font-mono ${colorClass}`;
+      changeEl.textContent = formattedChange;
+      changeEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
 
-      pctEl.textContent = `(${isUp ? '+' : ''}${dataMap['漲跌福'] || dataMap['當日漲跌幅'] || '0%'})`;
-      pctEl.className = `text-sm sm:text-base font-bold font-mono ${isUp ? 'text-stockRed' : 'text-stockGreen'}`;
+      pctEl.textContent = `(${formattedPct})`;
+      pctEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
+
+      // 同步到縮小置頂條 (Sticky Mini Bar)
+      const miniIndex = document.getElementById('miniMarketIndex');
+      const miniChange = document.getElementById('miniMarketChange');
+      const miniPct = document.getElementById('miniMarketPct');
+      if (miniIndex && miniChange && miniPct) {
+        miniIndex.textContent = closePrice.toFixed(2);
+        miniIndex.className = `font-black text-sm sm:text-base ${colorClass}`;
+        miniChange.textContent = formattedChange;
+        miniChange.className = `font-bold ${colorClass}`;
+        miniPct.textContent = `(${formattedPct})`;
+        miniPct.className = `font-bold ${colorClass}`;
+      }
 
       colorizeMarketItem('marketOpen', parseFloat(dataMap['開盤'] || '0'), prevClose);
       colorizeMarketItem('marketHigh', parseFloat(dataMap['最高'] || '0'), prevClose);
@@ -1442,6 +1568,19 @@
         const note2 = row[13] ? row[13].trim() : '';
         const volume = parseFloat(row[43]) || 0;
 
+        // 💡 提取 AU 欄到 BD 欄 (索引 46 ~ 55) 的十日趨勢漲跌幅數據
+        const tenDayHistory = [];
+        for (let c = 46; c <= 55; c++) {
+          const valStr = row[c] ? row[c].trim() : '';
+          const numVal = parseFloat(valStr.replace('%', '')) || 0;
+          tenDayHistory.push({
+            dateHeader: tenDayDatesHeaders[c - 46] || `D${c - 45}`,
+            valStr: valStr || '--',
+            numVal: isNaN(numVal) ? 0 : numVal,
+            hasData: valStr !== '' && valStr !== '-' && valStr !== 'nan'
+          });
+        }
+
         if (id && id !== '-') {
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
           const isLimitUp = (pctNum >= 9.5 && change > 0);
@@ -1470,7 +1609,8 @@
               cap, weight, contribution, groupChange: sharedGroupChange,
               note1, note2, volume, badges,
               turnover: volume * price,
-              isLimitUp, isLimitDown
+              isLimitUp, isLimitDown,
+              tenDayHistory
             };
 
             stockMap.set(id, stock);
@@ -1500,6 +1640,7 @@
         else if (s.change < 0) priceBadgeClass = "text-stockGreen font-black";
 
         const pctColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
 
         return `
           <div onclick="openStockModal('${s.id}')" class="cursor-pointer bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-3 hover:border-brand-500 hover:shadow-lg transition flex flex-col justify-between">
@@ -1512,7 +1653,7 @@
                 ${s.price.toFixed(s.price >= 100 ? 1 : 2)}
               </span>
               <span class="text-[10px] sm:text-xs font-bold font-mono ${pctColor}">
-                ${s.change >= 0 ? '+' : ''}${s.pctStr}
+                ${formattedPct}
               </span>
             </div>
           </div>
@@ -1532,6 +1673,7 @@
 
         const changeTextColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
         const isStarred = userWatchlist.has(s.id);
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
 
         let badgeHtml = '<span class="text-slate-300 dark:text-slate-700">-</span>';
         if (s.badges && s.badges.length > 0) {
@@ -1555,7 +1697,7 @@
             </td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
             <td class="py-2.5 sm:py-3 px-3 text-right font-bold ${changeTextColor} hidden sm:table-cell">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.pctStr}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
             <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden lg:table-cell">${s.volume.toLocaleString()}</td>
             <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden lg:table-cell">${s.cap.toFixed(2)}</td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center">${badgeHtml}</td>
@@ -1631,6 +1773,108 @@
       document.getElementById('groupSection').scrollIntoView({ behavior: 'smooth' });
     }
 
+    // 💡 切換個股趨勢 圖表 / 列表 視圖
+    function switchTrendView(mode) {
+      const btnChart = document.getElementById('btnTrendChart');
+      const btnList = document.getElementById('btnTrendList');
+      const chartBox = document.getElementById('trendChartContainer');
+      const listBox = document.getElementById('trendListContainer');
+
+      if (mode === 'chart') {
+        btnChart.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
+        btnList.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
+        chartBox.classList.remove('hidden');
+        listBox.classList.add('hidden');
+      } else {
+        btnList.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
+        btnChart.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
+        listBox.classList.remove('hidden');
+        chartBox.classList.add('hidden');
+      }
+    }
+
+    function renderStockTrend(stock) {
+      const history = stock.tenDayHistory || [];
+      const svgWrapper = document.getElementById('trendSvgWrapper');
+      const legendWrapper = document.getElementById('trendDatesLegend');
+      const listGrid = document.getElementById('trendListGrid');
+
+      // 1. 列表模式渲染
+      listGrid.innerHTML = history.map((item, idx) => {
+        const isUp = item.numVal > 0;
+        const isDown = item.numVal < 0;
+        const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-400');
+        const bgClass = isUp ? 'bg-red-500/10 border-red-500/20' : (isDown ? 'bg-green-500/10 border-green-500/20' : 'bg-slate-200/50 dark:bg-slate-900 border-slate-200 dark:border-slate-800');
+        const displayVal = item.hasData ? (isUp ? `+${item.valStr}` : item.valStr) : '--';
+
+        return `
+          <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border ${bgClass} text-center space-y-0.5">
+            <span class="block text-[9px] text-slate-400 font-mono">${item.dateHeader}</span>
+            <span class="block text-[11px] font-black font-mono ${colorClass}">${displayVal}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 2. 圖表模式 (動態 SVG 折線圖繪製)
+      const validPoints = history.filter(h => h.hasData);
+      if (validPoints.length === 0) {
+        svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無十日趨勢數據</span>';
+        legendWrapper.innerHTML = '';
+        return;
+      }
+
+      const svgWidth = 420;
+      const svgHeight = 110;
+      const padX = 24;
+      const padY = 16;
+
+      const vals = validPoints.map(p => p.numVal);
+      let minVal = Math.min(...vals, 0);
+      let maxVal = Math.max(...vals, 0);
+      if (maxVal === minVal) { maxVal = 2; minVal = -2; }
+      const valRange = (maxVal - minVal) || 1;
+
+      const stepX = (svgWidth - padX * 2) / Math.max(history.length - 1, 1);
+      const zeroY = svgHeight - padY - ((0 - minVal) / valRange) * (svgHeight - padY * 2);
+
+      let polyPoints = [];
+      let dotsHtml = '';
+
+      history.forEach((h, i) => {
+        const x = padX + i * stepX;
+        const y = svgHeight - padY - ((h.numVal - minVal) / valRange) * (svgHeight - padY * 2);
+        polyPoints.push(`${x},${y}`);
+
+        const dotColor = h.numVal > 0 ? '#ef4444' : (h.numVal < 0 ? '#22c55e' : '#94a3b8');
+        const textVal = h.hasData ? `${h.numVal > 0 ? '+' : ''}${h.valStr}` : '';
+
+        dotsHtml += `
+          <circle cx="${x}" cy="${y}" r="3.5" fill="${dotColor}" class="transition-all hover:r-5 cursor-pointer"/>
+          <text x="${x}" y="${y - 8}" text-anchor="middle" font-size="8" font-family="monospace" fill="${dotColor}" font-weight="bold">${textVal}</text>
+        `;
+      });
+
+      const polylineStr = polyPoints.join(' ');
+
+      svgWrapper.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
+          <!-- 零軸基準線 -->
+          <line x1="${padX}" y1="${zeroY}" x2="${svgWidth - padX}" y2="${zeroY}" stroke="#64748b" stroke-dasharray="3 3" stroke-width="1" opacity="0.4"/>
+          <!-- 趨勢折線 -->
+          <polyline fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" points="${polylineStr}"/>
+          <!-- 節點與數值 -->
+          ${dotsHtml}
+        </svg>
+      `;
+
+      // 底部日期座標
+      legendWrapper.innerHTML = `
+        <span>${history[0].dateHeader} (10日前)</span>
+        <span>${history[Math.floor(history.length/2)].dateHeader}</span>
+        <span class="text-brand-500 font-bold">${history[history.length - 1].dateHeader} (最新)</span>
+      `;
+    }
+
     function openStockModal(stockId) {
       const s = parsedStocks.find(item => item.id.toString() === stockId.toString());
       if (!s) return;
@@ -1652,6 +1896,7 @@
 
       const isUp = s.change >= 0;
       const colorClass = isUp ? 'text-stockRed' : 'text-stockGreen';
+      const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
 
       const priceEl = document.getElementById('modalStockPrice');
       priceEl.textContent = s.price.toFixed(2);
@@ -1662,7 +1907,7 @@
       changeEl.className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
 
       const pctEl = document.getElementById('modalStockPct');
-      pctEl.textContent = `${isUp ? '+' : ''}${s.pctStr}`;
+      pctEl.textContent = formattedPct;
       pctEl.className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
 
       document.getElementById('modalStockVolume').textContent = s.volume.toLocaleString();
@@ -1670,6 +1915,9 @@
       const turnoverInYi = (s.volume * 1000 * s.price) / 100000000;
       document.getElementById('modalStockTurnover').textContent = turnoverInYi >= 1 ? `${turnoverInYi.toFixed(2)} 億元` : `${((s.volume * 1000 * s.price) / 10000).toFixed(0)} 萬元`;
       document.getElementById('modalStockCap').textContent = `${s.cap.toFixed(2)} 億元`;
+
+      // 渲染個股十日趨勢
+      renderStockTrend(s);
 
       const doubleGrpContainer = document.getElementById('modalDoubleGroupContainer');
       doubleGrpContainer.innerHTML = groupsData.map((g, idx) => {
@@ -1708,13 +1956,14 @@
               ${peers.map(p => {
                 const isCurrent = p.id.toString() === s.id.toString();
                 const pColor = p.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+                const pFormattedPct = (p.change > 0 && !p.pctStr.startsWith('+')) ? `+${p.pctStr}` : p.pctStr;
                 if (isCurrent) {
                   return `<span class="px-2 py-1 sm:px-2.5 sm:py-1 rounded-xl bg-brand-500 text-white font-bold text-[11px] sm:text-xs shadow-sm">${p.name} <span class="text-[9px] sm:text-[10px] opacity-90">${p.id}</span></span>`;
                 } else {
                   return `
                     <button onclick="openStockModal('${p.id}')" class="px-2 py-1 sm:px-2.5 sm:py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:border-brand-500 border border-slate-200 dark:border-slate-700 text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 transition flex items-center space-x-1 sm:space-x-1.5">
                       <span>${p.name}</span>
-                      <span class="font-mono text-[9px] sm:text-[10px] ${pColor}">${p.pctStr}</span>
+                      <span class="font-mono text-[9px] sm:text-[10px] ${pColor}">${pFormattedPct}</span>
                     </button>
                   `;
                 }
@@ -1732,6 +1981,7 @@
     }
 
     function openAdminPanel() {
+      updateAdminStatusIndicator(isCurrentMaintenance);
       document.getElementById('adminPanelModal').classList.remove('hidden');
     }
 
@@ -1779,8 +2029,10 @@
         });
         const result = await res.json();
         if (result.success) {
+          isCurrentMaintenance = isMaintenance;
+          updateAdminStatusIndicator(isMaintenance);
           msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-          msgBox.textContent = isMaintenance ? "已成功切換為「維護中」狀態！" : "已成功解除維護！";
+          msgBox.textContent = isMaintenance ? "已成功切換為「維護中」狀態！" : "已成功切換為「正常運行」！";
           if (rawCsvGrid[10]) rawCsvGrid[10][44] = isMaintenance ? '維護中' : '';
         } else {
           msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
