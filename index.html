@@ -97,7 +97,7 @@
     </div>
   </div>
 
-  <!-- 標籤規則詳細說明 Modal (客觀化文案修正) -->
+  <!-- 標籤規則詳細說明 Modal -->
   <div id="badgeGuideModal" onclick="handleModalBgClick(event, 'badgeGuideModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -112,7 +112,7 @@
 
       <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-600 dark:text-amber-400 leading-relaxed">
         <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-        <strong>系統免責聲明：</strong>所有市場技術標籤純粹由公開市場之<strong>「價格走勢與成交量能」</strong>進行純量化演算，不代表任何法人或主力內部籌碼進出；產業題材由 AI 輔助彙整，不構成任何買賣要約或決策建議。
+        <strong>系統免責聲明：</strong>所有市場技術標籤純粹由公開市場之<strong>「價格走勢與成交量能」</strong>進行純量化演算，不代表任何法人或內部籌碼進出；產業題材由 AI 輔助整理，不構成任何買賣決策建議。
       </div>
 
       <div class="space-y-2.5 text-xs">
@@ -255,273 +255,409 @@
     </div>
   </div>
 
-  <!-- 主頁內容區 -->
-  <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
-    <div class="sticky top-0 z-40 w-full shadow-sm">
-      <header id="mainHeader" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
-          <div class="flex items-center space-x-2 sm:space-x-3">
-            <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20 shrink-0">
-              <i class="fa-solid fa-chart-line text-white text-base sm:text-lg"></i>
-            </div>
-            <div class="min-w-0">
-              <h1 class="font-bold text-sm sm:text-base lg:text-lg text-slate-900 dark:text-slate-100 truncate flex items-center">
-                <span class="hidden sm:inline mr-1">股市助手</span>
-                <span class="text-[10px] sm:text-xs font-normal text-brand-500 border border-brand-500/30 px-1.5 py-0.5 rounded whitespace-nowrap">族群趨勢版</span>
-              </h1>
-              <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 truncate">更新: <span id="dataTimestamp" class="font-mono font-semibold">載入中...</span></p>
-            </div>
-          </div>
-
-          <nav class="hidden md:flex items-center space-x-6 text-sm">
-            <a href="javascript:void(0)" onclick="navigateTo('home')" id="navHome" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-house text-xs"></i><span>首頁</span></a>
-            <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSector" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
-            <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenter" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>個人化</span></a>
-            <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-regular fa-envelope text-xs"></i><span>聯絡管理員</span></a>
-          </nav>
-
-          <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
-            <button id="btnAdminConsole" onclick="openAdminPanel()" class="px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition text-[10px] sm:text-xs font-bold items-center space-x-1 hidden">
-              <i class="fa-solid fa-terminal"></i>
-              <span class="hidden sm:inline">控制台</span>
-            </button>
-            <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="手動刷新資料">
-              <i id="refreshIcon" class="fa-solid fa-rotate-right"></i>
-            </button>
-            <button onclick="toggleTheme()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="切換深/淺色模式">
-              <i id="themeIcon" class="fa-solid fa-sun"></i>
-            </button>
-            <button onclick="toggleLargeFont()" id="btnLargeFont" class="px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-transparent">
-              <i class="fa-solid fa-text-height"></i>
-              <span id="largeFontText" class="hidden sm:inline">大字</span>
-            </button>
-            <span id="userBadge" class="text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium transition whitespace-nowrap"></span>
-            <button onclick="logout()" class="text-[10px] sm:text-xs bg-slate-100 dark:bg-slate-800 hover:bg-red-500/20 hover:text-red-500 text-slate-500 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition border border-slate-200 dark:border-slate-700" title="登出系統">
-              <i class="fa-solid fa-right-from-bracket"></i>
-            </button>
-          </div>
-        </div>
-      </header>
-
-      <!-- 加權縮小置頂條 -->
-      <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 -translate-y-full opacity-0 pointer-events-none px-3 sm:px-8 py-2 w-full">
-        <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
+  <!-- 族群導覽型成分股詳情 Modal (z-50) -->
+  <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
+        <div>
           <div class="flex items-center space-x-2">
-            <div class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></div>
-            <span class="font-sans font-black text-slate-800 dark:text-slate-100">加權指數</span>
+            <span class="w-3 h-3 rounded-full bg-brand-500"></span>
+            <h3 id="modalSectorTitle" class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">--</h3>
+            <span id="modalSectorPct" class="text-xs sm:text-sm font-black font-mono px-2.5 py-0.5 rounded-md">--</span>
           </div>
-          <div class="flex items-center space-x-3 sm:space-x-6">
-            <span id="miniMarketIndex" class="font-black text-sm sm:text-base">--</span>
-            <span id="miniMarketChange" class="font-bold">--</span>
-            <span id="miniMarketPct" class="font-bold">--</span>
-            <div class="hidden sm:flex items-center space-x-1 text-amber-500 font-bold">
-              <i class="fa-solid fa-coins text-[10px]"></i>
-              <span id="miniMarketVolume" class="text-xs">--</span>
-            </div>
+          <p id="modalSectorSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">--</p>
+        </div>
+
+        <div class="flex items-center space-x-2 self-end sm:self-auto">
+          <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 flex text-xs">
+            <button id="btnSectorModeCards" onclick="switchSectorModalMode('cards')" class="px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition">列表導覽</button>
+            <button id="btnSectorModeHeatmap" onclick="switchSectorModalMode('heatmap')" class="px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition">市值熱力圖</button>
           </div>
+          <button onclick="closeSectorModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl pl-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
         </div>
       </div>
-    </div>
 
-    <!-- 跑馬公告 -->
-    <div class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-hidden py-1.5 px-3 sm:px-4">
-      <div class="max-w-7xl mx-auto flex items-center text-[11px] sm:text-xs">
-        <span id="marqueeTag" class="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold px-1.5 sm:px-2 py-0.5 rounded mr-2 sm:mr-3 flex items-center space-x-1 shrink-0">
-          <i class="fa-solid fa-bullhorn"></i> <span class="hidden sm:inline">即時公告</span>
-        </span>
-        <div class="overflow-hidden relative w-full h-4 sm:h-5">
-          <div id="marqueeContainer" class="animate-marquee text-slate-700 dark:text-slate-300 font-medium">
-            系統連線就緒，正在同步試算表最新數據...
-          </div>
-        </div>
+      <div class="text-[10px] text-amber-600 dark:text-amber-500 bg-amber-50 dark:bg-amber-500/10 p-2.5 rounded-xl border border-amber-200/60 dark:border-amber-500/20 flex items-center space-x-1.5">
+        <i class="fa-solid fa-circle-info mt-0.5"></i>
+        <span>免責提示：公司業務與題材皆由 AI 輔助彙整，點擊個股可展開近十日量價與技術圖表。</span>
       </div>
+
+      <div id="modalSectorCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2.5 w-full min-h-[360px] items-stretch content-start"></div>
     </div>
-
-    <!-- 主要資料流容器 -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
-
-      <!-- 大盤指數儀表板 -->
-      <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
-        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
-              <div id="marketStatusDot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
-              <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 shrink-0">加權指數</h2>
-              <span id="marketStatusBadge" class="text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center shrink-0">當日資訊</span>
-            </div>
-
-            <div class="flex flex-col sm:flex-row sm:items-baseline sm:space-x-2">
-              <span id="marketIndex" class="market-val text-xl sm:text-2xl font-black">--</span>
-              <div class="flex items-baseline space-x-1.5 mt-1 sm:mt-0">
-                <span id="marketChange" class="text-sm sm:text-base font-bold">--</span>
-                <span id="marketPct" class="text-sm sm:text-base font-bold">--</span>
-              </div>
-            </div>
-          </div>
-
-          <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 text-xs font-mono mt-2 lg:mt-0">
-            <div class="flex items-center space-x-1 text-amber-500 font-bold bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded sm:bg-transparent sm:p-0 shrink-0">
-              <i class="fa-solid fa-coins text-[10px]"></i>
-              <span class="text-slate-500 dark:text-slate-400 sm:text-slate-400">成交</span>
-              <span id="marketVolume" class="text-sm sm:text-base">--</span>
-            </div>
-            <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
-            <div class="flex flex-col items-start space-y-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto">
-              <div>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></div>
-              <div class="flex items-center space-x-3">
-                <span>開 <strong id="marketOpen">--</strong></span>
-                <span>高 <strong id="marketHigh">--</strong></span>
-                <span>低 <strong id="marketLow">--</strong></span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="space-y-2">
-          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] sm:text-xs gap-y-2">
-            <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
-              <i class="fa-solid fa-chart-column text-brand-500"></i>
-              <span>多空結構分佈 (不含平盤)</span>
-            </span>
-            <div class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] sm:text-[11px]">
-              <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-limitUp"></span><span>漲停 <strong id="countLimitUp" class="text-red-500">0</strong></span></span>
-              <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-stockRed"></span><span>上漲 <strong id="countUp" class="text-red-500">0</strong></span></span>
-              <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-stockGreen"></span><span>下跌 <strong id="countDown" class="text-green-500">0</strong></span></span>
-              <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-limitDown"></span><span>跌停 <strong id="countLimitDown" class="text-green-500">0</strong></span></span>
-            </div>
-          </div>
-
-          <div class="w-full h-2 sm:h-3 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex p-0.5 space-x-0.5 shadow-inner" id="marketRatioBar">
-            <div id="barLimitUp" class="h-full bg-limitUp rounded-l-full transition-all duration-500" style="width: 0%" title="漲停"></div>
-            <div id="barUp" class="h-full bg-stockRed transition-all duration-500" style="width: 0%" title="上漲"></div>
-            <div id="barDown" class="h-full bg-stockGreen transition-all duration-500" style="width: 0%" title="下跌"></div>
-            <div id="barLimitDown" class="h-full bg-limitDown rounded-r-full transition-all duration-500" style="width: 0%" title="跌停"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- 今日熱門 Top 10 方塊 -->
-      <section id="hotSection">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-y-1">
-          <div class="flex items-center space-x-2">
-            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
-              <i class="fa-solid fa-fire text-amber-500"></i>
-              <span>熱門焦點 (Top 10 成交排行)</span>
-            </h2>
-            <div class="relative group">
-              <button class="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-brand-500 flex items-center justify-center text-[10px] transition">
-                <i class="fa-solid fa-info"></i>
-              </button>
-              <div class="absolute left-0 sm:left-auto sm:right-0 top-6 z-20 hidden group-hover:block w-56 sm:w-64 p-3 bg-slate-900 text-slate-200 text-[10px] sm:text-[11px] rounded-xl shadow-2xl border border-slate-700 leading-relaxed pointer-events-none">
-                <strong>今日熱門計算方式：</strong><br>
-                以「成交張數 × 1,000股 × 收盤價」即時估算個股成交總金額，跨族群自動去除重複代號後，依資金集中度由大至小排序。
-              </div>
-            </div>
-          </div>
-          <span class="text-[10px] sm:text-xs text-slate-400">點擊卡片可查看完整題材</span>
-        </div>
-        <div id="hotCardsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
-      </section>
-
-      <!-- 內容切換核心區塊 (水平滑動軌道) -->
-      <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
-        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <div>
-            <div class="flex items-center space-x-2">
-              <h2 id="sectionTitleText" class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">族群選股列表</h2>
-              <button onclick="openBadgeGuideModal()" class="text-slate-400 hover:text-brand-500 transition text-xs sm:text-sm flex items-center" title="查看標籤詳細說明">
-                <i class="fa-solid fa-circle-info"></i>
-              </button>
-            </div>
-            <p id="sectionSubtitleText" class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">點擊卡片瀏覽成分股題材，探索產業鏈動能</p>
-          </div>
-
-          <div class="w-full sm:w-auto" id="searchFilterBox">
-            <input type="text" id="stockFilterInput" oninput="applyFilters()" placeholder="搜尋代號 / 標的 / 族群..." class="w-full sm:w-64 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
-          </div>
-        </div>
-
-        <!-- 標籤快速過濾列 -->
-        <div id="tagFilterSection">
-          <div class="block sm:hidden">
-            <button onclick="toggleMobileTagDrawer()" class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
-              <span class="flex items-center space-x-1.5">
-                <i class="fa-solid fa-filter text-brand-500"></i>
-                <span>特徵標籤快速過濾</span>
-              </span>
-              <i id="mobileTagDrawerIcon" class="fa-solid fa-chevron-down transition-transform"></i>
-            </button>
-          </div>
-
-          <div id="tagFilterContainer" class="hidden sm:flex flex-wrap items-center gap-1.5 text-[11px] font-medium pt-1">
-            <button onclick="setTagFilter('ALL')" id="btnTag_ALL" class="px-2.5 py-1 rounded-lg bg-brand-500 text-white font-bold whitespace-nowrap transition shadow-sm">全部</button>
-            <button onclick="setTagFilter('漲停')" id="btnTag_漲停" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">漲停</button>
-            <button onclick="setTagFilter('跌停')" id="btnTag_跌停" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-green-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">跌停</button>
-            <button onclick="setTagFilter('強勢')" id="btnTag_強勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">強勢</button>
-            <button onclick="setTagFilter('弱勢')" id="btnTag_弱勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">弱勢</button>
-            <button onclick="setTagFilter('持續走高')" id="btnTag_持續走高" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續走高</button>
-            <button onclick="setTagFilter('持續走低')" id="btnTag_持續走低" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續走低</button>
-            <button onclick="setTagFilter('量價齊揚')" id="btnTag_量價齊揚" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量價齊揚</button>
-            <button onclick="setTagFilter('量縮價跌')" id="btnTag_量縮價跌" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價跌</button>
-            <button onclick="setTagFilter('量縮價漲')" id="btnTag_量縮價漲" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價漲</button>
-            <button onclick="setTagFilter('帶量下殺')" id="btnTag_帶量下殺" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">帶量下殺</button>
-            <button onclick="setTagFilter('爆量')" id="btnTag_爆量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量</button>
-            <button onclick="setTagFilter('爆量長紅')" id="btnTag_爆量長紅" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長紅</button>
-            <button onclick="setTagFilter('爆量長黑')" id="btnTag_爆量長黑" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-fuchsia-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長黑</button>
-            <button onclick="setTagFilter('持續量增')" id="btnTag_持續量增" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量增</button>
-            <button onclick="setTagFilter('持續量縮')" id="btnTag_持續量縮" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量縮</button>
-            <button onclick="setTagFilter('十日震盪整理')" id="btnTag_十日震盪整理" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-teal-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">十日震盪整理</button>
-            <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
-          </div>
-        </div>
-
-        <!-- 輪播軌道 (保證第 1 頁與第 2 頁各為 100% 容器寬度) -->
-        <div class="overflow-hidden w-full relative">
-          <div id="pageSliderTrack" class="flex w-[200%] transition-transform duration-500 ease-out">
-            
-            <!-- 第 1 頁：全個股清單 -->
-            <div id="pageHomeView" class="w-1/2 shrink-0 pr-2 min-w-0">
-              <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[540px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 w-full">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
-                    <tr>
-                      <th class="py-2.5 px-3 text-center w-8">關注</th>
-                      <th class="py-2.5 px-3 hidden sm:table-cell">族群類別</th>
-                      <th class="py-2.5 px-3">標的</th>
-                      <th class="py-2.5 px-3 text-right">收盤價</th>
-                      <th class="py-2.5 px-3 text-right">當日漲跌</th>
-                      <th class="py-2.5 px-3 text-right">漲跌幅</th>
-                      <th class="py-2.5 px-3 text-right hidden sm:table-cell">成交量 (張)</th>
-                      <th class="py-2.5 px-3 text-right hidden md:table-cell">市值 (億)</th>
-                      <th class="py-2.5 px-3 text-center hidden sm:table-cell">動態特徵</th>
-                    </tr>
-                  </thead>
-                  <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono"></tbody>
-                </table>
-              </div>
-            </div>
-
-            <!-- 第 2 頁：族群瀑布流總覽 -->
-            <div id="pageSectorView" class="w-1/2 shrink-0 pl-2 min-w-0">
-              <div id="sectorCardsGrid" class="w-full"></div>
-            </div>
-
-          </div>
-        </div>
-
-        <div class="flex justify-between items-center text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 pt-1">
-          <span id="tableCountInfo">載入中...</span>
-          <span class="hidden sm:inline" id="tableHintText">提示：點擊任一檔股票即可查看完整雙層加權與備註</span>
-        </div>
-      </section>
-    </main>
-
-    <footer class="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-6 px-4 text-center text-xs text-slate-500 space-y-1 mt-auto">
-      <p>© 2026 股市助手 SectorPulse. 版權所有.</p>
-      <p class="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-600">雙層加權族群觀測系統 | 維護通報：danielkuo3104@gmail.com</p>
-    </footer>
   </div>
 
+  <!-- 管理員控制面板 Modal -->
+  <div id="adminPanelModal" onclick="handleModalBgClick(event, 'adminPanelModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-brand-500/40 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+          <i class="fa-solid fa-sliders text-brand-500"></i>
+          <span>管理員控制中樞 (郭丹騏)</span>
+        </h3>
+        <button onclick="closeAdminPanel()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs">
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <span class="font-bold text-slate-700 dark:text-slate-300 block">當前核心狀態：</span>
+            <span class="text-[10px] text-slate-400">雙向比對 AS11 儲存格與 API</span>
+          </div>
+          <span id="adminCurrentStatusBadge" class="px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span id="adminCurrentStatusText">正常運行</span>
+          </span>
+        </div>
+
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+            <span class="flex items-center space-x-1.5">
+              <i class="fa-solid fa-bullhorn text-amber-500"></i>
+              <span>即時布告欄廣播發布</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-normal">寫入試算表廣播欄</span>
+          </label>
+          <div class="space-y-2">
+            <textarea id="adminAnnouncementInput" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white" placeholder="輸入要即時推播在頂部跑馬燈的公告內容..."></textarea>
+            <div class="flex space-x-2">
+              <button onclick="postAdminAnnouncement()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>發布即時廣播</span>
+              </button>
+              <button onclick="clearAdminAnnouncement()" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-300 transition">清空</button>
+            </div>
+          </div>
+          <p id="adminAnnounceMsg" class="text-[11px] font-medium text-center hidden"></p>
+        </div>
+
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 block">會員權限等級授予：</label>
+          <div class="space-y-2">
+            <input type="text" id="adminMemberSearch" placeholder="搜尋會員名稱或 Email..." oninput="adminFilterMembers()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white">
+            <select id="adminMemberSelect" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white">
+              <option value="">-- 請選取目標會員 --</option>
+            </select>
+            <div class="flex space-x-2 pt-1">
+              <select id="adminTierSelect" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white flex-1 font-bold">
+                <option value="初級韭菜">初級韭菜 (限20檔)</option>
+                <option value="資深韭菜">資深韭菜 (限50檔)</option>
+                <option value="萬年韭皇">萬年韭皇 (無限制)</option>
+              </select>
+              <button onclick="updateMemberTier()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition">授予等級</button>
+            </div>
+          </div>
+          <p id="adminTierMsg" class="text-[11px] font-medium text-center hidden"></p>
+        </div>
+
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 block">系統維護狀態控制 (寫入 AS11)：</label>
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="setMaintenanceStatus(true)" class="py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-lock"></i>
+              <span>切換維護中</span>
+            </button>
+            <button onclick="setMaintenanceStatus(false)" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1.5">
+              <i class="fa-solid fa-lock-open"></i>
+              <span>切換正常運行</span>
+            </button>
+          </div>
+          <p id="adminStatusMsg" class="text-[11px] font-medium text-center hidden"></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 聯絡管理員信箱 Modal -->
+  <div id="contactModal" onclick="handleModalBgClick(event, 'contactModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 shadow-2xl" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800 mb-4">
+        <h3 class="text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+          <i class="fa-regular fa-envelope text-brand-500"></i>
+          <span>寫信給管理員</span>
+        </h3>
+        <button onclick="closeContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">主旨分類</label>
+          <select id="contactSubject" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white">
+            <option value="錯誤回報">錯誤回報</option>
+            <option value="維護通報詢問">維護通報詢問</option>
+            <option value="會員升級申請">會員升級申請</option>
+            <option value="特別感謝">特別感謝</option>
+            <option value="想法提案">想法提案</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">信件內容</label>
+          <textarea id="contactBody" rows="5" class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white" placeholder="請在此輸入您的建議、升級需求或回報內容..."></textarea>
+        </div>
+        <button onclick="sendContactEmail()" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm flex items-center justify-center space-x-2 shadow-lg shadow-brand-600/30">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>系統內建寄出</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 個股詳細資訊彈窗 Modal (z-[60]，浮在族群彈窗之上) -->
+  <div id="stockDetailModal" onclick="handleModalBgClick(event, 'stockDetailModal')" class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+        <div>
+          <div class="flex items-center space-x-3">
+            <button id="modalStarBtn" onclick="toggleModalStar()" class="text-lg text-slate-300 dark:text-slate-700 hover:text-amber-400 transition" title="加入個人關注">
+              <i class="fa-regular fa-star"></i>
+            </button>
+            <h3 id="modalStockName" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">--</h3>
+            <span id="modalStockId" class="text-sm font-mono text-slate-500 dark:text-slate-400">--</span>
+          </div>
+          <div id="modalGroupsBadges" class="flex flex-wrap gap-1.5 mt-2"></div>
+          <div id="modalFeatureBadges" class="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60"></div>
+        </div>
+        <button onclick="closeStockModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl self-start">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 sm:p-3 rounded-2xl">
+          <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mb-1">收盤價</span>
+          <span id="modalStockPrice" class="text-base sm:text-lg font-black font-mono">--</span>
+        </div>
+        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 sm:p-3 rounded-2xl">
+          <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mb-1">漲跌</span>
+          <span id="modalStockChange" class="text-base sm:text-lg font-black font-mono">--</span>
+        </div>
+        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 sm:p-3 rounded-2xl">
+          <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mb-1">漲跌幅</span>
+          <span id="modalStockPct" class="text-base sm:text-lg font-black font-mono">--</span>
+        </div>
+        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 sm:p-3 rounded-2xl">
+          <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mb-1">成交量</span>
+          <span id="modalStockVolume" class="text-base sm:text-lg font-bold font-mono text-slate-800 dark:text-slate-200">--</span>
+        </div>
+      </div>
+
+      <div id="modalDoubleGroupContainer" class="space-y-3"></div>
+
+      <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+        <div class="flex items-center justify-between flex-wrap gap-2">
+          <div class="flex items-center space-x-2">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
+              <i class="fa-solid fa-chart-line text-brand-500"></i>
+              <span>近十日價格走勢 (收盤價)</span>
+            </h4>
+            <span id="trendCumPctBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">--</span>
+          </div>
+          <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 text-[10px]">
+            <button id="btnTrendBar" onclick="switchTrendView('pct', 'bar')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">單日漲跌</button>
+            <button id="btnTrendCum" onclick="switchTrendView('pct', 'cum')" class="px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition">價格曲線</button>
+            <button id="btnTrendList" onclick="switchTrendView('pct', 'list')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">數據列表</button>
+          </div>
+        </div>
+
+        <div id="trendChartContainer_pct" class="w-full">
+          <div id="trendSvgWrapper_pct" class="w-full h-32 flex items-center justify-center"></div>
+          <div id="trendDatesLegend_pct" class="flex justify-between text-[9px] text-slate-400 font-mono mt-1 px-1"></div>
+        </div>
+
+        <div id="trendListContainer_pct" class="w-full hidden overflow-x-auto">
+          <div id="trendListGrid_pct" class="flex items-center gap-1.5 min-w-[340px] py-1"></div>
+        </div>
+      </div>
+
+      <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+        <div class="flex items-center justify-between">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
+            <i class="fa-solid fa-chart-simple text-amber-500"></i>
+            <span>近十日成交量能趨勢 (張)</span>
+          </h4>
+          <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 text-[10px]">
+            <button id="btnVolChart" onclick="switchTrendView('vol', 'chart')" class="px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition">直方圖</button>
+            <button id="btnVolList" onclick="switchTrendView('vol', 'list')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">列表</button>
+          </div>
+        </div>
+
+        <div id="trendChartContainer_vol" class="w-full">
+          <div id="trendSvgWrapper_vol" class="w-full h-28 flex items-center justify-center"></div>
+          <div id="trendDatesLegend_vol" class="flex justify-between text-[9px] text-slate-400 font-mono mt-1 px-1"></div>
+        </div>
+
+        <div id="trendListContainer_vol" class="w-full hidden overflow-x-auto">
+          <div id="trendListGrid_vol" class="flex items-center gap-1.5 min-w-[340px] py-1"></div>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400 font-medium">預估交易總額</span>
+          <span id="modalStockTurnover" class="font-bold font-mono text-amber-500">--</span>
+        </div>
+        <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+          <span class="text-slate-500 dark:text-slate-400 font-medium">當前市值 (億)</span>
+          <span id="modalStockCap" class="font-bold font-mono text-slate-700 dark:text-slate-200">--</span>
+        </div>
+      </div>
+
+      <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 text-xs">
+        <h4 class="font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
+          <i class="fa-solid fa-lightbulb text-amber-500"></i>
+          <span>核心業務與產業題材</span>
+        </h4>
+        <div class="text-slate-700 dark:text-slate-200 leading-relaxed font-medium" id="modalStockNote1"></div>
+        <div class="text-slate-600 dark:text-slate-400 leading-relaxed" id="modalStockNote2"></div>
+      </div>
+
+      <div class="space-y-3">
+        <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
+          <i class="fa-solid fa-users text-brand-500"></i>
+          <span>同族群其他成分股 (點擊切換)</span>
+        </h4>
+        <div id="modalPeerStocks" class="space-y-3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 登入 / 註冊 彈窗視窗 -->
+  <div id="authModal" class="fixed inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl">
+      <div class="flex items-center space-x-3 mb-6">
+        <div class="w-10 h-10 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30 shrink-0">
+          <i class="fa-solid fa-chart-pie text-white text-lg"></i>
+        </div>
+        <div>
+          <h3 class="font-bold text-base sm:text-lg text-slate-900 dark:text-slate-100">股市助手 SectorPulse</h3>
+          <p class="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">會員認證與專屬觀察中心</p>
+        </div>
+      </div>
+
+      <div class="flex border-b border-slate-200 dark:border-slate-800 mb-6 text-xs sm:text-sm">
+        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer">會員登入</button>
+        <button id="tabRegisterSub" onclick="switchAuthTab('regSub')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 whitespace-nowrap cursor-pointer">已訂閱開通</button>
+        <button id="tabRegisterNew" onclick="switchAuthTab('regNew')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">全新註冊</button>
+      </div>
+
+      <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">電子信箱</label>
+          <input type="email" id="loginEmail" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white" placeholder="your@email.com">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">登入密碼</label>
+          <div class="relative">
+            <input type="password" id="loginPass" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white pr-10" placeholder="••••••••">
+            <button type="button" onclick="togglePassVisibility('loginPass')" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <div class="flex items-center justify-between text-[11px] sm:text-xs text-slate-500 dark:text-slate-400">
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" id="loginRemember" class="rounded bg-slate-100 dark:bg-slate-950 border-slate-300 dark:border-slate-800 text-brand-500 focus:ring-0">
+            <span>保持登入狀態</span>
+          </label>
+          <button type="button" onclick="switchAuthTab('regSub')" class="text-brand-500 hover:underline">忘記密碼？(重設)</button>
+        </div>
+        <button type="submit" id="btnLoginSubmit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm shadow-lg shadow-brand-600/30">
+          登入系統
+        </button>
+        <div class="pt-2">
+          <button type="button" onclick="loginAsGuest()" class="w-full py-2.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold rounded-xl transition text-xs flex items-center justify-center space-x-1.5 border border-slate-200 dark:border-slate-700">
+            <i class="fa-regular fa-user"></i>
+            <span>以訪客身份直接瀏覽 (免登入)</span>
+          </button>
+        </div>
+      </form>
+
+      <form id="formRegSub" onsubmit="handleRegSub(event)" class="space-y-4 hidden">
+        <div>
+          <label class="block text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">訂閱時登記名稱 (模糊搜尋)</label>
+          <div class="flex space-x-2">
+            <input type="text" id="subSearchName" class="flex-1 w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-3 py-2 text-sm text-slate-900 dark:text-white" placeholder="例如：郭、daniel...">
+            <button type="button" onclick="searchSubscribers()" class="px-3 sm:px-4 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-xl text-xs font-semibold whitespace-nowrap">搜尋</button>
+          </div>
+          <select id="subNameSelect" class="w-full mt-2 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white hidden"></select>
+        </div>
+        <div>
+          <label class="block text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">驗證電子信箱 (須與訂閱時一致)</label>
+          <input type="email" id="subEmail" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white" placeholder="驗證電子郵件">
+        </div>
+        <div>
+          <label class="block text-[11px] sm:text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">設定登入密碼 (寫入試算表)</label>
+          <div class="relative">
+            <input type="password" id="subPass" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white pr-10" placeholder="設定至少 6 位數密碼">
+            <button type="button" onclick="togglePassVisibility('subPass')" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" id="btnSubSubmit" class="w-full py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition text-sm">
+          驗證並開通帳號
+        </button>
+      </form>
+
+      <form id="formRegNew" onsubmit="handleRegNew(event)" class="space-y-3 hidden">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">名稱 / 暱稱</label>
+          <input type="text" id="newName" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white" placeholder="您的稱呼">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">電子信箱</label>
+          <input type="email" id="newEmail" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2 text-sm text-slate-900 dark:text-white" placeholder="your@email.com">
+        </div>
+        <div class="bg-slate-100 dark:bg-slate-950/60 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+          <p class="font-semibold text-slate-800 dark:text-slate-200">免費快報訂閱：</p>
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" id="optMorning" checked class="rounded bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-brand-500">
+            <span>開通早報通知</span>
+          </label>
+          <label class="flex items-center space-x-2 cursor-pointer">
+            <input type="checkbox" id="optEvening" checked class="rounded bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-700 text-brand-500">
+            <span>開通晚報通知</span>
+          </label>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 dark:text-slate-400 mb-1">設定登入密碼</label>
+          <div class="relative">
+            <input type="password" id="newPass" required class="w-full bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-800 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white pr-10" placeholder="••••••••">
+            <button type="button" onclick="togglePassVisibility('newPass')" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-sm">
+              <i class="fa-regular fa-eye"></i>
+            </button>
+          </div>
+        </div>
+        <button type="submit" id="btnNewSubmit" class="w-full py-3 bg-brand-600 hover:bg-brand-500 text-white font-semibold rounded-xl transition text-sm">
+          立即註冊開通
+        </button>
+      </form>
+
+      <div id="authAlert" class="mt-4 text-xs text-center font-medium hidden"></div>
+    </div>
+  </div>
+
+  <!-- 系統免責宣告 Toast -->
+  <div id="toastDisclaimer" class="fixed bottom-5 right-5 z-40 max-w-[90vw] sm:max-w-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 rounded-2xl shadow-2xl flex items-start space-x-3 transition transform translate-y-28 opacity-0">
+    <i class="fa-solid fa-circle-exclamation text-brand-500 text-lg mt-0.5"></i>
+    <div class="flex-1 text-xs text-slate-600 dark:text-slate-300">
+      <h4 class="font-bold text-slate-900 dark:text-slate-100 mb-1">系統免責聲明與盤面狀態</h4>
+      <p id="disclaimerBody" class="leading-relaxed text-slate-500 dark:text-slate-400">
+        本系統資訊可能存在錯誤或傳輸延後，不構成任何投資建議。
+      </p>
+      <div id="dateNotice" class="mt-2 text-amber-500 font-medium"></div>
+    </div>
+    <button onclick="closeDisclaimer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
+  <!-- 核心邏輯腳本 -->
   <script>
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
     const CSV_MEMBERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=0&single=true&output=csv';
@@ -578,7 +714,6 @@
       return Math.round(price).toString();
     }
 
-    // 動態推算台股漲跌停價（考量檔位跳動）
     function getLimitPrice(prevClose, direction) {
       if (!prevClose || prevClose <= 0) return 0;
       const rawLimit = direction === 'up' ? prevClose * 1.10 : prevClose * 0.90;
@@ -1076,7 +1211,8 @@
             userWatchlist = new Set(currentUser.watchlist);
           }
           if (!currentUser.tier) currentUser.tier = '初級韭菜';
-          document.getElementById('authModal').classList.add('hidden');
+          const authModal = document.getElementById('authModal');
+          if (authModal) authModal.classList.add('hidden');
           launchApp();
         } catch(e) {
           logout();
@@ -1087,15 +1223,23 @@
     }
 
     function showAuthModal() {
-      document.getElementById('authModal').classList.remove('hidden');
-      document.getElementById('mainApp').classList.add('hidden');
+      const authModal = document.getElementById('authModal');
+      const mainApp = document.getElementById('mainApp');
+      if (authModal) authModal.classList.remove('hidden');
+      if (mainApp) mainApp.classList.add('hidden');
     }
 
     function switchAuthTab(tab) {
       const tabs = ['tabLogin', 'tabRegisterSub', 'tabRegisterNew'];
       const forms = ['formLogin', 'formRegSub', 'formRegNew'];
-      tabs.forEach(t => document.getElementById(t).className = "flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer");
-      forms.forEach(f => document.getElementById(f).classList.add('hidden'));
+      tabs.forEach(t => {
+        const el = document.getElementById(t);
+        if (el) el.className = "flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer";
+      });
+      forms.forEach(f => {
+        const el = document.getElementById(f);
+        if (el) el.classList.add('hidden');
+      });
 
       if (tab === 'login') {
         document.getElementById('tabLogin').className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
@@ -1113,7 +1257,8 @@
     function loginAsGuest() {
       currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest', tier: '初級韭菜' };
       localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
-      document.getElementById('authModal').classList.add('hidden');
+      const authModal = document.getElementById('authModal');
+      if (authModal) authModal.classList.add('hidden');
       launchApp();
     }
 
@@ -1163,7 +1308,8 @@
       const userJson = JSON.stringify(currentUser);
       if (remember) localStorage.setItem('sectorpulse_user', userJson);
       else sessionStorage.setItem('sectorpulse_user', userJson);
-      document.getElementById('authModal').classList.add('hidden');
+      const authModal = document.getElementById('authModal');
+      if (authModal) authModal.classList.add('hidden');
       launchApp();
     }
 
@@ -1179,6 +1325,7 @@
 
     function showAuthMsg(msg, isError) {
       const alertBox = document.getElementById('authAlert');
+      if (!alertBox) return;
       alertBox.textContent = msg;
       alertBox.className = `mt-4 text-xs text-center font-medium ${isError ? 'text-rose-500' : 'text-emerald-500'}`;
       alertBox.classList.remove('hidden');
@@ -1589,7 +1736,6 @@
       }
     }
 
-    // 💡 核心技術特徵演算邏輯（嚴謹客觀化）
     function renderStockModules() {
       parsedStocks = [];
       groupMap = {};
@@ -1681,7 +1827,6 @@
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
           const prevClose = price - change;
           
-          // 💡 1. 嚴謹漲跌停判定：結合跳動檔位升降限制，避免死寫 9.5%
           const theoreticalLimitUp = getLimitPrice(prevClose, 'up');
           const theoreticalLimitDown = getLimitPrice(prevClose, 'down');
           
@@ -1708,15 +1853,12 @@
             const last3Pcts = validPcts.slice(-3);
             const last3Vols = validVols.slice(-3);
 
-            // 💡 3 & 4. 持續走高 / 持續走低：嚴格判定近 3 日收盤價逐日推升 / 逐日下挫
             const is3DaysPriceUp = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal > 0.001);
             const is3DaysPriceDown = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal < -0.001);
 
-            // 💡 12. 持續量增 / 縮：增加當日量 >= 10日均量防失真
             const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal) && (last3Vols[2].numVal >= avgVol10);
             const is3DaysVolDown = last3Vols.length === 3 && (last3Vols[2].numVal < last3Vols[1].numVal) && (last3Vols[1].numVal < last3Vols[0].numVal);
 
-            // 💡 13. 十日震盪整理：明確公式 (10日最高 - 10日最低) / 10日最低 <= 5.0%
             let is10DaysConsolidation = false;
             if (validPcts.length >= 8) {
               let pTrace = [];
@@ -1735,18 +1877,14 @@
             }
 
             const volRatio = volume / (avgVol10 || 1);
-            // 💡 9. 爆量：成交量 >= 2 倍均量 且 當日量 >= 500 張
             const isSurge = volRatio >= 2.0 && volume >= 500;
             const isHeavy = volRatio >= 1.3 && volume >= 300;
-            // 💡 14. 窒息量：量縮至 0.35 倍且均量 >= 300 張
             const isDry = volRatio <= 0.35 && avgVol10 >= 300;
             const isShrink = volRatio <= 0.65;
 
-            // 1. 漲停 / 跌停
             if (isLimitUp) badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
             else if (isLimitDown) badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
 
-            // 10 & 11. 爆量長紅 / 長黑
             if (pctNum >= 3.5 && isSurge) {
               badges.push({ text: '爆量長紅', color: 'bg-red-600 text-white border border-red-400 font-black shadow-sm' });
             }
@@ -1754,7 +1892,6 @@
               badges.push({ text: '爆量長黑', color: 'bg-purple-700 text-white border border-purple-400 font-black shadow-sm' });
             }
 
-            // 5, 6, 7, 8. 價量型態
             if (pctNum >= 3.0 && isHeavy && !badges.some(b => b.text === '爆量長紅')) {
               badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
             } else if (pctNum <= -1.5 && isShrink) {
@@ -1771,7 +1908,6 @@
               badges.push({ text: '窒息量', color: 'bg-slate-700 text-slate-100 border border-slate-500 font-bold shadow-sm' });
             }
 
-            // 持續走高 / 走低
             if (is3DaysPriceUp) {
               badges.push({ text: '持續走高', color: 'bg-rose-600/15 text-rose-500 border border-rose-500/30 font-black' });
             }
@@ -1779,7 +1915,6 @@
               badges.push({ text: '持續走低', color: 'bg-emerald-600/15 text-emerald-500 border border-emerald-500/30 font-black' });
             }
 
-            // 2. 強勢 / 弱勢（純價格波動強度）
             if (pctNum >= 3.0 && !badges.some(b => b.text === '漲停' || b.text === '爆量長紅')) {
               badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold' });
             }
@@ -1829,7 +1964,6 @@
       }
       const val = parseFloat(rawPct.toString().replace('%', '')) || 0;
 
-      // 0% 平盤嚴格定義為中性灰階
       if (Math.abs(val) < 0.001) {
         return { 
           bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300', 
@@ -2069,7 +2203,6 @@
       cardsContainer.style.display = currentSectorModalMode === 'cards' ? 'grid' : 'none';
       heatContainer.style.display = currentSectorModalMode === 'heatmap' ? 'block' : 'none';
 
-      // 1. 列表導覽模式內容
       cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
@@ -2108,7 +2241,6 @@
         `;
       }).join('');
 
-      // 2. 市值熱力圖模式：Treemap 演算法 + 5 階防破版
       let rawNodes = grpData.members.map(s => ({
         id: s.id,
         name: s.name,
