@@ -1061,17 +1061,26 @@
       }
     }
 
-    async function preloadMembersFromSheet() {
+    preloadMembersFromSheet() {
       try {
         const res = await fetch(CSV_MEMBERS_URL);
         const text = await res.text();
         const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
         memberListCache = lines.slice(1).map(line => {
           const row = parseCsvRow(line);
+          let parsedWl = [];
+          try {
+            // 💡 H 欄（索引 7）是會員關注陣列
+            if (row[7] && row[7].trim().startsWith('[')) {
+              parsedWl = JSON.parse(row[7].trim());
+            }
+          } catch(e) {}
+
           return {
             name: row[0] ? row[0].trim() : '',
             email: row[1] ? row[1].trim() : '',
             tier: row[5] ? row[5].trim() : '初級韭菜',
+            watchlist: parsedWl,
             hasPass: !!(row[6] && row[6].trim())
           };
         }).filter(m => m.name && m.email);
@@ -1262,9 +1271,21 @@
       if (stored) {
         try {
           currentUser = JSON.parse(stored);
-          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
-            userWatchlist = new Set(currentUser.watchlist);
+          
+          // 💡 優先從試算表快取或使用者暫存恢復星號清單
+          let activeWl = currentUser.watchlist;
+          if (!activeWl && memberListCache.length > 0) {
+            const matchMem = memberListCache.find(m => m.email === currentUser.email);
+            if (matchMem) activeWl = matchMem.watchlist;
           }
+
+          if (activeWl && Array.isArray(activeWl)) {
+            userWatchlist = new Set(activeWl);
+            localStorage.setItem('sectorpulse_watchlist', JSON.stringify(activeWl));
+          } else {
+            loadWatchlist();
+          }
+
           if (!currentUser.tier) currentUser.tier = '初級韭菜';
           const authModal = document.getElementById('authModal');
           if (authModal) authModal.classList.add('hidden');
