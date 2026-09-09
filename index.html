@@ -94,7 +94,7 @@
       </div>
 
       <div class="space-y-4 text-xs">
-        <!-- 💡 當前核心狀態卡片 -->
+        <!-- 當前核心狀態卡片 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span class="font-bold text-slate-700 dark:text-slate-300 block">當前核心狀態：</span>
@@ -119,7 +119,7 @@
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
           <label class="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
             <span>會員權限等級授予：</span>
-            <span class="text-[10px] font-normal text-slate-400">預設：銀星會員</span>
+            <span class="text-[10px] font-normal text-slate-400">預設：初級韭菜</span>
           </label>
           <div class="space-y-2">
             <input type="text" id="adminMemberSearch" placeholder="搜尋會員名稱或 Email..." oninput="adminFilterMembers()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white">
@@ -128,9 +128,9 @@
             </select>
             <div class="flex space-x-2 pt-1">
               <select id="adminTierSelect" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white flex-1 font-bold">
-                <option value="銀星會員">銀星會員 (限20檔)</option>
-                <option value="金級會員">金級會員 (限50檔)</option>
-                <option value="尊榮會員">尊榮會員 (無限制)</option>
+                <option value="初級韭菜">初級韭菜 (限20檔)</option>
+                <option value="資深韭菜">資深韭菜 (限50檔)</option>
+                <option value="萬年韭皇">萬年韭皇 (無限制)</option>
               </select>
               <button onclick="updateMemberTier()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-xl transition">
                 授予等級
@@ -246,8 +246,8 @@
             <span id="trendCumPctBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">--</span>
           </div>
           <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 text-[10px]">
-            <button id="btnTrendBar" onclick="switchTrendView('pct', 'bar')" class="px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition">單日柱狀</button>
-            <button id="btnTrendCum" onclick="switchTrendView('pct', 'cum')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">累積走勢</button>
+            <button id="btnTrendBar" onclick="switchTrendView('pct', 'bar')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">單日柱狀</button>
+            <button id="btnTrendCum" onclick="switchTrendView('pct', 'cum')" class="px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition">累積走勢</button>
             <button id="btnTrendList" onclick="switchTrendView('pct', 'list')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">數據列表</button>
           </div>
         </div>
@@ -720,9 +720,9 @@
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
 
     const TIER_LIMITS = {
-      '銀星會員': 20,
-      '金級會員': 50,
-      '尊榮會員': Infinity
+      '初級韭菜': 20,
+      '資深韭菜': 50,
+      '萬年韭皇': Infinity
     };
 
     let currentUser = null;
@@ -740,7 +740,7 @@
     let tenDayDatesHeaders = []; 
     let tenDayVolDatesHeaders = [];
     let isCurrentMaintenance = false;
-    let currentPctTrendMode = 'bar';
+    let currentPctTrendMode = 'cum';
     let adminStatusPollInterval = null;
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -899,7 +899,7 @@
           return {
             name: row[0] ? row[0].trim() : '',
             email: row[1] ? row[1].trim() : '',
-            tier: row[5] ? row[5].trim() : '銀星會員',
+            tier: row[5] ? row[5].trim() : '初級韭菜',
             hasPass: !!(row[6] && row[6].trim())
           };
         }).filter(m => m.name && m.email);
@@ -913,7 +913,7 @@
       const select = document.getElementById('adminMemberSelect');
       if (!select) return;
       select.innerHTML = '<option value="">-- 請選取目標會員 --</option>' + members.map(m => {
-        return `<option value="${m.email}">${m.name} (${m.email}) - [${m.tier || '銀星會員'}]</option>`;
+        return `<option value="${m.email}">${m.name} (${m.email}) - [${m.tier || '初級韭菜'}]</option>`;
       }).join('');
     }
 
@@ -1038,7 +1038,7 @@
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
           }
-          if (!currentUser.tier) currentUser.tier = '銀星會員';
+          if (!currentUser.tier) currentUser.tier = '初級韭菜';
           document.getElementById('authModal').classList.add('hidden');
           launchApp();
         } catch(e) {
@@ -1074,7 +1074,7 @@
     }
 
     function loginAsGuest() {
-      currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest', tier: '銀星會員' };
+      currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest', tier: '初級韭菜' };
       localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
       document.getElementById('authModal').classList.add('hidden');
       launchApp();
@@ -1098,7 +1098,7 @@
         const result = await res.json();
         if (result.success) {
           currentUser = result.user;
-          if (!currentUser.tier) currentUser.tier = '銀星會員';
+          if (!currentUser.tier) currentUser.tier = '初級韭菜';
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
             localStorage.setItem('sectorpulse_watchlist', JSON.stringify(currentUser.watchlist));
@@ -1109,7 +1109,7 @@
         }
       } catch (err) {
         if (email === ADMIN_EMAIL && pass) {
-          currentUser = { name: '郭丹騏', email: email, role: 'admin', tier: '尊榮會員' };
+          currentUser = { name: '郭丹騏', email: email, role: 'admin', tier: '萬年韭皇' };
           finalizeLogin(remember);
         } else {
           showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
@@ -1209,7 +1209,7 @@
         if (result.success) {
           showAuthMsg('開通成功！確認信件已寄出，登入中...', false);
           currentUser = result.user;
-          if (!currentUser.tier) currentUser.tier = '銀星會員';
+          if (!currentUser.tier) currentUser.tier = '初級韭菜';
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
           }
@@ -1245,7 +1245,7 @@
         const result = await res.json();
         if (result.success) {
           showAuthMsg('註冊成功！歡迎信已寄送至您的信箱。', false);
-          currentUser = { name, email, role: 'member', tier: '銀星會員' };
+          currentUser = { name, email, role: 'member', tier: '初級韭菜' };
           setTimeout(() => finalizeLogin(true), 1200);
         } else {
           showAuthMsg(result.message || '該信箱已被使用', true);
@@ -1262,23 +1262,23 @@
       document.getElementById('mainApp').classList.remove('hidden');
     
       const badgeEl = document.getElementById('userBadge');
-      const tierName = currentUser.tier || '銀星會員';
+      const tierName = currentUser.tier || '初級韭菜';
       
       if (currentUser.role === 'admin') {
-        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 尊榮)</span>`;
+        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 韭皇)</span>`;
         badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
       } else if (currentUser.role === 'guest') {
-        badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (唯讀)</span>`;
+        badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (路過散戶)</span>`;
         badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
       } else {
-        if (tierName === '尊榮會員') {
+        if (tierName === '萬年韭皇') {
           badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
           badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
-        } else if (tierName === '金級會員') {
+        } else if (tierName === '資深韭菜') {
           badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
           badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
         } else {
-          badgeEl.innerHTML = `<i class="fa-solid fa-star mr-1.5 text-slate-500 dark:text-slate-300"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.innerHTML = `<i class="fa-solid fa-seedling mr-1.5 text-emerald-500 dark:text-emerald-400"></i><span>${currentUser.name} (${tierName})</span>`;
           badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
         }
       }
@@ -1293,7 +1293,6 @@
     
       showDisclaimerToast();
       await fetchAndParseCsv();
-      // 同步一次即時維護狀態
       pollAdminMaintenanceStatus();
     }
 
@@ -1321,17 +1320,24 @@
 
       rawCsvGrid = lines.map(line => parseCsvRow(line));
 
-      tenDayDatesHeaders = [];
-      if (rawCsvGrid[0]) {
-        for (let c = 46; c <= 55; c++) {
-          tenDayDatesHeaders.push(rawCsvGrid[0][c] ? rawCsvGrid[0][c].trim() : `D-${55 - c + 1}`);
-        }
-      }
-
+      // 成交量表頭完整日期（34~43 欄）
       tenDayVolDatesHeaders = [];
       if (rawCsvGrid[0]) {
         for (let c = 34; c <= 43; c++) {
           tenDayVolDatesHeaders.push(rawCsvGrid[0][c] ? rawCsvGrid[0][c].trim() : `D-${43 - c + 1}`);
+        }
+      }
+
+      // 漲跌表頭（46~55 欄）：若未含標準日期或為簡稱，自動對齊完整的成交量日期
+      tenDayDatesHeaders = [];
+      if (rawCsvGrid[0]) {
+        for (let c = 46; c <= 55; c++) {
+          const idx = c - 46;
+          let dateTxt = rawCsvGrid[0][c] ? rawCsvGrid[0][c].trim() : '';
+          if (!dateTxt || dateTxt.startsWith('D-') || !dateTxt.includes('/')) {
+            dateTxt = tenDayVolDatesHeaders[idx] || dateTxt;
+          }
+          tenDayDatesHeaders.push(dateTxt);
         }
       }
 
@@ -1644,48 +1650,66 @@
           if (!stockMap.has(id)) {
             const badges = [];
 
-            // 1. 計算十日均量 (排除當日如果有的話，或取十日歷史的有效平均)
+            // 1. 計算近十日均量
             const validVols = tenDayVolHistory.filter(v => v.hasData && v.numVal > 0);
             const sumVol = validVols.reduce((acc, cur) => acc + cur.numVal, 0);
-            const avgVol10 = validVols.length > 0 ? (sumVol / validVols.length) : volume;
+            const avgVol10 = validVols.length > 0 ? (sumVol / validVols.length) : (volume || 1);
 
-            // 2. 歷史走勢特徵（連續漲跌天數與短期動能）
-            const validPctHistory = tenDayHistory.filter(h => h.hasData);
-            const last3Days = validPctHistory.slice(-3); // 最近三筆
-            const is3DaysUp = last3Days.length === 3 && last3Days.every(d => d.numVal > 0);
-            const is3DaysDown = last3Days.length === 3 && last3Days.every(d => d.numVal < 0);
-            const sum3Pct = last3Days.reduce((acc, cur) => acc + cur.numVal, 0);
+            // 2. 取近 3 日歷史量價以判斷連續型籌碼走勢
+            const validPcts = tenDayHistory.filter(h => h.hasData);
+            const last3Pcts = validPcts.slice(-3);
+            const last3Vols = validVols.slice(-3);
 
-            // ================= 標籤判定規則 =================
-            // ① 漲跌停
+            const is3DaysUp = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal > 0);
+            const is3DaysDown = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal < 0);
+            const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal);
+
+            // 3. 量能倍數定義
+            const volRatio = volume / (avgVol10 || 1);
+            const isSurge = volRatio >= 2.0 && volume >= 500;
+            const isHeavy = volRatio >= 1.3 && volume >= 300;
+            const isDry = volRatio <= 0.35 && avgVol10 >= 300;
+            const isShrink = volRatio <= 0.65;
+
+            // ================= 價量與籌碼標籤判定 =================
+            // ① 漲跌停極限態
             if (isLimitUp) {
-              badges.push({ text: '漲停', color: 'bg-red-600/15 text-red-500 border border-red-500/40 font-black' });
+              badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
             } else if (isLimitDown) {
-              badges.push({ text: '跌停', color: 'bg-emerald-600/15 text-emerald-500 border border-emerald-500/40 font-black' });
+              badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
             }
 
-            // ② 價量組合（爆量、量縮、攻擊、出貨）
-            const isVolumeSurge = avgVol10 > 0 && (volume >= avgVol10 * 2.0) && (volume >= 500); // 至少500張才算爆量，避免幾張的小股雜訊
-            const isVolumeDrying = avgVol10 >= 300 && (volume <= avgVol10 * 0.4); // 窒息量
-
-            if (pctNum >= 4.0 && isVolumeSurge) {
-              badges.push({ text: '帶量長紅', color: 'bg-rose-500/15 text-rose-500 border border-rose-500/40' });
-            } else if (pctNum <= -4.0 && isVolumeSurge) {
-              badges.push({ text: '爆量下殺', color: 'bg-purple-900/30 text-purple-400 border border-purple-500/40' });
-            } else if (isVolumeSurge) {
-              badges.push({ text: '爆量', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
-            } else if (isVolumeDrying) {
-              badges.push({ text: '窒息量', color: 'bg-slate-500/15 text-slate-400 border border-slate-500/30' });
+            // ② 連續型量價籌碼
+            if (is3DaysUp && is3DaysVolUp) {
+              badges.push({ text: '多頭延續', color: 'bg-rose-600/15 text-rose-500 border border-rose-500/30' });
+            } else if (is3DaysDown && isShrink) {
+              badges.push({ text: '空方衰竭', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30' });
             }
 
-            // ③ 連續動能與強弱
-            if (is3DaysUp && sum3Pct >= 12.0) {
-              badges.push({ text: '連三紅噴', color: 'bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/30' });
-            } else if (is3DaysDown && sum3Pct <= -10.0) {
-              badges.push({ text: '連黑探底', color: 'bg-emerald-950/40 text-emerald-400 border border-emerald-700/40' });
-            } else if (!isLimitUp && pctNum >= 3.0 && pctNum < 9.5) {
+            // ③ 價量配合型
+            if (pctNum >= 3.0 && isHeavy) {
+              badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
+            } else if (pctNum <= -3.5 && isSurge) {
+              badges.push({ text: '爆量長黑', color: 'bg-purple-950/40 text-purple-300 border border-purple-600/40 font-bold' });
+            } else if (pctNum >= 2.5 && isShrink) {
+              badges.push({ text: '量價背離', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
+            } else if (pctNum <= -1.5 && isShrink) {
+              badges.push({ text: '量縮價跌', color: 'bg-slate-500/15 text-slate-400 border border-slate-500/30' });
+            } else if (Math.abs(pctNum) <= 1.0 && isShrink) {
+              badges.push({ text: '量縮價穩', color: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30' });
+            }
+
+            // ④ 純量能特徵
+            if (isSurge && !badges.some(b => b.text === '量價齊揚' || b.text === '爆量長黑')) {
+              badges.push({ text: '爆量換手', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
+            } else if (isDry) {
+              badges.push({ text: '窒息量', color: 'bg-slate-600/20 text-slate-400 border border-slate-600/30' });
+            }
+
+            // ⑤ 動能特徵輔助
+            if (!isLimitUp && pctNum >= 3.5 && !badges.some(b => b.text.includes('揚') || b.text.includes('延續'))) {
               badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' });
-            } else if (!isLimitDown && pctNum <= -3.0 && pctNum > -9.5) {
+            } else if (!isLimitDown && pctNum <= -3.5 && !badges.some(b => b.text.includes('黑') || b.text.includes('衰竭'))) {
               badges.push({ text: '弱勢', color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' });
             }
 
@@ -1818,7 +1842,7 @@
       if (userWatchlist.has(stockId)) {
         userWatchlist.delete(stockId);
       } else {
-        const currentTier = currentUser ? (currentUser.tier || '銀星會員') : '銀星會員';
+        const currentTier = currentUser ? (currentUser.tier || '初級韭菜') : '初級韭菜';
         const limit = TIER_LIMITS[currentTier] ?? 20;
 
         if (userWatchlist.size >= limit) {
@@ -1947,7 +1971,6 @@
       const currentPrice = stock.price || 100;
       let prices = new Array(history.length);
       
-      // 找出最後一個有數據的索引
       let lastValidIdx = -1;
       for (let i = history.length - 1; i >= 0; i--) {
         if (history[i].hasData) {
@@ -1958,7 +1981,6 @@
 
       if (lastValidIdx !== -1) {
         prices[lastValidIdx] = currentPrice;
-        // 向前推算每日股價: P[i-1] = P[i] / (1 + r[i])
         for (let i = lastValidIdx; i > 0; i--) {
           if (history[i].hasData) {
             const r = history[i].numVal / 100;
@@ -2073,10 +2095,14 @@
         `;
       }
 
+      const firstDate = history[0] ? history[0].dateHeader : '';
+      const midDate = history[Math.floor(history.length / 2)] ? history[Math.floor(history.length / 2)].dateHeader : '';
+      const lastDate = history[history.length - 1] ? history[history.length - 1].dateHeader : '';
+
       legendWrapper.innerHTML = `
-        <span>${history[0].dateHeader} (10日前)</span>
-        <span>${history[Math.floor(history.length/2)].dateHeader}</span>
-        <span class="text-brand-500 font-bold">${history[history.length - 1].dateHeader} (最新)</span>
+        <span>${firstDate} (10日前)</span>
+        <span>${midDate}</span>
+        <span class="text-brand-500 font-bold">${lastDate} (最新)</span>
       `;
     }
 
@@ -2133,10 +2159,14 @@
         </svg>
       `;
 
+      const firstVolDate = history[0] ? history[0].dateHeader : '';
+      const midVolDate = history[Math.floor(history.length / 2)] ? history[Math.floor(history.length / 2)].dateHeader : '';
+      const lastVolDate = history[history.length - 1] ? history[history.length - 1].dateHeader : '';
+
       legendWrapper.innerHTML = `
-        <span>${history[0].dateHeader} (10日前)</span>
-        <span>${history[Math.floor(history.length/2)].dateHeader}</span>
-        <span class="text-amber-500 font-bold">${history[history.length - 1].dateHeader} (最新)</span>
+        <span>${firstVolDate} (10日前)</span>
+        <span>${midVolDate}</span>
+        <span class="text-amber-500 font-bold">${lastVolDate} (最新)</span>
       `;
     }
 
