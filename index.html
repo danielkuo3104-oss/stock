@@ -80,7 +80,7 @@
     </div>
   </div>
 
-  <!-- 標籤規則詳細說明 Modal -->
+  <!-- 標籤規則詳細說明 Modal (修復第一點：加上完整的圖標與說明結構) -->
   <div id="badgeGuideModal" onclick="handleModalBgClick(event, 'badgeGuideModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -101,7 +101,7 @@
       <div class="space-y-2.5 text-xs">
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitUp text-white">漲停</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitUp text-white"><i class="fa-solid fa-arrow-up mr-1"></i>漲停</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 9.5% 且 點數 > 0</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">多頭鎖死漲停板，最強買盤動能展現。</p>
@@ -109,7 +109,7 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitDown text-white">跌停</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitDown text-white"><i class="fa-solid fa-arrow-down mr-1"></i>跌停</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -9.5% 且 點數 < 0</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">空頭摜壓至跌停板，賣壓極度宣洩。</p>
@@ -117,7 +117,7 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-600 text-white border border-red-400">爆量長紅</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-600 text-white border border-red-400"><i class="fa-solid fa-fire mr-1"></i>爆量長紅</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.5% 且 當日量 ≥ 2倍均量</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">伴隨大量實質突破拉抬，主力攻擊氣勢強勁。</p>
@@ -125,7 +125,7 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-700 text-white border border-purple-400">爆量長黑</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-700 text-white border border-purple-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>爆量長黑</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.5% 且 當日量 ≥ 2倍均量</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">高檔爆量大跌或摜破支撐，多為主力調節或恐慌出脫。</p>
@@ -133,7 +133,7 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30">量價齊揚</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30"><i class="fa-solid fa-chart-line mr-1"></i>量價齊揚</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.0% 且 當日量 ≥ 1.3倍均量</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">價漲量增，主力資金實質進駐推升。</p>
@@ -141,7 +141,7 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30">十日震盪整理</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30"><i class="fa-solid fa-arrows-split-up-and-left mr-1"></i>十日震盪整理</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">近 10 日累計極差 ≤ 4% 且每日 ≤ 2%</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">股價在近 10 天狹幅區間扎實沉澱，無單邊暴衝趨勢。</p>
@@ -149,7 +149,7 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-100 border border-slate-500">窒息量</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-100 border border-slate-500"><i class="fa-solid fa-water mr-1"></i>窒息量</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≤ 0.35倍均量 且 均量 ≥ 300張</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">成交量極限萎縮，浮額洗淨，常為重大突破前夕。</p>
@@ -158,7 +158,7 @@
     </div>
   </div>
 
-  <!-- 💡 族群導覽型成分股詳情 Modal (卡片收盤價加強放大 + 市值熱力圖重構) -->
+  <!-- 族群導覽型成分股詳情 Modal -->
   <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
@@ -236,15 +236,6 @@
             </div>
           </div>
           <p id="adminAnnounceMsg" class="text-[11px] font-medium text-center hidden"></p>
-        </div>
-
-        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 border border-slate-200 dark:border-slate-800">
-          <label class="font-bold text-slate-700 dark:text-slate-300 block">模擬系統「今日日期」：</label>
-          <div class="flex space-x-2">
-            <input type="date" id="adminCustomDate" class="flex-1 w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white font-mono">
-            <button onclick="applyAdminDate()" class="px-3 py-2 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-500 transition">套用</button>
-            <button onclick="resetAdminDate()" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-300 transition">重設</button>
-          </div>
         </div>
 
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
@@ -624,7 +615,7 @@
         </div>
       </header>
 
-      <!-- 💡 加權縮小置頂條 -->
+      <!-- 加權縮小置頂條 -->
       <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 -translate-y-full opacity-0 pointer-events-none px-3 sm:px-8 py-2 w-full">
         <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
           <div class="flex items-center space-x-2">
@@ -661,7 +652,7 @@
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
 
-      <!-- 大盤指數儀表板 (族群選股頁時隱藏) -->
+      <!-- 大盤指數儀表板 -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
@@ -721,7 +712,7 @@
         </div>
       </section>
 
-      <!-- 今日熱門 Top 10 方塊 (族群選股頁時隱藏) -->
+      <!-- 今日熱門 Top 10 方塊 -->
       <section id="hotSection">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-y-1">
           <div class="flex items-center space-x-2">
@@ -754,7 +745,6 @@
                 <i class="fa-solid fa-circle-info"></i>
               </button>
             </div>
-            <!-- 💡 第一點：次標題文案淨化 -->
             <p id="sectionSubtitleText" class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">點擊卡片瀏覽成分股題材，探索產業鏈動能</p>
           </div>
 
@@ -763,7 +753,7 @@
           </div>
         </div>
 
-        <!-- 標籤快速過濾列 (首頁顯示，族群頁隱藏) -->
+        <!-- 標籤快速過濾列 -->
         <div id="tagFilterSection">
           <div class="block sm:hidden">
             <button onclick="toggleMobileTagDrawer()" class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
@@ -795,7 +785,7 @@
           </div>
         </div>
 
-        <!-- 💡 族群選股頁時顯示：主族群嵌套子族群板塊 (依你的手繪草圖重構) -->
+        <!-- 💡 第三點：緊密堆疊佈局 (grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start) -->
         <div id="sectorCardsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
 
         <!-- 首頁時顯示：全個股清單 -->
@@ -832,7 +822,7 @@
     </footer>
   </div>
 
-  <!-- 核心邏輯腳本 -->
+  <!-- 核心邏輯腳本 (包含補齊的 openStockModal, openAdminPanel, pollAdminMaintenanceStatus) -->
   <script>
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
     const CSV_MEMBERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=0&single=true&output=csv';
@@ -869,7 +859,6 @@
     let currentPctTrendMode = 'cum';
     let adminStatusPollInterval = null;
 
-    // 💡 依台股升降級距對價格做精準四捨五入規整
     function roundToTick(price) {
       if (price <= 0 || isNaN(price)) return 0;
       let tick = 0.01;
@@ -903,6 +892,93 @@
       if (e.target.id === modalId) {
         document.getElementById(modalId).classList.add('hidden');
       }
+    }
+
+    // 💡 補齊遺漏的 管理員彈窗與維護輪詢函式
+    function openAdminPanel() {
+      const el = document.getElementById('adminPanelModal');
+      if (el) el.classList.remove('hidden');
+    }
+
+    function closeAdminPanel() {
+      const el = document.getElementById('adminPanelModal');
+      if (el) el.classList.add('hidden');
+    }
+
+    async function pollAdminMaintenanceStatus() {
+      try {
+        const res = await fetch(`${BACKEND_API_URL}?action=getMaintenance&_t=${Date.now()}`);
+        const data = await res.json();
+        if (data.success) {
+          isCurrentMaintenance = data.isMaintenance;
+          updateAdminStatusIndicator(isCurrentMaintenance);
+          if (currentUser && currentUser.email !== ADMIN_EMAIL) {
+            const overlay = document.getElementById('maintenanceOverlay');
+            if (overlay) overlay.classList.toggle('hidden', !isCurrentMaintenance);
+          }
+        }
+      } catch (e) {}
+    }
+
+    // 💡 補齊遺漏的個股詳細資訊彈窗函式 (openStockModal / closeStockModal)
+    function openStockModal(stockId) {
+      const stock = parsedStocks.find(s => s.id.toString() === stockId.toString());
+      if (!stock) return;
+      currentModalStockId = stockId;
+
+      document.getElementById('modalStockName').textContent = stock.name;
+      document.getElementById('modalStockId').textContent = stock.id;
+      document.getElementById('modalStockPrice').textContent = stock.price.toFixed(2);
+      document.getElementById('modalStockChange').textContent = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
+      document.getElementById('modalStockPct').textContent = stock.pctStr;
+      document.getElementById('modalStockVolume').textContent = stock.volume.toLocaleString();
+      document.getElementById('modalStockTurnover').textContent = Math.round(stock.turnover / 10000).toLocaleString() + ' 萬';
+      document.getElementById('modalStockCap').textContent = stock.cap.toFixed(2);
+      document.getElementById('modalStockNote1').textContent = stock.note1 || '暫無核心業務摘要';
+      document.getElementById('modalStockNote2').textContent = stock.note2 || '暫無產業題材說明';
+
+      updateModalStarUI(stockId);
+
+      // 雙層群組標籤
+      const groups = stockMultiGroupMap[stock.id] || [{ rawGroup: stock.rawGroup, mainGroup: stock.group, subGroup: stock.subGroup, weight: stock.weight, contribution: stock.contribution, mainGroupChange: stock.groupChange }];
+      document.getElementById('modalDoubleGroupContainer').innerHTML = groups.map(g => `
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+          <div class="flex items-center justify-between font-bold">
+            <span class="text-brand-500">${g.mainGroup} ${g.subGroup ? ' / ' + g.subGroup : ''}</span>
+            <span class="font-mono ${parseFloat(g.mainGroupChange) >= 0 ? 'text-stockRed' : 'text-stockGreen'}">族群漲幅: ${g.mainGroupChange}</span>
+          </div>
+          <div class="flex justify-between text-[11px] text-slate-500">
+            <span>市值權重: ${g.weight}</span>
+            <span>貢獻點數: ${g.contribution}</span>
+          </div>
+        </div>
+      `).join('');
+
+      // 特徵標籤
+      document.getElementById('modalFeatureBadges').innerHTML = (stock.badges || []).map(b => `<span class="px-2 py-0.5 rounded text-[10px] ${b.color}">${b.text}</span>`).join(' ');
+
+      // 同族群其他股票
+      const peerGroup = groupMap[stock.rawGroup];
+      const peerContainer = document.getElementById('modalPeerStocks');
+      if (peerGroup && peerGroup.members) {
+        peerContainer.innerHTML = peerGroup.members.slice(0, 6).map(p => `
+          <div onclick="openStockModal('${p.id}')" class="cursor-pointer flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 transition text-xs">
+            <span class="font-bold">${p.name} (${p.id})</span>
+            <span class="font-mono ${p.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${p.price.toFixed(2)} (${p.pctStr})</span>
+          </div>
+        `).join('');
+      } else {
+        peerContainer.innerHTML = '<span class="text-xs text-slate-400">無其他同族群標的</span>';
+      }
+
+      renderStockTrend(stock);
+      renderStockVolTrend(stock);
+      document.getElementById('stockDetailModal').classList.remove('hidden');
+    }
+
+    function closeStockModal() {
+      document.getElementById('stockDetailModal').classList.add('hidden');
+      currentModalStockId = null;
     }
 
     function navigateTo(tabName) {
@@ -1804,7 +1880,6 @@
       stockMultiGroupMap = {};
       const stockMap = new Map();
 
-      // 先建立群組骨幹
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const rawGroup = row[0] ? row[0].trim() : '';
@@ -1910,11 +1985,9 @@
             const last3Pcts = validPcts.slice(-3);
             const last3Vols = validVols.slice(-3);
 
-            const is3DaysUp = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal > 0);
             const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal);
             const is3DaysVolDown = last3Vols.length === 3 && (last3Vols[2].numVal < last3Vols[1].numVal) && (last3Vols[1].numVal < last3Vols[0].numVal);
 
-            // 💡 第一點：更新十日震盪整理嚴格判定
             let runningCum = 0;
             const cumVals = validPcts.map(p => { runningCum += p.numVal; return runningCum; });
             const cumRange = (cumVals.length === 10) ? (Math.max(...cumVals) - Math.min(...cumVals)) : 999;
@@ -1926,7 +1999,6 @@
             const isDry = volRatio <= 0.35 && avgVol10 >= 300;
             const isShrink = volRatio <= 0.65;
 
-            // 補齊所有價量關係判斷
             if (isLimitUp) badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
             else if (isLimitDown) badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
 
@@ -1986,7 +2058,6 @@
         }
       }
 
-      // 清除空族群
       Object.keys(groupMap).forEach(key => {
         if (!groupMap[key].members || groupMap[key].members.length === 0 || key === '-' || key === '--') {
           delete groupMap[key];
@@ -2031,7 +2102,6 @@
       }).join('');
     }
 
-    // 💡 第三點：0, 1, 3, 5, 7, 9% 嚴謹色階
     function getDynamicColorTier(rawPct) {
       if (!rawPct) return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
       const val = parseFloat(rawPct.toString().replace('%', '')) || 0;
@@ -2052,7 +2122,6 @@
       return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
     }
 
-    // 💡 第三點：主族群大卡片包著子族群板塊 (依草圖重構，不再是死板單列)
     function renderSectorCards(filteredStockList) {
       const container = document.getElementById('sectorCardsGrid');
       if (!container) return;
@@ -2071,7 +2140,6 @@
       });
 
       container.innerHTML = Object.entries(mainGroupHierarchy).map(([mainGroupName, subGroups]) => {
-        // 計算主族群整體表現
         const subCardsHtml = subGroups.map(grpData => {
           const tier = getDynamicColorTier(grpData.groupChange || '0%');
           const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
@@ -2239,12 +2307,10 @@
       if (groupMap[currentActiveSectorName]) renderSectorModalContent(groupMap[currentActiveSectorName]);
     }
 
-    // 💡 第四點、第五點與第六點：彈窗卡片加強收盤價、熱力圖每 100 億一個等級
     function renderSectorModalContent(grpData) {
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
-      // 1. 列表導覽模式（卡片收盤價放大、配合漲跌上色）
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
         const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
@@ -2260,7 +2326,6 @@
                   <span class="font-black text-base text-slate-900 dark:text-slate-100">${s.name}</span>
                   <span class="text-[10px] text-slate-400 font-mono">${s.id}</span>
                 </div>
-                <!-- 💡 第四點：收盤價顯眼突出並上色 -->
                 <div class="flex items-baseline space-x-2 mt-1">
                   <span class="text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
                   <span class="text-xs font-bold font-mono ${priceColor}">${formattedChange} (${formattedPct})</span>
@@ -2283,10 +2348,8 @@
         `;
       }).join('');
 
-      // 2. 💡 第五與第六點：熱力圖每 100 億一個等級階梯，收盤漲跌作為核心主角
       heatContainer.innerHTML = grpData.members.map(s => {
         const capVal = s.cap || 10;
-        // 每 100 億為 1 級，基底 120px，每級 +35px，上限 320px
         const tierLevel = Math.min(Math.floor(capVal / 100), 6); 
         const flexWidth = 140 + tierLevel * 35;
         const minHeight = 100 + tierLevel * 15;
@@ -2306,7 +2369,6 @@
               <span class="font-mono text-xs font-black px-2 py-0.5 rounded ${heatTier.badge}">${formattedPct}</span>
             </div>
 
-            <!-- 核心收盤價放中間，不擠在備註 -->
             <div class="my-auto py-1">
               <span class="text-xl sm:text-2xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
               <span class="text-xs font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
@@ -2420,7 +2482,6 @@
       }
     }
 
-    // 💡 第二點：累積走勢圖直接改為顯示「真實收盤價」，並嚴格遵守台股升降級距跳動
     function renderStockTrend(stock) {
       const history = stock.tenDayHistory || [];
       const svgWrapper = document.getElementById('trendSvgWrapper_pct');
@@ -2437,7 +2498,6 @@
         return;
       }
 
-      // 依台股跳動單位逆推每日真實收盤價
       const currentPrice = stock.price || 100;
       let prices = new Array(history.length);
       let lastValidIdx = -1;
@@ -2461,7 +2521,6 @@
         }
       }
 
-      // 列表顯示
       listGrid.innerHTML = history.map((item, idx) => {
         const isUp = item.numVal > 0;
         const isDown = item.numVal < 0;
@@ -2479,7 +2538,6 @@
         `;
       }).join('');
 
-      // 計算複合累積漲跌幅
       const basePrice = (lastValidIdx !== -1 && history[0].hasData) ? (prices[0] / (1 + history[0].numVal / 100)) : (prices[0] || currentPrice);
       const totalCumPct = basePrice > 0 ? ((currentPrice - basePrice) / basePrice) * 100 : 0;
       const isCumUp = totalCumPct > 0;
@@ -2524,7 +2582,6 @@
           </svg>
         `;
       } else if (currentPctTrendMode === 'cum') {
-        // 價格曲線折線圖 (直接標註實際收盤價)
         const validPrices = prices.filter(p => p !== undefined && !isNaN(p));
         let minPrice = Math.min(...validPrices);
         let maxPrice = Math.max(...validPrices);
