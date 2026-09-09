@@ -1302,30 +1302,34 @@
     }
 
     async function launchApp() {
-      document.getElementById('mainApp').classList.remove('hidden');
+      const mainApp = document.getElementById('mainApp');
+      if (mainApp) mainApp.classList.remove('hidden');
+
       const badgeEl = document.getElementById('userBadge');
-      const tierName = currentUser.tier || '初級韭菜';
+      const tierName = currentUser ? (currentUser.tier || '初級韭菜') : '初級韭菜';
       
-      if (currentUser.role === 'admin') {
-        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 韭皇)</span>`;
-        badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
-      } else if (currentUser.role === 'guest') {
-        badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (路過散戶)</span>`;
-        badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
-      } else {
-        if (tierName === '萬年韭皇') {
-          badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
-          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
-        } else if (tierName === '資深韭菜') {
-          badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
-          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+      if (badgeEl && currentUser) {
+        if (currentUser.role === 'admin') {
+          badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 韭皇)</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+        } else if (currentUser.role === 'guest') {
+          badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (路過散戶)</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
         } else {
-          badgeEl.innerHTML = `<i class="fa-solid fa-seedling mr-1.5 text-emerald-500 dark:text-emerald-400"></i><span>${currentUser.name} (${tierName})</span>`;
-          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
+          if (tierName === '萬年韭皇') {
+            badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
+            badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+          } else if (tierName === '資深韭菜') {
+            badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
+            badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+          } else {
+            badgeEl.innerHTML = `<i class="fa-solid fa-seedling mr-1.5 text-emerald-500 dark:text-emerald-400"></i><span>${currentUser.name} (${tierName})</span>`;
+            badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
+          }
         }
       }
     
-      if (currentUser.role === 'admin') {
+      if (currentUser && currentUser.role === 'admin') {
         const adminBtn = document.getElementById('btnAdminConsole');
         if (adminBtn) {
           adminBtn.classList.remove('hidden');
@@ -1339,11 +1343,17 @@
     }
 
     function showDisclaimerToast() {
-      document.getElementById('toastDisclaimer').classList.remove('translate-y-28', 'opacity-0');
+      const toast = document.getElementById('toastDisclaimer');
+      if (toast) {
+        toast.classList.remove('translate-y-28', 'opacity-0');
+      }
     }
 
     function closeDisclaimer() {
-      document.getElementById('toastDisclaimer').classList.add('translate-y-28', 'opacity-0');
+      const toast = document.getElementById('toastDisclaimer');
+      if (toast) {
+        toast.classList.add('translate-y-28', 'opacity-0');
+      }
     }
 
     async function fetchAndParseCsv(isSilent = false) {
