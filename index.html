@@ -93,10 +93,9 @@
         </button>
       </div>
 
-      <!-- 💡 第六點：免責聲明與 AI 資訊揭露 -->
       <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-600 dark:text-amber-400 leading-relaxed">
         <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-        <strong>系統免責聲明：</strong>所有市場技術標籤為系統依據公開成交量價之客觀演算結果；公司簡介、業務主軸與產業題材皆由 AI 輔助整理提供，不構成任何買賣決策建議。
+        <strong>系統免責聲明：</strong>所有市場技術標籤為系統依據公開量價演算結果；公司簡介、業務主軸與產業題材皆由 AI 輔助整理提供，不構成任何買賣決策建議。
       </div>
 
       <div class="space-y-2.5 text-xs">
@@ -142,34 +141,10 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-500/15 text-sky-400 border border-sky-500/30">量縮價跌</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -1.5% 且 當日量 ≤ 0.65倍均量</span>
-          </div>
-          <p class="text-slate-600 dark:text-slate-300">回檔未見非理性賣壓，籌碼多為技術性洗盤。</p>
-        </div>
-
-        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/30">量縮價漲</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 2% 且 當日量 ≤ 0.65倍均量</span>
-          </div>
-          <p class="text-slate-600 dark:text-slate-300">價漲但追價量不足，呈現量價背離或籌碼高度惜售。</p>
-        </div>
-
-        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-700/20 text-rose-500 border border-rose-600/30">帶量下殺</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -2% 且 當日量 ≥ 1.3倍均量</span>
-          </div>
-          <p class="text-slate-600 dark:text-slate-300">下跌同時伴隨出量賣單，短線賣盤積極出籠。</p>
-        </div>
-
-        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30">十日震盪整理</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">近 10 交易日每日波動皆在 ±2.0% 箱型內</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近 10 日累計震幅 ≤ 4% 且 無任何單日大於 2%</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">股價於狹幅箱型扎實沉澱，無大幅波動雜訊。</p>
+          <p class="text-slate-600 dark:text-slate-300">股價在近 10 天狹幅區間扎實沉澱，無單邊暴衝趨勢。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -183,31 +158,41 @@
     </div>
   </div>
 
-  <!-- ================= 💡 第五點：族群導覽型成分股詳情 Modal (以公司介紹為主) ================= -->
+  <!-- ================= 💡 第五與第六點：族群導覽型成分股詳情 Modal (支援列表/熱力圖雙模式) ================= -->
   <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[90vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
-      <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
         <div>
           <div class="flex items-center space-x-2">
             <span class="w-3 h-3 rounded-full bg-brand-500"></span>
             <h3 id="modalSectorTitle" class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100">--</h3>
-            <span id="modalSectorPct" class="text-xs sm:text-sm font-black font-mono px-2 py-0.5 rounded-md">--</span>
+            <span id="modalSectorPct" class="text-xs sm:text-sm font-black font-mono px-2.5 py-0.5 rounded-md">--</span>
           </div>
           <p id="modalSectorSubtitle" class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">--</p>
         </div>
-        <button onclick="closeSectorModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
+
+        <!-- 💡 第六點：熱力圖 vs 列表切換鈕 -->
+        <div class="flex items-center space-x-2 self-end sm:self-auto">
+          <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 flex text-xs">
+            <button id="btnSectorModeCards" onclick="switchSectorModalMode('cards')" class="px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition">列表導覽</button>
+            <button id="btnSectorModeHeatmap" onclick="switchSectorModalMode('heatmap')" class="px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition">市值熱力圖</button>
+          </div>
+          <button onclick="closeSectorModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl pl-1">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
       </div>
 
-      <!-- 💡 第六點：族群彈窗內的免責提示 -->
       <div class="text-[10px] text-slate-400 bg-slate-100 dark:bg-slate-950 p-2.5 rounded-xl border border-slate-200/60 dark:border-slate-800 flex items-center space-x-1.5">
         <i class="fa-solid fa-circle-info text-brand-500"></i>
-        <span>公司業務簡介與產業題材皆由 AI 整理提供，供探索族群題材與認識公司使用。點擊卡片可深入觀測技術面。</span>
+        <span>免責提示：公司業務與題材皆由 AI 輔助彙整，點擊個股可展開近十日量價與技術圖表。</span>
       </div>
 
-      <!-- 導覽卡片流容器 -->
+      <!-- 模式一：導覽卡片模式 (依 0/1/3/5/7/9% 顏色分級) -->
       <div id="modalSectorCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+
+      <!-- 模式二：市值熱力圖 (Treemap 風格，具備最小安全高度) -->
+      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2 w-full min-h-[300px]"></div>
     </div>
   </div>
 
@@ -646,7 +631,7 @@
         </div>
       </header>
 
-      <!-- 💡 加權縮小置頂條 -->
+      <!-- 💡 加權縮小置頂條 (在族群頁時直接作為常駐置頂條) -->
       <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 -translate-y-full opacity-0 pointer-events-none px-3 sm:px-8 py-2 w-full">
         <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
           <div class="flex items-center space-x-2">
@@ -666,14 +651,7 @@
       </div>
     </div>
 
-    <!-- 💡 手機版提示橫幅 -->
-    <div class="md:hidden bg-indigo-50 dark:bg-indigo-900/30 border-b border-indigo-100 dark:border-indigo-800 py-2 px-4 text-center">
-      <p class="text-[10px] sm:text-xs text-indigo-600 dark:text-indigo-400 font-medium">
-        <i class="fa-solid fa-mobile-screen-button mr-1"></i> 目前為行動版介面，建議使用電腦版以獲得完整寬幅觀測體驗。
-      </p>
-    </div>
-
-    <!-- ② 跑馬公告 -->
+    <!-- 跑馬公告 -->
     <div class="bg-slate-100 dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 overflow-hidden py-1.5 px-3 sm:px-4">
       <div class="max-w-7xl mx-auto flex items-center text-[11px] sm:text-xs">
         <span id="marqueeTag" class="bg-amber-500/10 text-amber-600 dark:text-amber-400 font-semibold px-1.5 sm:px-2 py-0.5 rounded mr-2 sm:mr-3 flex items-center space-x-1 shrink-0">
@@ -690,7 +668,7 @@
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
 
-      <!-- ③ 大盤指數儀表板 -->
+      <!-- ③ 大盤指數儀表板 (💡 族群選股頁時隱藏) -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
@@ -715,9 +693,7 @@
               <span class="text-slate-500 dark:text-slate-400 sm:text-slate-400">成交</span>
               <span id="marketVolume" class="text-sm sm:text-base">--</span>
             </div>
-            
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
-            
             <div class="flex flex-col items-start space-y-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto">
               <div>昨收 <strong id="marketPrevClose" class="text-slate-700 dark:text-slate-300">--</strong></div>
               <div class="flex items-center space-x-3">
@@ -752,7 +728,7 @@
         </div>
       </section>
 
-      <!-- ④ 今日熱門 Top 10 方塊 -->
+      <!-- ④ 今日熱門 Top 10 方塊 (💡 族群選股頁時隱藏) -->
       <section id="hotSection">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-y-1">
           <div class="flex items-center space-x-2">
@@ -775,7 +751,7 @@
         <div id="hotCardsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
       </section>
 
-      <!-- ⑤ 內容切換核心區塊 (首頁個股總表 vs 族群選股板塊) -->
+      <!-- ⑤ 內容切換核心區塊 (首頁個股總表 vs 族群板塊) -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -788,12 +764,12 @@
             <p id="sectionSubtitleText" class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">左右滑動瀏覽，點擊列可展開詳情</p>
           </div>
 
-          <div class="w-full sm:w-auto">
+          <div class="w-full sm:w-auto" id="searchFilterBox">
             <input type="text" id="stockFilterInput" oninput="applyFilters()" placeholder="搜尋代號 / 標的 / 族群..." class="w-full sm:w-64 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
           </div>
         </div>
 
-        <!-- 💡 第四點：僅在首頁顯示標籤篩選，族群板塊時隱藏 -->
+        <!-- 標籤快速過濾列 (首頁顯示，族群頁隱藏) -->
         <div id="tagFilterSection">
           <div class="block sm:hidden">
             <button onclick="toggleMobileTagDrawer()" class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
@@ -810,35 +786,31 @@
             <button onclick="setTagFilter('爆量長紅')" id="btnTag_爆量長紅" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長紅</button>
             <button onclick="setTagFilter('爆量長黑')" id="btnTag_爆量長黑" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-fuchsia-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長黑</button>
             <button onclick="setTagFilter('量價齊揚')" id="btnTag_量價齊揚" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量價齊揚</button>
-            <button onclick="setTagFilter('量縮價跌')" id="btnTag_量縮價跌" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價跌</button>
-            <button onclick="setTagFilter('量縮價漲')" id="btnTag_量縮價漲" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價漲</button>
-            <button onclick="setTagFilter('帶量下殺')" id="btnTag_帶量下殺" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">帶量下殺</button>
             <button onclick="setTagFilter('強勢')" id="btnTag_強勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">強勢</button>
             <button onclick="setTagFilter('弱勢')" id="btnTag_弱勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">弱勢</button>
-            <button onclick="setTagFilter('爆量')" id="btnTag_爆量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量</button>
             <button onclick="setTagFilter('十日震盪整理')" id="btnTag_十日震盪整理" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-teal-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">十日震盪整理</button>
             <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
             <button onclick="setTagFilter('漲停')" id="btnTag_漲停" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">漲停</button>
           </div>
         </div>
 
-        <!-- 導覽列「族群選股」時顯示：族群卡片網格 -->
+        <!-- 💡 族群選股頁時顯示：族群卡片網格 -->
         <div id="sectorCardsGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
 
-        <!-- 導覽列「首頁」時顯示：全個股資料表 -->
+        <!-- 💡 首頁時顯示：全個股清單 (第七點：手機版超精簡欄位) -->
         <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
-          <table class="w-full text-left text-[11px] sm:text-xs border-collapse min-w-[320px]">
+          <table class="w-full text-left text-xs border-collapse">
             <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
               <tr>
                 <th class="py-2.5 px-3 text-center w-8">關注</th>
-                <th class="py-2.5 px-3 hidden md:table-cell">族群類別</th>
+                <th class="py-2.5 px-3 hidden sm:table-cell">族群類別</th>
                 <th class="py-2.5 px-3">標的</th>
                 <th class="py-2.5 px-3 text-right">收盤價</th>
-                <th class="py-2.5 px-3 text-right hidden sm:table-cell">當日漲跌</th>
+                <th class="py-2.5 px-3 text-right">當日漲跌</th>
                 <th class="py-2.5 px-3 text-right">漲跌幅</th>
-                <th class="py-2.5 px-3 text-right hidden lg:table-cell">成交量 (張)</th>
-                <th class="py-2.5 px-3 text-right hidden lg:table-cell">市值 (億)</th>
-                <th class="py-2.5 px-3 text-center">動態特徵</th>
+                <th class="py-2.5 px-3 text-right hidden sm:table-cell">成交量 (張)</th>
+                <th class="py-2.5 px-3 text-right hidden md:table-cell">市值 (億)</th>
+                <th class="py-2.5 px-3 text-center hidden sm:table-cell">動態特徵</th>
               </tr>
             </thead>
             <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono"></tbody>
@@ -880,6 +852,8 @@
     let filteredStocks = [];
     let currentTagFilter = 'ALL';
     let currentTab = 'home';
+    let currentSectorModalMode = 'cards'; // 'cards' | 'heatmap'
+    let currentActiveSectorName = '';
     let groupMap = {};
     let stockMultiGroupMap = {};
     let memberListCache = [];
@@ -903,14 +877,13 @@
       initStickyScrollHandler();
     });
 
-    // 💡 第三點：點擊彈窗外部背景關閉彈窗
     function handleModalBgClick(e, modalId) {
       if (e.target.id === modalId) {
         document.getElementById(modalId).classList.add('hidden');
       }
     }
 
-    // 💡 第一點與第四點：導覽列切換。首頁顯示表格與標籤過濾；族群選股顯示卡片並隱藏標籤過濾
+    // 💡 第二點：導覽切換（族群選股隱藏熱門焦點與大盤，加權指數常態置頂一條）
     function navigateTo(tabName) {
       currentTab = tabName;
       const navHome = document.getElementById('navHome');
@@ -918,6 +891,9 @@
       const navHomeMobile = document.getElementById('navHomeMobile');
       const navSectorMobile = document.getElementById('navSectorMobile');
 
+      const mainMarketSection = document.getElementById('mainMarketSection');
+      const hotSection = document.getElementById('hotSection');
+      const miniBar = document.getElementById('stickyMiniBar');
       const grid = document.getElementById('sectorCardsGrid');
       const table = document.getElementById('stockListContainer');
       const tagFilterSec = document.getElementById('tagFilterSection');
@@ -931,9 +907,13 @@
         if (navHomeMobile) navHomeMobile.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
         if (navSectorMobile) navSectorMobile.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
 
+        // 恢復首頁所有區塊
+        mainMarketSection.classList.remove('hidden');
+        hotSection.classList.remove('hidden');
         grid.classList.add('hidden');
         table.classList.remove('hidden');
-        tagFilterSec.classList.remove('hidden'); // 首頁支援標籤查詢
+        tagFilterSec.classList.remove('hidden');
+        
         titleText.textContent = '族群選股列表';
         subtitleText.textContent = '左右滑動瀏覽，點擊列可展開詳情';
         hintText.textContent = '提示：點擊任一檔股票即可查看完整雙層加權與備註';
@@ -943,11 +923,18 @@
         if (navSectorMobile) navSectorMobile.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
         if (navHomeMobile) navHomeMobile.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
 
+        // 💡 族群選股頁面：熱門焦點不用，加權指數剩下置頂一條
+        mainMarketSection.classList.add('hidden');
+        hotSection.classList.add('hidden');
+        miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
+        miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
+
         table.classList.add('hidden');
         grid.classList.remove('hidden');
-        tagFilterSec.classList.add('hidden'); // 💡 族群板塊隱藏標籤過濾列
-        titleText.textContent = '族群板塊總覽 (點擊卡片瀏覽公司題材導覽)';
-        subtitleText.textContent = '依當日族群漲跌深淺顯示，點擊卡片認識成分股業務';
+        tagFilterSec.classList.add('hidden'); // 族群板塊不支援標籤快速查詢
+
+        titleText.textContent = '族群板塊總覽';
+        subtitleText.textContent = '卡片色彩採用 0、1、3、5、7、9% 細緻分級，點擊卡片瀏覽公司題材與熱力圖';
         hintText.textContent = '提示：點擊任一族群卡片進入該產業成分股導覽';
       }
 
@@ -979,6 +966,7 @@
       const miniBar = document.getElementById('stickyMiniBar');
 
       window.addEventListener('scroll', () => {
+        if (currentTab === 'sector') return; // 族群選股模式下恆置頂
         if (!target || !miniBar) return;
         const rect = target.getBoundingClientRect();
         if (rect.bottom < 60) {
@@ -1022,8 +1010,6 @@
         alert("信件內容不能為空喔！");
         return;
       }
-
-      const originalBtnText = btn.innerHTML;
       btn.disabled = true;
       btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>寄送中...</span>';
 
@@ -1049,7 +1035,7 @@
         alert("寄送失敗，請確認網路連線。");
       } finally {
         btn.disabled = false;
-        btn.innerHTML = originalBtnText;
+        btn.innerHTML = '<span>系統內建寄出</span>';
       }
     }
 
@@ -1799,16 +1785,17 @@
       stockMultiGroupMap = {};
       const stockMap = new Map();
 
+      // 建立族群骨幹 (💡 第五點：排除 '-'、空值等無效名稱)
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const rawGroup = row[0] ? row[0].trim() : '';
         const groupChangeJ = row[9] ? row[9].trim() : '';
         const groupChangeK = row[10] ? row[10].trim() : '';
         
-        if (rawGroup && !groupMap[rawGroup]) {
+        if (rawGroup && rawGroup !== '-' && rawGroup !== '--' && !groupMap[rawGroup]) {
           groupMap[rawGroup] = {
             rawGroup,
-            groupChange: (groupChangeJ && groupChangeJ !== 'nan') ? groupChangeJ : ((groupChangeK && groupChangeK !== 'nan') ? groupChangeK : '-'),
+            groupChange: (groupChangeJ && groupChangeJ !== 'nan' && groupChangeJ !== '-') ? groupChangeJ : ((groupChangeK && groupChangeK !== 'nan' && groupChangeK !== '-') ? groupChangeK : '0.00%'),
             members: []
           };
         }
@@ -1866,11 +1853,12 @@
           });
         }
 
-        if (id && id !== '-') {
+        // 排除無代號或代號為 '-'
+        if (id && id !== '-' && id !== '--') {
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
           const isLimitUp = (pctNum >= 9.5 && change > 0);
           const isLimitDown = (pctNum <= -9.5 && change < 0);
-          const sharedGroupChange = (groupMap[rawGroup] && groupMap[rawGroup].groupChange !== '-') ? groupMap[rawGroup].groupChange : (row[9] || '-');
+          const sharedGroupChange = (groupMap[rawGroup] && groupMap[rawGroup].groupChange !== '-') ? groupMap[rawGroup].groupChange : (row[9] || '0.00%');
 
           if (!stockMultiGroupMap[id]) stockMultiGroupMap[id] = [];
           stockMultiGroupMap[id].push({
@@ -1887,25 +1875,28 @@
             const sumVol = validVols.reduce((acc, cur) => acc + cur.numVal, 0);
             const avgVol10 = validVols.length > 0 ? (sumVol / validVols.length) : (volume || 1);
 
-            // 2. 歷史走勢取樣
+            // 2. 歷史十日走勢取樣
             const validPcts = tenDayHistory.filter(h => h.hasData);
             
-            // 💡 第三點：十日震盪整理嚴格檢驗（連續 10 天皆有數據，且漲跌幅均收斂在 ±2.0% 內）
-            const is10DaysConsolidation = (validPcts.length === 10) && validPcts.every(d => Math.abs(d.numVal) <= 2.0);
+            // 💡 第一點：嚴格震盪整理（複合累積極差 ≤ 4%，且 10 天內無任何一天波動 > 2%）
+            let runningCum = 0;
+            const cumVals = validPcts.map(p => {
+              runningCum += p.numVal;
+              return runningCum;
+            });
+            const cumRange = (cumVals.length === 10) ? (Math.max(...cumVals) - Math.min(...cumVals)) : 999;
+            const is10DaysConsolidation = (validPcts.length === 10) && (cumRange <= 4.0) && validPcts.every(d => Math.abs(d.numVal) <= 2.0);
 
             // 3. 量能倍數定義
             const volRatio = volume / (avgVol10 || 1);
             const isSurge = volRatio >= 2.0 && volume >= 500;
             const isHeavy = volRatio >= 1.3 && volume >= 300;
-            const isShrink = volRatio <= 0.65;
             const isDry = volRatio <= 0.35 && avgVol10 >= 300;
 
-            // ================= 💡 第二點：全面擴充價量關係指標 =================
-            // ① 漲跌停
+            // ================= 標籤精準判定 =================
             if (isLimitUp) badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
             else if (isLimitDown) badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
 
-            // ② 爆量長紅 / 爆量長黑
             if (pctNum >= 3.5 && isSurge) {
               badges.push({ text: '爆量長紅', color: 'bg-red-600 text-white border border-red-400 font-black shadow-sm' });
             }
@@ -1913,25 +1904,17 @@
               badges.push({ text: '爆量長黑', color: 'bg-purple-700 text-white border border-purple-400 font-black shadow-sm' });
             }
 
-            // ③ 價量關係四大象限：量價齊揚、量縮價跌、量縮價漲、帶量下殺
             if (pctNum >= 3.0 && isHeavy && !badges.some(b => b.text === '爆量長紅')) {
               badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
-            } else if (pctNum <= -1.5 && isShrink) {
-              badges.push({ text: '量縮價跌', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30 font-medium' });
-            } else if (pctNum >= 2.0 && isShrink) {
-              badges.push({ text: '量縮價漲', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30 font-medium' });
-            } else if (pctNum <= -2.0 && isHeavy && !badges.some(b => b.text === '爆量長黑')) {
-              badges.push({ text: '帶量下殺', color: 'bg-rose-700/20 text-rose-500 border border-rose-600/30 font-bold' });
             }
 
-            // ④ 爆量與窒息量 (高對比深底白字)
             if (isSurge && !badges.some(b => b.text.includes('長'))) {
               badges.push({ text: '爆量', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/40 font-bold' });
             } else if (isDry) {
               badges.push({ text: '窒息量', color: 'bg-slate-700 text-slate-100 border border-slate-500 font-bold shadow-sm' });
             }
 
-            // ⑤ 漲停必含強勢、跌停必含弱勢
+            // 漲停必含強勢、跌停必含弱勢
             if (pctNum >= 3.0 || isLimitUp) {
               badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold' });
             }
@@ -1939,7 +1922,6 @@
               badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold' });
             }
 
-            // ⑥ 十日震盪整理
             if (is10DaysConsolidation) {
               badges.push({ text: '十日震盪整理', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30 font-semibold' });
             }
@@ -1963,50 +1945,35 @@
         }
       }
 
+      // 💡 第五點：清理成員數為 0 或名稱異常的空族群
+      Object.keys(groupMap).forEach(key => {
+        if (groupMap[key].members.length === 0 || key === '-' || key === '--') {
+          delete groupMap[key];
+        }
+      });
+
       renderHotCards(Array.from(stockMap.values()));
       applyFilters();
     }
 
-    function renderHotCards(stocks) {
-      const top10 = stocks.sort((a, b) => b.turnover - a.turnover).slice(0, 10);
-      const container = document.getElementById('hotCardsContainer');
+    // 💡 第三點：嚴謹的 0 / 1 / 3 / 5 / 7 / 9% 細緻級距分色
+    function getDynamicColorTier(rawPct) {
+      const val = parseFloat(rawPct.toString().replace('%', '')) || 0;
+      if (val >= 9.0) return { bg: 'bg-red-600/30 border-red-500 text-red-400', badge: 'bg-red-600 text-white' };
+      if (val >= 7.0) return { bg: 'bg-red-500/25 border-red-500/80 text-red-400', badge: 'bg-red-500 text-white' };
+      if (val >= 5.0) return { bg: 'bg-red-500/20 border-red-500/60 text-red-400', badge: 'bg-red-500/80 text-white' };
+      if (val >= 3.0) return { bg: 'bg-red-500/15 border-red-500/40 text-stockRed', badge: 'bg-red-500/20 text-stockRed border border-red-500/40' };
+      if (val >= 1.0) return { bg: 'bg-red-500/10 border-red-500/20 text-stockRed', badge: 'bg-red-500/10 text-stockRed border border-red-500/30' };
+      if (val > 0.0)  return { bg: 'bg-red-500/5 border-red-500/15 text-stockRed', badge: 'bg-red-500/10 text-stockRed' };
 
-      container.innerHTML = top10.map(s => {
-        let priceBadgeClass = "text-slate-800 dark:text-slate-200 font-bold";
-        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.change > 0) priceBadgeClass = "text-stockRed font-black";
-        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-black";
+      if (val <= -9.0) return { bg: 'bg-emerald-600/30 border-emerald-500 text-emerald-400', badge: 'bg-emerald-600 text-white' };
+      if (val <= -7.0) return { bg: 'bg-emerald-500/25 border-emerald-500/80 text-emerald-400', badge: 'bg-emerald-500 text-white' };
+      if (val <= -5.0) return { bg: 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400', badge: 'bg-emerald-500/80 text-white' };
+      if (val <= -3.0) return { bg: 'bg-emerald-500/15 border-emerald-500/40 text-stockGreen', badge: 'bg-emerald-500/20 text-stockGreen border border-emerald-500/40' };
+      if (val <= -1.0) return { bg: 'bg-emerald-500/10 border-emerald-500/20 text-stockGreen', badge: 'bg-emerald-500/10 text-stockGreen border border-emerald-500/30' };
+      if (val < 0.0)   return { bg: 'bg-emerald-500/5 border-emerald-500/15 text-stockGreen', badge: 'bg-emerald-500/10 text-stockGreen' };
 
-        const pctColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
-        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-
-        return `
-          <div onclick="openStockModal('${s.id}')" class="cursor-pointer bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-3 hover:border-brand-500 hover:shadow-lg transition flex flex-col justify-between">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 sm:mb-1.5 gap-0.5 sm:gap-0">
-              <span class="stock-name font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate w-full sm:w-auto">${s.name}</span>
-              <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">${s.id}</span>
-            </div>
-            <div class="flex items-baseline justify-between mt-0.5 sm:mt-1">
-              <span class="stock-price text-xs sm:text-sm font-mono ${priceBadgeClass}">
-                ${s.price.toFixed(s.price >= 100 ? 1 : 2)}
-              </span>
-              <span class="text-[10px] sm:text-xs font-bold font-mono ${pctColor}">
-                ${formattedPct}
-              </span>
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function getSectorDynamicCardClass(rawChange) {
-      const val = parseFloat(rawChange.replace('%', '')) || 0;
-      if (val >= 3.0) return 'bg-gradient-to-br from-red-500/20 to-red-600/10 border-red-500/40 text-red-500';
-      if (val > 0) return 'bg-red-500/5 border-red-500/20 text-red-500';
-      if (val <= -3.0) return 'bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 border-emerald-500/40 text-emerald-500';
-      if (val < 0) return 'bg-emerald-500/5 border-emerald-500/20 text-emerald-500';
-      return 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400';
+      return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
     }
 
     function renderSectorCards(filteredStockList) {
@@ -2020,11 +1987,11 @@
       }
 
       container.innerHTML = groupEntries.map(([grpName, grpData]) => {
-        const cardStyle = getSectorDynamicCardClass(grpData.groupChange);
+        const tier = getDynamicColorTier(grpData.groupChange);
         const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
 
         return `
-          <div onclick="openSectorModal('${grpName}')" class="cursor-pointer border p-4 rounded-2xl transition hover:shadow-xl hover:scale-[1.01] flex flex-col justify-between space-y-3 ${cardStyle}">
+          <div onclick="openSectorModal('${grpName}')" class="cursor-pointer border p-4 rounded-2xl transition hover:shadow-xl hover:scale-[1.01] flex flex-col justify-between space-y-3 ${tier.bg}">
             <div>
               <div class="flex items-start justify-between gap-2">
                 <div>
@@ -2034,7 +2001,7 @@
                   </h3>
                   <span class="text-[10px] text-slate-400 font-mono mt-0.5 block">收錄 ${grpData.members.length} 檔公司題材</span>
                 </div>
-                <span class="font-mono text-sm font-black px-2.5 py-1 rounded-xl bg-white/70 dark:bg-slate-950/70 shadow-sm">
+                <span class="font-mono text-xs font-black px-2.5 py-1 rounded-xl shadow-sm ${tier.badge}">
                   ${grpData.groupChange}
                 </span>
               </div>
@@ -2053,6 +2020,7 @@
       }).join('');
     }
 
+    // 💡 第七點：手機版極度精簡，僅顯示股名、代號、收盤價、今日漲跌與漲跌幅
     function renderStockTable() {
       const tbody = document.getElementById('stockTableBody');
       tbody.innerHTML = filteredStocks.map(s => {
@@ -2076,25 +2044,25 @@
 
         return `
           <tr onclick="openStockModal('${s.id}')" class="hover:bg-slate-100/70 dark:hover:bg-slate-800/50 cursor-pointer transition border-b border-slate-100 dark:border-slate-800/40 last:border-0">
-            <td class="py-2.5 sm:py-3 px-1.5 sm:px-3 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
+            <td class="py-2.5 sm:py-3 px-2 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
               <button class="text-sm transition ${isStarred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-700 hover:text-amber-400'}">
                 <i class="${isStarred ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
               </button>
             </td>
-            <td class="py-2.5 sm:py-3 px-3 font-sans text-slate-700 dark:text-slate-300 font-medium hidden md:table-cell">
+            <td class="py-2.5 sm:py-3 px-3 font-sans text-slate-700 dark:text-slate-300 font-medium hidden sm:table-cell">
               <div class="font-bold">${s.group}</div>
               ${s.subGroup ? `<div class="text-[10px] text-slate-400 font-normal truncate max-w-[140px]">${s.subGroup}</div>` : ''}
             </td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-3">
-              <div class="font-sans font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap truncate w-16 sm:w-auto">${s.name}</div>
-              <div class="text-[9px] sm:text-[10px] text-slate-500 font-mono">${s.id}</div>
+              <div class="font-sans font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">${s.name}</div>
+              <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
             </td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
-            <td class="py-2.5 sm:py-3 px-3 text-right font-bold ${changeTextColor} hidden sm:table-cell">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
-            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden lg:table-cell">${s.volume.toLocaleString()}</td>
-            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden lg:table-cell">${s.cap.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center">${badgeHtml}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
+            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden sm:table-cell">${s.volume.toLocaleString()}</td>
+            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden md:table-cell">${s.cap.toFixed(2)}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center hidden sm:table-cell">${badgeHtml}</td>
           </tr>
         `;
       }).join('');
@@ -2130,8 +2098,9 @@
       applyFilters();
     }
 
-    // 💡 第五點：專屬「產業導覽型」族群彈窗，以公司題材介紹為核心
+    // 💡 第四點與第六點：族群彈窗（卡片導覽 + 依市值比例縮放的熱力圖）
     function openSectorModal(grpName) {
+      currentActiveSectorName = grpName;
       const grpData = groupMap[grpName];
       if (!grpData) return;
 
@@ -2139,20 +2108,51 @@
       const pctBadge = document.getElementById('modalSectorPct');
       pctBadge.textContent = grpData.groupChange;
 
-      const isUp = grpData.groupChange.includes('+') || (!grpData.groupChange.includes('-') && parseFloat(grpData.groupChange) > 0);
-      const isDown = grpData.groupChange.includes('-');
-      pctBadge.className = isUp ? 'text-xs sm:text-sm font-black font-mono px-2 py-0.5 rounded-md bg-red-500/15 text-stockRed' : (isDown ? 'text-xs sm:text-sm font-black font-mono px-2 py-0.5 rounded-md bg-green-500/15 text-stockGreen' : 'text-xs sm:text-sm font-black font-mono px-2 py-0.5 rounded-md bg-slate-500/15 text-slate-400');
-      document.getElementById('modalSectorSubtitle').textContent = `共收錄 ${grpData.members.length} 家產業標的 · 點擊卡片可深入檢視個股盤面與技術走勢`;
+      const tier = getDynamicColorTier(grpData.groupChange);
+      pctBadge.className = `text-xs sm:text-sm font-black font-mono px-2.5 py-0.5 rounded-md shadow-sm ${tier.badge}`;
+      document.getElementById('modalSectorSubtitle').textContent = `共收錄 ${grpData.members.length} 家產業標的 · 提供業務主軸導覽與熱力圖透視`;
 
-      const container = document.getElementById('modalSectorCardsGrid');
-      container.innerHTML = grpData.members.map(s => {
-        const isMUp = s.change >= 0;
-        const colorClass = isMUp ? 'text-stockRed' : 'text-stockGreen';
+      renderSectorModalContent(grpData);
+      document.getElementById('sectorDetailModal').classList.remove('hidden');
+    }
+
+    function closeSectorModal() {
+      document.getElementById('sectorDetailModal').classList.add('hidden');
+    }
+
+    function switchSectorModalMode(mode) {
+      currentSectorModalMode = mode;
+      const btnCards = document.getElementById('btnSectorModeCards');
+      const btnHeat = document.getElementById('btnSectorModeHeatmap');
+      const cardsGrid = document.getElementById('modalSectorCardsGrid');
+      const heatGrid = document.getElementById('modalSectorHeatmapGrid');
+
+      if (mode === 'cards') {
+        btnCards.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
+        btnHeat.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
+        cardsGrid.classList.remove('hidden');
+        heatGrid.classList.add('hidden');
+      } else {
+        btnHeat.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
+        btnCards.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
+        heatGrid.classList.remove('hidden');
+        cardsGrid.classList.add('hidden');
+      }
+      if (groupMap[currentActiveSectorName]) renderSectorModalContent(groupMap[currentActiveSectorName]);
+    }
+
+    function renderSectorModalContent(grpData) {
+      const cardsContainer = document.getElementById('modalSectorCardsGrid');
+      const heatContainer = document.getElementById('modalSectorHeatmapGrid');
+
+      // 1. 列表導覽模式（💡 第四點：卡片依個股漲跌幅套用 0/1/3/5/7/9% 色階）
+      cardsContainer.innerHTML = grpData.members.map(s => {
+        const cardTier = getDynamicColorTier(s.pctStr);
         const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
         const badgesHtml = (s.badges || []).map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] ${b.color}">${b.text}</span>`).join(' ');
 
         return `
-          <div onclick="closeSectorModal(); openStockModal('${s.id}')" class="cursor-pointer bg-slate-100/70 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800/80 hover:border-brand-500 hover:shadow-lg transition space-y-2.5">
+          <div onclick="closeSectorModal(); openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-2.5 ${cardTier.bg}">
             <div class="flex items-start justify-between">
               <div>
                 <div class="flex items-center space-x-2">
@@ -2161,7 +2161,7 @@
                 </div>
                 <div class="flex items-center space-x-2 mt-0.5">
                   <span class="text-xs font-black font-mono text-slate-800 dark:text-slate-200">${s.price.toFixed(2)}</span>
-                  <span class="text-xs font-bold font-mono ${colorClass}">${formattedPct}</span>
+                  <span class="text-xs font-bold font-mono ${s.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${formattedPct}</span>
                 </div>
               </div>
               <div class="flex flex-wrap gap-1 justify-end max-w-[140px]">${badgesHtml || '-'}</div>
@@ -2181,11 +2181,29 @@
         `;
       }).join('');
 
-      document.getElementById('sectorDetailModal').classList.remove('hidden');
-    }
+      // 2. 💡 第六點：市值熱力圖 (保證最小尺寸 min-w-[140px] min-h-[90px])
+      const totalCap = grpData.members.reduce((acc, cur) => acc + (cur.cap || 1), 0);
+      heatContainer.innerHTML = grpData.members.map(s => {
+        const sharePct = Math.max(((s.cap || 1) / totalCap) * 100, 15); // 至少佔 15% 彈性寬度
+        const heatTier = getDynamicColorTier(s.pctStr);
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
 
-    function closeSectorModal() {
-      document.getElementById('sectorDetailModal').classList.add('hidden');
+        return `
+          <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="flex: ${sharePct} 1 140px; min-height: 90px;" class="cursor-pointer p-3 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg}">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-black text-sm text-slate-900 dark:text-slate-100">${s.name}</div>
+                <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
+              </div>
+              <span class="font-mono text-[11px] font-black px-1.5 py-0.5 rounded ${heatTier.badge}">${formattedPct}</span>
+            </div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 flex justify-between items-baseline pt-1 border-t border-slate-200/40 dark:border-slate-800/40">
+              <span>市值: ${(s.cap || 0).toFixed(1)}億</span>
+              <span class="font-mono font-bold text-slate-700 dark:text-slate-200">${s.price.toFixed(2)}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
     }
 
     function handleStarClick(stockId) {
@@ -2444,7 +2462,6 @@
       `;
     }
 
-    // 💡 修復變數未定義之致命報錯 (firstVolDate is not defined)
     function renderStockVolTrend(stock) {
       const history = stock.tenDayVolHistory || [];
       const svgWrapper = document.getElementById('trendSvgWrapper_vol');
@@ -2496,7 +2513,6 @@
         </svg>
       `;
 
-      // 嚴謹解析日期字串
       const firstVolDate = history[0] ? history[0].dateHeader : '';
       const midVolDate = history[Math.floor(history.length / 2)] ? history[Math.floor(history.length / 2)].dateHeader : '';
       const lastVolDate = history[history.length - 1] ? history[history.length - 1].dateHeader : '';
