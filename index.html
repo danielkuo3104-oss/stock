@@ -2412,11 +2412,7 @@
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
-      // 初始化依目前模式顯示/隱藏
-      cardsContainer.style.display = currentSectorModalMode === 'cards' ? 'grid' : 'none';
-      heatContainer.style.display = currentSectorModalMode === 'heatmap' ? 'block' : 'none';
-
-      // 1. 列表導覽模式（維持標準卡片佈局）
+      // 1. 列表導覽模式內容
       cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
@@ -2455,7 +2451,7 @@
         `;
       }).join('');
 
-      // 2. 市值熱力圖模式：採用標準 Treemap 演算法配置矩形
+      // 2. 市值熱力圖模式：改為透明底色容器，讓矩形直接呈現卡片風格
       let rawNodes = grpData.members.map(s => ({
         id: s.id,
         name: s.name,
@@ -2466,61 +2462,67 @@
         pctStr: s.pctStr
       })).filter(n => n.marketCap > 0);
 
-      // 由大到小排序
       rawNodes.sort((a, b) => b.marketCap - a.marketCap);
 
-      // 設定熱力圖容器繪製尺寸
       const containerWidth = 600;
       const containerHeight = 360;
 
-      heatContainer.className = "relative w-full overflow-hidden rounded-3xl border border-slate-700 shadow-inner bg-slate-950";
+      // 移除原先的深色背景與邊框，改為透明清爽容器
+      heatContainer.className = "relative w-full overflow-hidden rounded-3xl bg-transparent";
       heatContainer.style.height = `${containerHeight}px`;
 
-      // 執行演算法計算各矩形座標
       const treemapLayout = computeTreemap(rawNodes, 0, 0, containerWidth, containerHeight);
 
       heatContainer.innerHTML = treemapLayout.map(node => {
-        const colorStyle = getHeatmapColor(node.pct);
+        const heatTier = getDynamicColorTier(node.pctStr || (node.pct >= 0 ? `+${node.pct}%` : `${node.pct}%`));
         const formattedPct = (node.pct >= 0 ? '+' : '') + node.pct.toFixed(2) + '%';
         const formattedChange = (node.change >= 0 ? '+' : '') + (node.change || 0).toFixed(2);
-        const priceColor = node.change >= 0 ? 'text-red-400' : 'text-emerald-400';
         
-        // 根據矩形大小決定是否顯示完整文字或精簡顯示
-        const isTooSmall = node.width < 55 || node.height < 50;
-        const isMicro = node.width < 35 || node.height < 35;
+        const isMicro = node.width < 45 || node.height < 45;
+        const isTooSmall = node.width < 90 || node.height < 75;
 
         let innerContent = '';
         if (isMicro) {
-          innerContent = `<div class="text-[9px] font-mono text-center truncate px-1">${node.id}</div>`;
+          innerContent = `
+            <div class="flex flex-col items-center justify-center h-full p-1 text-slate-900 dark:text-white">
+              <span class="text-[10px] font-black truncate">${node.name}</span>
+              <span class="text-[9px] font-mono opacity-90">${formattedPct}</span>
+            </div>
+          `;
         } else if (isTooSmall) {
           innerContent = `
-            <div class="text-center p-1 flex flex-col justify-center h-full">
-              <div class="text-[10px] font-bold truncate">${node.name}</div>
-              <div class="text-[9px] font-mono opacity-90">${formattedPct}</div>
+            <div class="flex flex-col justify-between h-full p-2.5 text-slate-900 dark:text-white pointer-events-none">
+              <div class="flex justify-between items-start">
+                <span class="font-black text-xs truncate">${node.name}</span>
+                <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
+              </div>
+              <div class="text-[9px] font-mono opacity-75 truncate">市值:${Math.round(node.marketCap)}億</div>
             </div>
           `;
         } else {
           innerContent = `
-            <div class="flex flex-col justify-between h-full p-3 pointer-events-none">
-              <div class="flex justify-between items-start gap-1">
-                <div>
-                  <span class="font-black text-sm sm:text-base truncate">${node.name}</span>
-                  <span class="text-[9px] font-mono opacity-75 ml-1">${node.id}</span>
+            <div class="flex flex-col justify-between h-full p-3.5 text-slate-900 dark:text-white pointer-events-none">
+              <div class="flex items-start justify-between gap-1">
+                <div class="min-w-0">
+                  <div class="font-black text-sm sm:text-base truncate">${node.name}</div>
+                  <div class="text-[10px] opacity-75 font-mono">${node.id}</div>
                 </div>
-                <span class="font-mono text-xs font-bold px-1.5 py-0.5 rounded bg-black/30 shrink-0">${formattedPct}</span>
+                <span class="font-mono text-xs font-black px-2 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
               </div>
-              <div class="text-center font-mono my-auto">
-                <span class="text-base sm:text-lg font-black ${priceColor}">${node.price.toFixed(2)}</span>
+
+              <div class="my-auto py-1">
+                <span class="text-base sm:text-lg font-black font-mono">${node.price.toFixed(2)}</span>
+                <span class="text-[10px] font-bold font-mono ml-1 opacity-90">(${formattedChange})</span>
               </div>
-              <div class="text-[9px] font-mono opacity-75 flex justify-between pt-1 border-t border-white/10">
-                <span>市值:${Math.round(node.marketCap)}億</span>
-                <span>點擊看線圖</span>
+
+              <div class="text-[10px] opacity-75 pt-1 border-t border-black/10 dark:border-white/20 flex justify-between">
+                <span>市值: ${Math.round(node.marketCap)}億</span>
+                <span class="font-semibold">點擊查線圖</span>
               </div>
             </div>
           `;
         }
 
-        // 轉換為百分比絕對定位
         const leftPercent = (node.x / containerWidth) * 100;
         const topPercent = (node.y / containerHeight) * 100;
         const widthPercent = (node.width / containerWidth) * 100;
@@ -2529,8 +2531,8 @@
         return `
           <div onclick="closeSectorModal(); openStockModal('${node.id}')" 
                title="${node.name} (${node.id}) | 市值: ${Math.round(node.marketCap)}億 | 漲跌幅: ${formattedPct}"
-               style="position: absolute; left: calc(${leftPercent}% + 2px); top: calc(${topPercent}% + 2px); width: calc(${widthPercent}% - 4px); height: calc(${heightPercent}% - 4px); ${colorStyle}" 
-               class="cursor-pointer rounded-2xl border border-white/15 transition hover:scale-[1.01] hover:z-10 shadow-md flex flex-col justify-between overflow-hidden">
+               style="position: absolute; left: calc(${leftPercent}% + 3px); top: calc(${topPercent}% + 3px); width: calc(${widthPercent}% - 6px); height: calc(${heightPercent}% - 6px);" 
+               class="cursor-pointer rounded-2xl border transition hover:scale-[1.01] hover:z-10 shadow-md ${heatTier.bg} overflow-hidden">
             ${innerContent}
           </div>
         `;
