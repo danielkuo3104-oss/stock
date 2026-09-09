@@ -1570,11 +1570,30 @@
 
     async function fetchAndParseCsv(isSilent = false) {
       try {
+        console.log("正在發送 fetch 請求至 Google 試算表...");
         const cacheBuster = '&_t=' + new Date().getTime();
-        const res = await fetch(CSV_STOCKS_URL + cacheBuster);
+        
+        // 加入 8 秒逾時機制，避免卡住
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+        const res = await fetch(CSV_STOCKS_URL + cacheBuster, { signal: controller.signal });
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          throw new Error(`HTTP 錯誤！狀態碼: ${res.status}`);
+        }
+
         const text = await res.text();
+        console.log("CSV 資料抓取成功，字元數:", text.length);
         parseCsvData(text, isSilent);
-      } catch (e) {}
+      } catch (e) {
+        console.error("CSV 抓取失敗或逾時：", e);
+        const countEl = document.getElementById('tableCountInfo');
+        if (countEl) {
+          countEl.innerHTML = '<span class="text-rose-500 font-bold">資料載入逾時或受阻，請點擊上方重新整理按鈕</span>';
+        }
+      }
     }
 
     function parseCsvData(csvText, isSilent = false) {
