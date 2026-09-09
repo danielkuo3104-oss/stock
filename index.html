@@ -2451,16 +2451,14 @@
 
       // 在 renderSectorModalContent 內部的 heatContainer.innerHTML 替換這段計算
     heatContainer.innerHTML = grpData.members.map(s => {
-      // 確保取得正確的市值數字 (對應 G 欄)
       const capVal = parseFloat(s.cap) || 100;
-      
-      // 以族群中最大的市值作為基準進行比例縮放 (確保面積完全正比於市值)
+      const minCap = Math.min(...grpData.members.map(m => parseFloat(m.cap) || 100));
       const maxCap = Math.max(...grpData.members.map(m => parseFloat(m.cap) || 100));
-      const ratio = Math.max(capVal / maxCap, 0.2); // 最小保留 20% 避免過小
       
-      // 計算絕對的寬度與最小高度
-      const widthPx = Math.round(140 + ratio * 320);
-      const heightPx = Math.round(110 + ratio * 180);
+      // 計算相對於最大市值的百分比寬度 (範圍限制在 30% 到 100% 之間)
+      const spanRatio = maxCap === minCap ? 1 : (capVal - minCap) / (maxCap - minCap);
+      const widthPercent = Math.round(35 + spanRatio * 62); // 讓最小的佔 35%、最大的佔 97%
+      const minHeight = Math.round(110 + spanRatio * 90);
 
       const heatTier = getDynamicColorTier(s.pctStr || '0%');
       const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
@@ -2468,7 +2466,7 @@
       const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
 
       return `
-        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPx}px; min-height: ${heightPx}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg}">
+        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="flex: 0 0 ${widthPercent}%; min-height: ${minHeight}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg}">
           <div class="flex items-start justify-between">
             <div>
               <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">${s.name}</div>
