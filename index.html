@@ -997,7 +997,10 @@
       document.getElementById('modalStockChange').textContent = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
       document.getElementById('modalStockPct').textContent = stock.pctStr;
       document.getElementById('modalStockVolume').textContent = stock.volume.toLocaleString();
-      document.getElementById('modalStockTurnover').textContent = Math.round(stock.turnover / 10000).toLocaleString()document.getElementById(' 千萬';
+      const turnoverYi = stock.turnover / 100000000;
+      document.getElementById('modalStockTurnover').textContent = turnoverYi >= 1 
+        ? turnoverYi.toFixed(2) + ' 億' 
+        : Math.round(stock.turnover / 10000).toLocaleString() + ' 萬';
       document.getElementById('modalStockCap').textContent = stock.cap.toFixed(2);
       document.getElementById('modalStockNote1').textContent = stock.note1 || '暫無核心業務摘要';
       document.getElementById('modalStockNote2').textContent = stock.note2 || '暫無產業題材說明';
@@ -2109,7 +2112,7 @@
               cap, weight, contribution, groupChange: sharedGroupChange,
               note1, note2, volume, badges,
               avgVol10: Math.round(avgVol10),
-              turnover: volume * price,
+              turnover: volume * 1000 * price,
               isLimitUp, isLimitDown,
               tenDayHistory, tenDayVolHistory
             };
