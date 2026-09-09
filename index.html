@@ -2244,7 +2244,6 @@
         mainGroupHierarchy[mg].push(g);
       });
 
-      // 根據漲跌趴數大小動態計算圓點的顏色與深淺階層
       const getDotColorClass = (pctStr) => {
         const val = parseFloat(pctStr.toString().replace('%', '')) || 0;
         if (val >= 7.0) return 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.7)]';
@@ -2269,8 +2268,9 @@
           const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
           const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
 
+          // 移除 bg-white / dark:bg-slate-900，由 tier.bg 呈現淡紅與淡綠色階
           return `
-            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-2xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 bg-white dark:bg-slate-900 ${tier.bg} shadow-sm">
+            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-2xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 shadow-sm ${tier.bg}">
               <div class="flex items-center justify-between gap-1">
                 <div>
                   <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">${displayName}</h4>
@@ -2280,7 +2280,7 @@
                   ${groupPctStr}
                 </span>
               </div>
-              <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
+              <div class="pt-1.5 border-t border-slate-200/50 dark:border-slate-800/60 flex items-center justify-between text-[10px]">
                 <span class="text-slate-500 dark:text-slate-400">焦點：</span>
                 ${topLeader ? `
                   <span class="font-bold text-slate-800 dark:text-slate-200">
@@ -2310,55 +2310,6 @@
               ${subCardsHtml}
             </div>
           </div>
-        `;
-      }).join('');
-    }
-
-    function renderStockTable() {
-      const tbody = document.getElementById('stockTableBody');
-      if (!tbody) return;
-
-      tbody.innerHTML = filteredStocks.map(s => {
-        let priceBadgeClass = "font-bold text-slate-800 dark:text-slate-200";
-        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.change > 0) priceBadgeClass = "text-stockRed font-bold";
-        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-bold";
-
-        const changeTextColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
-        const isStarred = userWatchlist.has(s.id);
-        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-
-        let badgeHtml = '<span class="text-slate-300 dark:text-slate-700">-</span>';
-        if (s.badges && s.badges.length > 0) {
-          const firstBadge = s.badges[0];
-          const moreCount = s.badges.length - 1;
-          const morePill = moreCount > 0 ? `<span onclick="event.stopPropagation(); openStockModal('${s.id}')" class="ml-0.5 sm:ml-1 px-1 sm:px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold hover:text-brand-500 cursor-pointer">+${moreCount}</span>` : '';
-          badgeHtml = `<span class="inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap ${firstBadge.color}">${firstBadge.text}</span>${morePill}`;
-        }
-
-        return `
-          <tr onclick="openStockModal('${s.id}')" class="hover:bg-slate-100/70 dark:hover:bg-slate-800/50 cursor-pointer transition border-b border-slate-100 dark:border-slate-800/40 last:border-0">
-            <td class="py-2.5 sm:py-3 px-2 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
-              <button class="text-sm transition ${isStarred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-700 hover:text-amber-400'}">
-                <i class="${isStarred ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
-              </button>
-            </td>
-            <td class="py-2.5 sm:py-3 px-3 font-sans text-slate-700 dark:text-slate-300 font-medium hidden sm:table-cell">
-              <div class="font-bold">${s.group}</div>
-              ${s.subGroup ? `<div class="text-[10px] text-slate-400 font-normal truncate max-w-[140px]">${s.subGroup}</div>` : ''}
-            </td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3">
-              <div class="font-sans font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">${s.name}</div>
-              <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
-            </td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
-            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden sm:table-cell">${s.volume.toLocaleString()}</td>
-            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden md:table-cell">${s.cap.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center hidden sm:table-cell">${badgeHtml}</td>
-          </tr>
         `;
       }).join('');
     }
