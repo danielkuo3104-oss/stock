@@ -2924,6 +2924,40 @@
         msgBox.textContent = "連線異常，請檢查 Apps Script 後端部署。";
       }
     }
+
+    function renderHotCards(stocks) {
+      const top10 = stocks.sort((a, b) => b.turnover - a.turnover).slice(0, 10);
+      const container = document.getElementById('hotCardsContainer');
+      if (!container) return;
+
+      container.innerHTML = top10.map(s => {
+        let priceBadgeClass = "text-slate-800 dark:text-slate-200 font-bold";
+        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
+        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
+        else if (s.change > 0) priceBadgeClass = "text-stockRed font-black";
+        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-black";
+
+        const pctColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
+
+        return `
+          <div onclick="openStockModal('${s.id}')" class="cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-3 hover:border-brand-500 hover:shadow-lg transition flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 sm:mb-1.5 gap-0.5 sm:gap-0">
+              <span class="stock-name font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate w-full sm:w-auto">${s.name}</span>
+              <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">${s.id}</span>
+            </div>
+            <div class="flex items-baseline justify-between mt-0.5 sm:mt-1">
+              <span class="stock-price text-xs sm:text-sm font-mono ${priceBadgeClass}">
+                ${s.price.toFixed(s.price >= 100 ? 1 : 2)}
+              </span>
+              <span class="text-[10px] sm:text-xs font-bold font-mono ${pctColor}">
+                ${formattedPct}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
   </script>
 </body>
 </html>
