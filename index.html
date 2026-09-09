@@ -2254,9 +2254,8 @@
           const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
           const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
 
-          // 💡 關鍵修正：加入 bg-white dark:bg-slate-900 墊底，徹底阻絕大卡片的底色透上來
           return `
-            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 bg-white dark:bg-slate-900 ${tier.bg}">
+            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-2xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 bg-white dark:bg-slate-900 ${tier.bg} shadow-sm">
               <div class="flex items-center justify-between gap-1">
                 <div>
                   <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">${displayName}</h4>
@@ -2266,7 +2265,7 @@
                   ${groupPctStr}
                 </span>
               </div>
-              <div class="pt-1.5 border-t border-slate-200/50 dark:border-slate-800/60 flex items-center justify-between text-[10px]">
+              <div class="pt-1.5 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-[10px]">
                 <span class="text-slate-500 dark:text-slate-400">焦點：</span>
                 ${topLeader ? `
                   <span class="font-bold text-slate-800 dark:text-slate-200">
@@ -2278,22 +2277,22 @@
           `;
         }).join('');
 
-        // 大卡片外框也墊上純底，避免被底層頁面干擾
+        // 大卡片外框設定純色厚底背景 (bg-slate-50 dark:bg-slate-950)，並以 mainTier 邊框與柔和底色標記主族群
         return `
-          <div class="sector-category-card p-4 rounded-3xl border shadow-sm space-y-3 bg-slate-50 dark:bg-slate-950/80 ${mainTier.bg}">
-            <div class="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/70 pb-2">
+          <div class="sector-category-card w-full inline-block mb-4 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 bg-slate-50 dark:bg-slate-950/90 ${mainTier.bg}">
+            <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-800 pb-2.5">
               <div class="flex items-center space-x-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
                 <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">${mainGroupName}</h3>
               </div>
               <div class="flex items-center space-x-2">
-                <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${mainTier.badge}">
+                <span class="font-mono text-xs font-black px-2.5 py-0.5 rounded-lg shadow-sm ${mainTier.badge}">
                   ${mainGroupChange}
                 </span>
                 <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">${subGroups.length} 個子板塊</span>
               </div>
             </div>
-            <div class="space-y-2">
+            <div class="space-y-2.5">
               ${subCardsHtml}
             </div>
           </div>
