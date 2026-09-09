@@ -2412,6 +2412,7 @@
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
+      // 1. 列表導覽模式內容渲染
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
         const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
@@ -2449,48 +2450,46 @@
         `;
       }).join('');
 
-      // 在 renderSectorModalContent 內部的 heatContainer.innerHTML 替換這段計算
-    heatContainer.innerHTML = grpData.members.map(s => {
-      const capVal = parseFloat(s.cap) || 100;
-      const totalCap = grpData.members.reduce((acc, m) => acc + (parseFloat(m.cap) || 100), 0) || 100;
-      
-      // 計算市值權重 (0 ~ 1)
-      const weight = capVal / totalCap;
-      
-      // 根據權重的平方根計算寬高比例 (平方根能完美對應面積大小的視覺直覺)
-      const scale = Math.sqrt(weight);
-      
-      // 轉換成像素寬高（讓總體面積形成一個緊密長方形，大市值大、小市值小）
-      const widthPx = Math.max(Math.round(scale * 460), 120);
-      const heightPx = Math.max(Math.round(scale * 240), 75);
+      // 2. 市值熱力圖模式內容渲染 (依市值由大到小排序並使用 12 欄網格比例)
+      const sortedMembers = [...grpData.members].sort((a, b) => (b.cap || 0) - (a.cap || 0));
+      const totalCap = sortedMembers.reduce((acc, m) => acc + (parseFloat(m.cap) || 100), 0) || 100;
 
-      const heatTier = getDynamicColorTier(s.pctStr || '0%');
-      const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-      const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
-      const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+      heatContainer.className = "grid grid-cols-12 gap-3 w-full items-stretch";
 
-      return `
-        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPx}px; height: ${heightPx}px;" class="cursor-pointer p-3 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden shrink-0">
-          <div class="flex items-start justify-between gap-1">
-            <div class="min-w-0">
-              <div class="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">${s.name}</div>
-              <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
+      heatContainer.innerHTML = sortedMembers.map(s => {
+        const capVal = parseFloat(s.cap) || 100;
+        const weight = capVal / totalCap;
+        
+        // 依照市值比例分配 12 欄中的跨欄數 (最小佔 4 欄，最大佔 12 欄)
+        const colSpan = Math.max(Math.min(Math.round(weight * 12), 12), 4);
+
+        const heatTier = getDynamicColorTier(s.pctStr || '0%');
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
+        const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
+        const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+
+        return `
+          <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="grid-column: span ${colSpan};" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.01] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden min-h-[115px]">
+            <div class="flex items-start justify-between gap-1">
+              <div class="min-w-0">
+                <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${s.name}</div>
+                <div class="text-[10px] text-slate-400 font-mono">${s.id}</div>
+              </div>
+              <span class="font-mono text-xs font-black px-2 py-0.5 rounded shrink-0 ${heatTier.badge}">${formattedPct}</span>
             </div>
-            <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shrink-0 ${heatTier.badge}">${formattedPct}</span>
-          </div>
 
-          <div class="my-auto py-0.5 text-center">
-            <span class="text-sm sm:text-base font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
-            <span class="text-[10px] font-bold font-mono ml-0.5 ${priceColor}">(${formattedChange})</span>
-          </div>
+            <div class="my-auto py-1">
+              <span class="text-lg sm:text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
+              <span class="text-[11px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
+            </div>
 
-          <div class="text-[9px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
-            <span>市值: ${(s.cap || 0).toFixed(0)}億</span>
-            <span class="font-semibold">點擊查線圖</span>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
+              <span>市值: ${(s.cap || 0).toFixed(0)}億</span>
+              <span class="font-semibold">點擊查線圖</span>
+            </div>
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
     }
 
     function handleStarClick(stockId) {
