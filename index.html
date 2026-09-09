@@ -2452,15 +2452,15 @@
       // 在 renderSectorModalContent 內部的 heatContainer.innerHTML 替換這段計算
     heatContainer.innerHTML = grpData.members.map(s => {
       const capVal = parseFloat(s.cap) || 100;
-      const minCap = Math.min(...grpData.members.map(m => parseFloat(m.cap) || 100));
-      const maxCap = Math.max(...grpData.members.map(m => parseFloat(m.cap) || 100));
+      const totalCap = grpData.members.reduce((acc, m) => acc + (parseFloat(m.cap) || 100), 0) || 100;
       
-      // 計算相對於最大市值的平方根比例（開根號能讓面積比例更符合人類視覺對大小的直覺）
-      const ratio = maxCap === minCap ? 1 : Math.sqrt((capVal - minCap) / (maxCap - minCap + 1));
+      // 計算該標的佔該族群總市值的比例 (0 ~ 1)
+      const share = capVal / totalCap;
       
-      // 計算絕對的像素寬度與高度（最大塊明顯較大，最小塊明顯較小）
-      const widthPx = Math.round(150 + ratio * 280);
-      const heightPx = Math.round(100 + ratio * 130);
+      // 換算成百分比寬度（最小保留 28% 確保版面不擠壓，大市值會自動佔據更多寬度）
+      const widthPercent = Math.max(Math.round(share * 100), 28);
+      // 高度也根據市值比例微調，讓面積大小更加直覺
+      const heightPx = Math.max(Math.round(95 + share * 110), 95);
 
       const heatTier = getDynamicColorTier(s.pctStr || '0%');
       const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
@@ -2468,7 +2468,7 @@
       const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
 
       return `
-        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPx}px; height: ${heightPx}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden shrink-0">
+        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPercent}%; min-height: ${heightPx}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden">
           <div class="flex items-start justify-between gap-1">
             <div class="min-w-0">
               <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${s.name}</div>
