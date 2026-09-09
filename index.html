@@ -285,7 +285,7 @@
       </div>
 
       <div id="modalSectorCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2.5 w-full min-h-[340px] items-stretch content-start"></div>
+      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2.5 w-full min-h-[360px] items-stretch content-start"></div>
     </div>
   </div>
 
@@ -408,7 +408,7 @@
   </div>
 
   <!-- 個股詳細資訊彈窗 Modal -->
-  <div id="stockDetailModal" onclick="handleModalBgClick(event, 'stockDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <div id="stockDetailModal" onclick="handleModalBgClick(event, 'stockDetailModal')" class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
@@ -540,9 +540,9 @@
       </div>
 
       <div class="flex border-b border-slate-200 dark:border-slate-800 mb-6 text-xs sm:text-sm">
-        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500">會員登入</button>
-        <button id="tabRegisterSub" onclick="switchAuthTab('regSub')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 whitespace-nowrap">已訂閱開通</button>
-        <button id="tabRegisterNew" onclick="switchAuthTab('regNew')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">全新註冊</button>
+        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer">會員登入</button>
+        <button id="tabRegisterSub" onclick="switchAuthTab('regSub')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 whitespace-nowrap cursor-pointer">已訂閱開通</button>
+        <button id="tabRegisterNew" onclick="switchAuthTab('regNew')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">全新註冊</button>
       </div>
 
       <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
@@ -642,21 +642,6 @@
     </div>
   </div>
 
-  <!-- 系統免責宣告 Toast -->
-  <div id="toastDisclaimer" class="fixed bottom-5 right-5 z-40 max-w-[90vw] sm:max-w-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 rounded-2xl shadow-2xl flex items-start space-x-3 transition transform translate-y-28 opacity-0">
-    <i class="fa-solid fa-circle-exclamation text-brand-500 text-lg mt-0.5"></i>
-    <div class="flex-1 text-xs text-slate-600 dark:text-slate-300">
-      <h4 class="font-bold text-slate-900 dark:text-slate-100 mb-1">系統免責聲明與盤面狀態</h4>
-      <p id="disclaimerBody" class="leading-relaxed text-slate-500 dark:text-slate-400">
-        本系統資訊可能存在錯誤或傳輸延後，不構成任何投資建議。
-      </p>
-      <div id="dateNotice" class="mt-2 text-amber-500 font-medium"></div>
-    </div>
-    <button onclick="closeDisclaimer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
-      <i class="fa-solid fa-xmark"></i>
-    </button>
-  </div>
-
   <!-- 主頁內容區 -->
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
     <div class="sticky top-0 z-40 w-full shadow-sm">
@@ -702,13 +687,6 @@
               <i class="fa-solid fa-right-from-bracket"></i>
             </button>
           </div>
-        </div>
-        
-        <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
-          <a href="javascript:void(0)" onclick="navigateTo('home')" id="navHomeMobile" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
-          <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSectorMobile" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
-          <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenterMobile" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>個人化</span></a>
-          <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center"><i class="fa-regular fa-envelope text-lg"></i></a>
         </div>
       </header>
 
@@ -1332,7 +1310,7 @@
       }
     }
 
-    // 💡 修正：加上 async function 宣告，確保正確讀取 H 欄 (index 7) 關注清單
+    // 💡 修正：加上 async function 宣告，並正確解析 H 欄 (index 7) 雲端關注清單
     async function preloadMembersFromSheet() {
       try {
         const res = await fetch(CSV_MEMBERS_URL);
@@ -1497,6 +1475,7 @@
       } catch (e) {}
     }
 
+    // 💡 核心：將星號關注清單直接透過後端回傳並寫入試算表 H 欄
     function saveWatchlist() {
       const watchlistArr = Array.from(userWatchlist);
       localStorage.setItem('sectorpulse_watchlist', JSON.stringify(watchlistArr));
@@ -1511,23 +1490,27 @@
 
         const countInfoBox = document.getElementById('tableCountInfo');
         if (countInfoBox) {
-          countInfoBox.innerHTML = '<span class="text-brand-500 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> 同步關注清單中...</span>';
+          countInfoBox.innerHTML = '<span class="text-brand-500 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> 同步至試算表雲端中...</span>';
         }
 
         fetch(BACKEND_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'updateWatchlist', email: currentUser.email, watchlist: JSON.stringify(watchlistArr) })
+          body: JSON.stringify({ 
+            action: 'updateWatchlist', 
+            email: currentUser.email, 
+            watchlist: JSON.stringify(watchlistArr) 
+          })
         })
         .then(res => res.json())
-        .then(() => {
+        .then(data => {
           if (countInfoBox) {
-            countInfoBox.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 已同步關注清單</span>';
+            countInfoBox.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 雲端關注清單已同步</span>';
           }
           setTimeout(applyFilters, 1500);
         })
         .catch(() => {
           if (countInfoBox) {
-            countInfoBox.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation"></i> 同步失敗</span>';
+            countInfoBox.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation"></i> 雲端同步失敗</span>';
           }
           setTimeout(applyFilters, 1500);
         });
@@ -1543,6 +1526,7 @@
         try {
           currentUser = JSON.parse(stored);
           
+          // 💡 從試算表快取或使用者暫存恢復星號清單
           let activeWl = currentUser.watchlist;
           if (!activeWl && memberListCache.length > 0) {
             const matchMem = memberListCache.find(m => m.email === currentUser.email);
@@ -1629,6 +1613,13 @@
 
       if (email === ADMIN_EMAIL && (pass === 'daniel' || pass === 'danielkuo3104')) {
         currentUser = { name: '郭丹騏', email: ADMIN_EMAIL, role: 'admin', tier: '萬年韭皇' };
+        
+        // 嘗試從預載快取讀取管理員雲端關注清單
+        const adminMem = memberListCache.find(m => m.email === ADMIN_EMAIL);
+        if (adminMem && adminMem.watchlist) {
+          currentUser.watchlist = adminMem.watchlist;
+        }
+
         finalizeLogin(remember);
         if (btn) {
           btn.disabled = false;
@@ -1646,6 +1637,13 @@
         if (result.success) {
           currentUser = result.user;
           if (!currentUser.tier) currentUser.tier = '初級韭菜';
+          
+          // 如果後端沒回傳 watchlist，從 memberListCache 補抓
+          if (!currentUser.watchlist) {
+            const matchMem = memberListCache.find(m => m.email === email);
+            if (matchMem) currentUser.watchlist = matchMem.watchlist;
+          }
+
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
             localStorage.setItem('sectorpulse_watchlist', JSON.stringify(currentUser.watchlist));
