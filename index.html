@@ -2412,12 +2412,12 @@
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
-      // 初始化依目前模式顯示/隱藏
+      // 初始化依目前模式顯示/隱藏（使用已宣告的 container 變數）
       if (currentSectorModalMode === 'cards') {
         cardsContainer.classList.remove('hidden');
-        heatGrid.classList.add('hidden');
+        heatContainer.classList.add('hidden');
       } else {
-        heatGrid.classList.remove('hidden');
+        heatContainer.classList.remove('hidden');
         cardsContainer.classList.add('hidden');
       }
 
@@ -2460,7 +2460,7 @@
         `;
       }).join('');
 
-      // 2. 市值熱力圖模式：套用 Treemap 演算法，並為收盤價與漲跌加上對應顏色
+      // 2. 市值熱力圖模式：套用 Treemap 演算法
       let rawNodes = grpData.members.map(s => ({
         id: s.id,
         name: s.name,
@@ -2486,7 +2486,6 @@
         const formattedPct = (node.pct >= 0 ? '+' : '') + node.pct.toFixed(2) + '%';
         const formattedChange = (node.change >= 0 ? '+' : '') + (node.change || 0).toFixed(2);
         
-        // 賦予收盤價與漲跌金額紅綠色
         const priceColor = node.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
         
         const isMicro = node.width < 45 || node.height < 45;
