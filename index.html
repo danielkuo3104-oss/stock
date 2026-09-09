@@ -57,7 +57,7 @@
     .large-font .market-val { font-size: 2.2rem !important; }
     .large-font table { font-size: 0.98rem !important; }
 
-    /* 族群選股區瀑布流排版 */
+    /* 💡 族群選股區緊密堆疊瀑布流排版 */
     #sectorCardsGrid {
       column-count: 1;
       column-gap: 1rem;
@@ -240,7 +240,7 @@
     </div>
   </div>
 
-  <!-- 族群導覽型成分股詳情 Modal (z-50) -->
+  <!-- 族群導覽型成分股詳情 Modal -->
   <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
@@ -270,7 +270,7 @@
       </div>
 
       <div id="modalSectorCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2.5 w-full min-h-[360px] items-stretch content-start"></div>
+      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2.5 w-full min-h-[340px] items-stretch content-start"></div>
     </div>
   </div>
 
@@ -392,8 +392,8 @@
     </div>
   </div>
 
-  <!-- 個股詳細資訊彈窗 Modal (z-[60]，浮在族群彈窗之上) -->
-  <div id="stockDetailModal" onclick="handleModalBgClick(event, 'stockDetailModal')" class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+  <!-- 個股詳細資訊彈窗 Modal -->
+  <div id="stockDetailModal" onclick="handleModalBgClick(event, 'stockDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
         <div>
@@ -817,7 +817,7 @@
         <div id="hotCardsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
       </section>
 
-      <!-- 內容切換核心區塊 (左右滑軌支援) -->
+      <!-- 內容切換核心區塊 -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -867,36 +867,27 @@
           </div>
         </div>
 
-        <!-- 💡 左右滑動分頁滑軌容器 -->
-        <div class="overflow-hidden w-full">
-          <div id="pageSliderTrack" class="flex w-[200%] transition-transform duration-500 ease-out">
-            <!-- 第 1 頁：首頁個股全清單 -->
-            <div id="pageHomeView" class="w-1/2 shrink-0 pr-1 sm:pr-2">
-              <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[540px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
-                <table class="w-full text-left text-xs border-collapse">
-                  <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
-                    <tr>
-                      <th class="py-2.5 px-3 text-center w-8">關注</th>
-                      <th class="py-2.5 px-3 hidden sm:table-cell">族群類別</th>
-                      <th class="py-2.5 px-3">標的</th>
-                      <th class="py-2.5 px-3 text-right">收盤價</th>
-                      <th class="py-2.5 px-3 text-right">當日漲跌</th>
-                      <th class="py-2.5 px-3 text-right">漲跌幅</th>
-                      <th class="py-2.5 px-3 text-right hidden sm:table-cell">成交量 (張)</th>
-                      <th class="py-2.5 px-3 text-right hidden md:table-cell">市值 (億)</th>
-                      <th class="py-2.5 px-3 text-center hidden sm:table-cell">動態特徵</th>
-                    </tr>
-                  </thead>
-                  <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono"></tbody>
-                </table>
-              </div>
-            </div>
+        <!-- 族群選股瀑布流卡片容器 -->
+        <div id="sectorCardsGrid" class="hidden"></div>
 
-            <!-- 第 2 頁：族群選股瀑布流總覽 -->
-            <div id="pageSectorView" class="w-1/2 shrink-0 pl-1 sm:pr-2">
-              <div id="sectorCardsGrid"></div>
-            </div>
-          </div>
+        <!-- 首頁時顯示：全個股清單 -->
+        <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs border-collapse">
+            <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
+              <tr>
+                <th class="py-2.5 px-3 text-center w-8">關注</th>
+                <th class="py-2.5 px-3 hidden sm:table-cell">族群類別</th>
+                <th class="py-2.5 px-3">標的</th>
+                <th class="py-2.5 px-3 text-right">收盤價</th>
+                <th class="py-2.5 px-3 text-right">當日漲跌</th>
+                <th class="py-2.5 px-3 text-right">漲跌幅</th>
+                <th class="py-2.5 px-3 text-right hidden sm:table-cell">成交量 (張)</th>
+                <th class="py-2.5 px-3 text-right hidden md:table-cell">市值 (億)</th>
+                <th class="py-2.5 px-3 text-center hidden sm:table-cell">動態特徵</th>
+              </tr>
+            </thead>
+            <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono"></tbody>
+          </table>
         </div>
 
         <div class="flex justify-between items-center text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 pt-1">
@@ -1017,11 +1008,12 @@
 
       document.getElementById('modalStockName').textContent = stock.name;
       document.getElementById('modalStockId').textContent = stock.id;
-      
+      // 判斷漲跌趨勢（紅綠色系）
       const isUp = stock.change > 0 || (stock.pctNum && stock.pctNum > 0);
       const isDown = stock.change < 0 || (stock.pctNum && stock.pctNum < 0);
       const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-800 dark:text-slate-200');
 
+      // 帶入數值與對應的漲跌顏色
       document.getElementById('modalStockPrice').textContent = stock.price.toFixed(2);
       document.getElementById('modalStockPrice').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
 
@@ -1061,7 +1053,7 @@
       const peerContainer = document.getElementById('modalPeerStocks');
       if (peerGroup && peerGroup.members) {
         peerContainer.innerHTML = peerGroup.members.slice(0, 6).map(p => `
-          <div onclick="openStockModal('${p.id}')" class="cursor-pointer flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-xs">
+          <div onclick="openStockModal('${p.id}')" class="cursor-pointer flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 transition text-xs">
             <span class="font-bold">${p.name} (${p.id})</span>
             <span class="font-mono ${p.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${p.price.toFixed(2)} (${p.pctStr})</span>
           </div>
@@ -1072,11 +1064,7 @@
 
       renderStockTrend(stock);
       renderStockVolTrend(stock);
-
-      const modalEl = document.getElementById('stockDetailModal');
-      // 設定高層級 z-[60]，浮在族群彈窗上方
-      modalEl.className = "fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4";
-      modalEl.classList.remove('hidden');
+      document.getElementById('stockDetailModal').classList.remove('hidden');
     }
 
     function closeStockModal() {
@@ -1084,7 +1072,6 @@
       currentModalStockId = null;
     }
 
-    // 💡 左右滑動切換頁面
     function navigateTo(tabName) {
       currentTab = tabName;
       const navHome = document.getElementById('navHome');
@@ -1095,11 +1082,12 @@
       const mainMarketSection = document.getElementById('mainMarketSection');
       const hotSection = document.getElementById('hotSection');
       const miniBar = document.getElementById('stickyMiniBar');
+      const grid = document.getElementById('sectorCardsGrid');
+      const table = document.getElementById('stockListContainer');
       const tagFilterSec = document.getElementById('tagFilterSection');
       const titleText = document.getElementById('sectionTitleText');
       const subtitleText = document.getElementById('sectionSubtitleText');
       const hintText = document.getElementById('tableHintText');
-      const sliderTrack = document.getElementById('pageSliderTrack');
 
       if (tabName === 'home') {
         navHome.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
@@ -1109,11 +1097,10 @@
 
         mainMarketSection.classList.remove('hidden');
         hotSection.classList.remove('hidden');
+        grid.classList.add('hidden');
+        table.classList.remove('hidden');
         tagFilterSec.classList.remove('hidden');
-
-        // 水平推移到第 1 頁
-        if (sliderTrack) sliderTrack.style.transform = 'translateX(0%)';
-
+        
         titleText.textContent = '族群選股列表';
         subtitleText.textContent = '左右滑動瀏覽，點擊列可展開詳情';
         hintText.textContent = '提示：點擊任一檔股票即可查看完整雙層加權與備註';
@@ -1128,10 +1115,9 @@
         miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
         miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
 
+        table.classList.add('hidden');
+        grid.classList.remove('hidden');
         tagFilterSec.classList.add('hidden');
-
-        // 水平推移到第 2 頁
-        if (sliderTrack) sliderTrack.style.transform = 'translateX(-50%)';
 
         titleText.textContent = '族群板塊總覽';
         subtitleText.textContent = '點擊卡片瀏覽成分股題材，探索產業鏈動能';
@@ -1139,6 +1125,7 @@
       }
 
       applyFilters();
+      document.getElementById('groupSection').scrollIntoView({ behavior: 'smooth' });
     }
 
     function openBadgeGuideModal() {
@@ -2205,25 +2192,10 @@
         `;
       }).join('');
     }
-function getDynamicColorTier(rawPct) {
-      if (rawPct === undefined || rawPct === null || rawPct === '') {
-        return { 
-          bg: 'bg-slate-100/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400', 
-          badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' 
-        };
-      }
 
+    function getDynamicColorTier(rawPct) {
+      if (!rawPct) return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
       const val = parseFloat(rawPct.toString().replace('%', '')) || 0;
-
-      // 嚴格隔離平盤 0%（灰階樣式）
-      if (Math.abs(val) < 0.001) {
-        return { 
-          bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300', 
-          badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' 
-        };
-      }
-
-      // 紅色系 (漲)
       if (val >= 9.0) return { bg: 'bg-red-600/30 border-red-500 text-red-400', badge: 'bg-red-600 text-white' };
       if (val >= 7.0) return { bg: 'bg-red-500/25 border-red-500/80 text-red-400', badge: 'bg-red-500 text-white' };
       if (val >= 5.0) return { bg: 'bg-red-500/20 border-red-500/60 text-red-400', badge: 'bg-red-500/80 text-white' };
@@ -2231,7 +2203,6 @@ function getDynamicColorTier(rawPct) {
       if (val >= 1.0) return { bg: 'bg-red-500/10 border-red-500/20 text-stockRed', badge: 'bg-red-500/10 text-stockRed border border-red-500/30' };
       if (val > 0.0)  return { bg: 'bg-red-500/5 border-red-500/15 text-stockRed', badge: 'bg-red-500/10 text-stockRed' };
 
-      // 綠色系 (跌)
       if (val <= -9.0) return { bg: 'bg-emerald-600/30 border-emerald-500 text-emerald-400', badge: 'bg-emerald-600 text-white' };
       if (val <= -7.0) return { bg: 'bg-emerald-500/25 border-emerald-500/80 text-emerald-400', badge: 'bg-emerald-500 text-white' };
       if (val <= -5.0) return { bg: 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400', badge: 'bg-emerald-500/80 text-white' };
@@ -2239,96 +2210,127 @@ function getDynamicColorTier(rawPct) {
       if (val <= -1.0) return { bg: 'bg-emerald-500/10 border-emerald-500/20 text-stockGreen', badge: 'bg-emerald-500/10 text-stockGreen border border-emerald-500/30' };
       if (val < 0.0)   return { bg: 'bg-emerald-500/5 border-emerald-500/15 text-stockGreen', badge: 'bg-emerald-500/10 text-stockGreen' };
 
-      return { 
-        bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300', 
-        badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' 
-      };
+      return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
     }
 
-    // 💡 修正板塊大卡片外框跟隨漲跌色階，不再是灰色
     function renderSectorCards(filteredStockList) {
-      const container = document.getElementById('sectorCardsGrid');
-      if (!container) return;
+  const container = document.getElementById('sectorCardsGrid');
+  if (!container) return;
 
-      const groupEntries = Object.values(groupMap);
-      if (groupEntries.length === 0) {
-        container.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-xs">暫無族群資料</div>';
-        return;
-      }
+  const groupEntries = Object.values(groupMap);
+  if (groupEntries.length === 0) {
+    container.innerHTML = '<div class="col-span-full py-8 text-center text-slate-400 text-xs">暫無族群資料</div>';
+    return;
+  }
 
-      const mainGroupHierarchy = {};
-      groupEntries.forEach(g => {
-        const mg = g.mainGroup || '其他產業';
-        if (!mainGroupHierarchy[mg]) mainGroupHierarchy[mg] = [];
-        mainGroupHierarchy[mg].push(g);
-      });
+  const mainGroupHierarchy = {};
+  groupEntries.forEach(g => {
+    const mg = g.mainGroup || '其他產業';
+    if (!mainGroupHierarchy[mg]) mainGroupHierarchy[mg] = [];
+    mainGroupHierarchy[mg].push(g);
+  });
 
-      const getDotColorClass = (pctStr) => {
-        const val = parseFloat(pctStr.toString().replace('%', '')) || 0;
-        if (val >= 7.0) return 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.7)]';
-        if (val >= 4.0) return 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]';
-        if (val >= 1.5) return 'bg-red-400';
-        if (val > 0.0)  return 'bg-red-300 dark:bg-red-400/80';
-        if (val <= -7.0) return 'bg-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.7)]';
-        if (val <= -4.0) return 'bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]';
-        if (val <= -1.5) return 'bg-emerald-400';
-        if (val < 0.0)   return 'bg-emerald-300 dark:bg-emerald-400/80';
-        return 'bg-slate-400 dark:bg-slate-500';
-      };
+  container.innerHTML = Object.entries(mainGroupHierarchy).map(([mainGroupName, subGroups]) => {
+    // 取得該主族群底下第一個子板塊的加權漲跌幅（對應 K 欄數據）作為主族群代表
+    const mainGroupChange = subGroups.length > 0 ? (subGroups[0].groupChange || '0.00%') : '0.00%';
+    const mainTier = getDynamicColorTier(mainGroupChange);
 
-      container.innerHTML = Object.entries(mainGroupHierarchy).map(([mainGroupName, subGroups]) => {
-        const mainGroupChange = subGroups.length > 0 ? (subGroups[0].groupChange || '0.00%') : '0.00%';
-        const mainTier = getDynamicColorTier(mainGroupChange);
-        const dotColor = getDotColorClass(mainGroupChange);
+    const subCardsHtml = subGroups.map(grpData => {
+      const groupPctStr = (grpData.groupChange && grpData.groupChange !== '-' && grpData.groupChange !== 'nan') ? grpData.groupChange : '0.00%';
+      const tier = getDynamicColorTier(groupPctStr);
+      const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
+      const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
 
-        const subCardsHtml = subGroups.map(grpData => {
-          const groupPctStr = (grpData.groupChange && grpData.groupChange !== '-' && grpData.groupChange !== 'nan') ? grpData.groupChange : '0.00%';
-          const tier = getDynamicColorTier(groupPctStr);
-          const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
-          const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
-
-          // 移除 bg-white / dark:bg-slate-900，由 tier.bg 呈現淡紅與淡綠色階
-          return `
-            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-2xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 shadow-sm ${tier.bg}">
-              <div class="flex items-center justify-between gap-1">
-                <div>
-                  <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">${displayName}</h4>
-                  <span class="text-[9px] text-slate-400 font-mono">${grpData.members.length} 檔成分股</span>
-                </div>
-                <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${tier.badge}">
-                  ${groupPctStr}
-                </span>
-              </div>
-              <div class="pt-1.5 border-t border-slate-200/50 dark:border-slate-800/60 flex items-center justify-between text-[10px]">
-                <span class="text-slate-500 dark:text-slate-400">焦點：</span>
-                ${topLeader ? `
-                  <span class="font-bold text-slate-800 dark:text-slate-200">
-                    ${topLeader.name} <span class="font-mono ${topLeader.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${topLeader.pctStr}</span>
-                  </span>
-                ` : '<span class="text-slate-400">--</span>'}
-              </div>
+      return `
+        <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 ${tier.bg}">
+          <div class="flex items-center justify-between gap-1">
+            <div>
+              <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">${displayName}</h4>
+              <span class="text-[9px] text-slate-400 font-mono">${grpData.members.length} 檔成分股</span>
             </div>
-          `;
-        }).join('');
+            <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${tier.badge}">
+              ${groupPctStr}
+            </span>
+          </div>
+          <div class="pt-1.5 border-t border-slate-200/40 dark:border-slate-800/50 flex items-center justify-between text-[10px]">
+            <span class="text-slate-500 dark:text-slate-400">焦點：</span>
+            ${topLeader ? `
+              <span class="font-bold text-slate-800 dark:text-slate-200">
+                ${topLeader.name} <span class="font-mono ${topLeader.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${topLeader.pctStr}</span>
+              </span>
+            ` : '<span class="text-slate-400">--</span>'}
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    return `
+      <div class="sector-category-card bg-slate-50 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-2">
+          <div class="flex items-center space-x-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+            <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">${mainGroupName}</h3>
+          </div>
+          <div class="flex items-center space-x-2">
+            <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${mainTier.badge}">
+              ${mainGroupChange}
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">${subGroups.length} 個子板塊</span>
+          </div>
+        </div>
+        <div class="space-y-2">
+          ${subCardsHtml}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+    function renderStockTable() {
+      const tbody = document.getElementById('stockTableBody');
+      if (!tbody) return;
+
+      tbody.innerHTML = filteredStocks.map(s => {
+        let priceBadgeClass = "font-bold text-slate-800 dark:text-slate-200";
+        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
+        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
+        else if (s.change > 0) priceBadgeClass = "text-stockRed font-bold";
+        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-bold";
+
+        const changeTextColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
+        const isStarred = userWatchlist.has(s.id);
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
+
+        let badgeHtml = '<span class="text-slate-300 dark:text-slate-700">-</span>';
+        if (s.badges && s.badges.length > 0) {
+          const firstBadge = s.badges[0];
+          const moreCount = s.badges.length - 1;
+          const morePill = moreCount > 0 ? `<span onclick="event.stopPropagation(); openStockModal('${s.id}')" class="ml-0.5 sm:ml-1 px-1 sm:px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold hover:text-brand-500 cursor-pointer">+${moreCount}</span>` : '';
+          badgeHtml = `<span class="inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap ${firstBadge.color}">${firstBadge.text}</span>${morePill}`;
+        }
 
         return `
-          <div class="sector-category-card w-full inline-block mb-4 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3 bg-slate-100/70 dark:bg-slate-900/80">
-            <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-800/80 pb-2.5">
-              <div class="flex items-center space-x-2">
-                <span class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${dotColor}"></span>
-                <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">${mainGroupName}</h3>
-              </div>
-              <div class="flex items-center space-x-2">
-                <span class="font-mono text-xs font-black px-2.5 py-0.5 rounded-lg shadow-sm ${mainTier.badge}">
-                  ${mainGroupChange}
-                </span>
-                <span class="text-[10px] text-slate-500 dark:text-slate-400 font-mono">${subGroups.length} 個子板塊</span>
-              </div>
-            </div>
-            <div class="space-y-2.5">
-              ${subCardsHtml}
-            </div>
-          </div>
+          <tr onclick="openStockModal('${s.id}')" class="hover:bg-slate-100/70 dark:hover:bg-slate-800/50 cursor-pointer transition border-b border-slate-100 dark:border-slate-800/40 last:border-0">
+            <td class="py-2.5 sm:py-3 px-2 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
+              <button class="text-sm transition ${isStarred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-700 hover:text-amber-400'}">
+                <i class="${isStarred ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
+              </button>
+            </td>
+            <td class="py-2.5 sm:py-3 px-3 font-sans text-slate-700 dark:text-slate-300 font-medium hidden sm:table-cell">
+              <div class="font-bold">${s.group}</div>
+              ${s.subGroup ? `<div class="text-[10px] text-slate-400 font-normal truncate max-w-[140px]">${s.subGroup}</div>` : ''}
+            </td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-3">
+              <div class="font-sans font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">${s.name}</div>
+              <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
+            </td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
+            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden sm:table-cell">${s.volume.toLocaleString()}</td>
+            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden md:table-cell">${s.cap.toFixed(2)}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center hidden sm:table-cell">${badgeHtml}</td>
+          </tr>
         `;
       }).join('');
     }
@@ -2410,10 +2412,11 @@ function getDynamicColorTier(rawPct) {
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
+      // 嚴格依據當前模式切換顯示與隱藏
       cardsContainer.style.display = currentSectorModalMode === 'cards' ? 'grid' : 'none';
       heatContainer.style.display = currentSectorModalMode === 'heatmap' ? 'block' : 'none';
 
-      // 1. 列表導覽模式內容（點擊個股不關閉族群彈窗）
+      // 1. 列表導覽模式內容
       cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
@@ -2423,7 +2426,7 @@ function getDynamicColorTier(rawPct) {
         const badgesHtml = (s.badges || []).map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] ${b.color}">${b.text}</span>`).join(' ');
 
         return `
-          <div onclick="openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-3 ${cardTier.bg}">
+          <div onclick="closeSectorModal(); openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-3 ${cardTier.bg}">
             <div class="flex items-start justify-between">
               <div>
                 <div class="flex items-center space-x-2">
@@ -2567,7 +2570,7 @@ function getDynamicColorTier(rawPct) {
         const heightPercent = (node.height / containerHeight) * 100;
 
         return `
-          <div onclick="openStockModal('${node.id}')" 
+          <div onclick="closeSectorModal(); openStockModal('${node.id}')" 
                title="${node.name} (${node.id}) | 市值: ${Math.round(node.marketCap)}億 | 漲跌幅: ${formattedPct}"
                style="position: absolute; left: calc(${leftPercent}% + 2px); top: calc(${topPercent}% + 2px); width: calc(${widthPercent}% - 4px); height: calc(${heightPercent}% - 4px);" 
                class="cursor-pointer rounded-2xl border transition hover:scale-[1.01] hover:z-10 shadow-sm ${heatTier.bg} overflow-hidden">
@@ -2577,10 +2580,31 @@ function getDynamicColorTier(rawPct) {
       }).join('');
     }
 
+    // 取得基於漲跌幅的熱力圖顏色 (深紅到深綠，最大區間 10%)
+    function getHeatmapColor(pct) {
+      const val = parseFloat(pct) || 0;
+      const MAX_PCT = 10.0;
+      const intensity = Math.min(Math.abs(val) / MAX_PCT, 1);
+
+      if (val > 0) {
+        // 紅色系：從淺紅到深紅
+        const lightness = Math.round(88 - intensity * 35); // 88% -> 53%
+        return `background-color: hsl(0, 80%, ${lightness}%); color: #ffffff;`;
+      } else if (val < 0) {
+        // 綠色系：從淺綠到深綠
+        const lightness = Math.round(88 - intensity * 35);
+        return `background-color: hsl(145, 65%, ${lightness}%); color: #ffffff;`;
+      } else {
+        // 中性色 (0%)
+        return `background-color: #334155; color: #cbd5e1;`;
+      }
+    }
+
     // Squarified Treemap 遞迴排版演算法
     function computeTreemap(nodes, x, y, width, height) {
       if (!nodes || nodes.length === 0) return [];
 
+      // 若只剩一項，直接填滿剩餘區域
       if (nodes.length === 1) {
         return [{
           ...nodes[0],
@@ -2598,9 +2622,11 @@ function getDynamicColorTier(rawPct) {
       let currentSum = 0;
       let splitIndex = 1;
 
+      // 尋找最佳切分點，使矩形長寬比盡量接近 1
       for (let i = 0; i < nodes.length; i++) {
         currentSum += nodes[i].marketCap;
         if (currentSum >= halfTotal && i > 0) {
+          // 選擇更接近的一邊
           const diff1 = Math.abs(currentSum - halfTotal);
           const diff2 = Math.abs(currentSum - nodes[i].marketCap - halfTotal);
           if (diff2 < diff1) splitIndex = i;
@@ -2618,10 +2644,12 @@ function getDynamicColorTier(rawPct) {
 
       let results = [];
       if (width >= height) {
+        // 寬大於高：進行垂直切割（左右分配）
         const w1 = width * ratio1;
         results = results.concat(computeTreemap(group1, x, y, w1, height));
         results = results.concat(computeTreemap(group2, x + w1, y, width - w1, height));
       } else {
+        // 高大於寬：進行水平切割（上下分配）
         const h1 = height * ratio1;
         results = results.concat(computeTreemap(group1, x, y, width, h1));
         results = results.concat(computeTreemap(group2, x, y + h1, width, height - h1));
