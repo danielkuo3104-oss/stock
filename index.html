@@ -2750,6 +2750,42 @@
         <span class="text-amber-500 font-bold">${lastVolDate} (最新)</span>
       `;
     }
+
+    // 💡 補齊遺漏的維護狀態設定函式 (給管理員控制台使用)
+    async function setMaintenanceStatus(isMaint) {
+      const msgBox = document.getElementById('adminStatusMsg');
+      if (!msgBox) return;
+      
+      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
+      msgBox.textContent = isMaint ? "正在切換為系統維護中..." : "正在切換為正常運行...";
+
+      try {
+        const res = await fetch(BACKEND_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'setMaintenance',
+            isMaintenance: isMaint,
+            admin: ADMIN_EMAIL
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+          msgBox.textContent = isMaint ? "已成功切換為維護狀態 (已寫入 AS11)" : "已成功切換為正常運行狀態";
+          isCurrentMaintenance = isMaint;
+          updateAdminStatusIndicator(isMaint);
+          if (currentUser && currentUser.email !== ADMIN_EMAIL) {
+            document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isMaint);
+          }
+        } else {
+          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+          msgBox.textContent = "切換失敗：" + (result.message || '未知錯誤');
+        }
+      } catch (e) {
+        msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+        msgBox.textContent = "連線異常，請檢查 Apps Script 後端部署。";
+      }
+    }
   </script>
 </body>
 </html>
