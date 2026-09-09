@@ -2412,6 +2412,8 @@
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
+      // 1. 列表導覽模式（維持標準卡片佈局）
+      cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
         const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
@@ -2449,46 +2451,152 @@
         `;
       }).join('');
 
-      // 在 renderSectorModalContent 內部的 heatContainer.innerHTML 替換這段計算
-    heatContainer.innerHTML = grpData.members.map(s => {
-      const capVal = parseFloat(s.cap) || 100;
-      const totalCap = grpData.members.reduce((acc, m) => acc + (parseFloat(m.cap) || 100), 0) || 100;
-      
-      // 計算該標的佔該族群總市值的比例 (0 ~ 1)
-      const share = capVal / totalCap;
-      
-      // 換算成百分比寬度（最小保留 28% 確保版面不擠壓，大市值會自動佔據更多寬度）
-      const widthPercent = Math.max(Math.round(share * 100), 28);
-      // 高度也根據市值比例微調，讓面積大小更加直覺
-      const heightPx = Math.max(Math.round(95 + share * 110), 95);
+      // 2. 市值熱力圖模式：採用標準 Treemap 演算法配置矩形
+      // 準備數據：將成員轉換為演算法需要的格式（marketCap 使用市值 cap，pct 使用 pctNum）
+      let rawNodes = grpData.members.map(s => ({
+        id: s.id,
+        name: s.name,
+        marketCap: parseFloat(s.cap) || 10,
+        pct: s.pctNum || 0,
+        price: s.price
+      })).filter(n => n.marketCap > 0);
 
-      const heatTier = getDynamicColorTier(s.pctStr || '0%');
-      const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-      const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
-      const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+      // 由大到小排序
+      rawNodes.sort((a, b) => b.marketCap - a.marketCap);
 
-      return `
-        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPercent}%; min-height: ${heightPx}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden">
-          <div class="flex items-start justify-between gap-1">
-            <div class="min-w-0">
-              <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${s.name}</div>
-              <div class="text-[10px] text-slate-400 font-mono">${s.id}</div>
+      // 設定熱力圖容器繪製尺寸（例如寬 600 px，高 350 px）
+      const containerWidth = 600;
+      const containerHeight = 360;
+
+      heatContainer.className = "relative w-full overflow-hidden rounded-2xl border border-slate-700 shadow-inner bg-slate-950";
+      heatContainer.style.height = `${containerHeight}px`;
+
+      // 執行演算法計算各矩形座標
+      const treemapLayout = computeTreemap(rawNodes, 0, 0, containerWidth, containerHeight);
+
+      heatContainer.innerHTML = treemapLayout.map(node => {
+        const colorStyle = getHeatmapColor(node.pct);
+        const formattedPct = (node.pct >= 0 ? '+' : '') + node.pct.toFixed(2) + '%';
+        
+        // 根據矩形大小決定是否顯示完整文字或精簡顯示
+        const isTooSmall = node.width < 50 || node.height < 45;
+        const isMicro = node.width < 30 || node.height < 30;
+
+        let innerContent = '';
+        if (isMicro) {
+          innerContent = `<div class="text-[9px] font-mono text-center truncate">${node.id}</div>`;
+        } else if (isTooSmall) {
+          innerContent = `
+            <div class="text-center">
+              <div class="text-[10px] font-bold truncate">${node.name}</div>
+              <div class="text-[9px] font-mono opacity-80">${formattedPct}</div>
             </div>
-            <span class="font-mono text-xs font-black px-2 py-0.5 rounded shrink-0 ${heatTier.badge}">${formattedPct}</span>
-          </div>
+          `;
+        } else {
+          innerContent = `
+            <div class="flex flex-col justify-between h-full p-1.5 pointer-events-none">
+              <div class="flex justify-between items-start">
+                <span class="font-black text-xs sm:text-sm truncate">${node.name}</span>
+                <span class="font-mono text-[10px] font-bold opacity-90">${formattedPct}</span>
+              </div>
+              <div class="text-center font-mono text-[10px] opacity-75">${node.id}</div>
+            </div>
+          `;
+        }
 
-          <div class="my-auto py-1">
-            <span class="text-lg sm:text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
-            <span class="text-[11px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
-          </div>
+        // 轉換為百分比絕對定位（支援響應式容器）
+        const leftPercent = (node.x / containerWidth) * 100;
+        const topPercent = (node.y / containerHeight) * 100;
+        const widthPercent = (node.width / containerWidth) * 100;
+        const heightPercent = (node.height / containerHeight) * 100;
 
-          <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
-            <span>市值: ${(s.cap || 0).toFixed(0)}億</span>
-            <span class="font-semibold">點擊查線圖</span>
+        return `
+          <div onclick="closeSectorModal(); openStockModal('${node.id}')" 
+               title="${node.name} (${node.id}) | 市值: ${node.marketCap}億 | 漲跌幅: ${formattedPct}"
+               style="position: absolute; left: ${leftPercent}%; top: ${topPercent}%; width: ${widthPercent}%; height: ${heightPercent}%; ${colorStyle}" 
+               class="cursor-pointer border border-slate-900/40 transition hover:brightness-110 hover:z-10 flex flex-col justify-between overflow-hidden text-white">
+            ${innerContent}
           </div>
-        </div>
-      `;
-    }).join('');
+        `;
+      }).join('');
+    }
+
+    // 取得基於漲跌幅的熱力圖顏色 (深紅到深綠，最大區間 10%)
+    function getHeatmapColor(pct) {
+      const val = parseFloat(pct) || 0;
+      const MAX_PCT = 10.0;
+      const intensity = Math.min(Math.abs(val) / MAX_PCT, 1);
+
+      if (val > 0) {
+        // 紅色系：從淺紅到深紅
+        const lightness = Math.round(88 - intensity * 35); // 88% -> 53%
+        return `background-color: hsl(0, 80%, ${lightness}%); color: #ffffff;`;
+      } else if (val < 0) {
+        // 綠色系：從淺綠到深綠
+        const lightness = Math.round(88 - intensity * 35);
+        return `background-color: hsl(145, 65%, ${lightness}%); color: #ffffff;`;
+      } else {
+        // 中性色 (0%)
+        return `background-color: #334155; color: #cbd5e1;`;
+      }
+    }
+
+    // Squarified Treemap 遞迴排版演算法
+    function computeTreemap(nodes, x, y, width, height) {
+      if (!nodes || nodes.length === 0) return [];
+
+      // 若只剩一項，直接填滿剩餘區域
+      if (nodes.length === 1) {
+        return [{
+          ...nodes[0],
+          x: Math.round(x),
+          y: Math.round(y),
+          width: Math.max(Math.round(width), 1),
+          height: Math.max(Math.round(height), 1)
+        }];
+      }
+
+      const totalValue = nodes.reduce((sum, n) => sum + n.marketCap, 0);
+      if (totalValue <= 0) return [];
+
+      let halfTotal = totalValue / 2;
+      let currentSum = 0;
+      let splitIndex = 1;
+
+      // 尋找最佳切分點，使矩形長寬比盡量接近 1
+      for (let i = 0; i < nodes.length; i++) {
+        currentSum += nodes[i].marketCap;
+        if (currentSum >= halfTotal && i > 0) {
+          // 選擇更接近的一邊
+          const diff1 = Math.abs(currentSum - halfTotal);
+          const diff2 = Math.abs(currentSum - nodes[i].marketCap - halfTotal);
+          if (diff2 < diff1) splitIndex = i;
+          else splitIndex = i + 1;
+          break;
+        }
+      }
+      splitIndex = Math.max(1, Math.min(splitIndex, nodes.length - 1));
+
+      const group1 = nodes.slice(0, splitIndex);
+      const group2 = nodes.slice(splitIndex);
+
+      const sum1 = group1.reduce((s, n) => s + n.marketCap, 0);
+      const ratio1 = sum1 / totalValue;
+
+      let results = [];
+      if (width >= height) {
+        // 寬大於高：進行垂直切割（左右分配）
+        const w1 = width * ratio1;
+        results = results.concat(computeTreemap(group1, x, y, w1, height));
+        results = results.concat(computeTreemap(group2, x + w1, y, width - w1, height));
+      } else {
+        // 高大於寬：進行水平切割（上下分配）
+        const h1 = height * ratio1;
+        results = results.concat(computeTreemap(group1, x, y, width, h1));
+        results = results.concat(computeTreemap(group2, x, y + h1, width, height - h1));
+      }
+
+      return results;
     }
 
     function handleStarClick(stockId) {
