@@ -1728,6 +1728,200 @@
         }
       } catch (e) {}
     }
+
+    // ==========================================
+// 1. 管理員彈窗 控制函式 (修復 openAdminPanel is not defined)
+// ==========================================
+function openAdminPanel() {
+  const el = document.getElementById('adminPanelModal');
+  if (el) el.classList.remove('hidden');
+}
+
+function closeAdminPanel() {
+  const el = document.getElementById('adminPanelModal');
+  if (el) el.classList.add('hidden');
+}
+
+function updateAdminStatusIndicator(isMaintenance) {
+  const badge = document.getElementById('adminCurrentStatusBadge');
+  const text = document.getElementById('adminCurrentStatusText');
+  if (!badge || !text) return;
+
+  if (isMaintenance) {
+    badge.className = "px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-rose-500/10 text-rose-500 border-rose-500/20";
+    text.textContent = "維護中";
+  } else {
+    badge.className = "px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20";
+    text.textContent = "正常運行";
+  }
+}
+
+// ==========================================
+// 2. CSV 解析器 (修復 fetchAndParseCsv is not defined)
+// ==========================================
+function parseCsvRow(rowText) {
+  const result = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < rowText.length; i++) {
+    const c = rowText[i];
+    if (c === '"') {
+      if (inQuotes && rowText[i + 1] === '"') {
+        cur += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (c === ',' && !inQuotes) {
+      result.push(cur);
+      cur = '';
+    } else {
+      cur += c;
+    }
+  }
+  result.push(cur);
+  return result;
+}
+
+async function fetchAndParseCsv() {
+  try {
+    const res = await fetch(CSV_STOCKS_URL + '&_t=' + Date.now());
+    const text = await res.text();
+    const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
+    
+    rawCsvGrid = lines.map(line => parseCsvRow(line));
+
+    // 檢查 AS11 維護狀態 (第 11 列，索引 10；AS 欄為第 45 欄，索引 44)
+    if (rawCsvGrid.length >= 11 && rawCsvGrid[10].length >= 45) {
+      const maintenanceCell = rawCsvGrid[10][44].trim();
+      isCurrentMaintenance = (maintenanceCell === '維護中');
+      updateAdminStatusIndicator(isCurrentMaintenance);
+      
+      if (currentUser && currentUser.role !== 'admin') {
+        const overlay = document.getElementById('maintenanceOverlay');
+        if (overlay) overlay.classList.toggle('hidden', !isCurrentMaintenance);
+      }
+    }
+
+    // 💡 讀取 AS14 開始的公告 (第 14 列，索引 13 開始)
+    loadAnnouncementsFromCsvGrid();
+
+    // 更新資料時間戳記
+    const tsEl = document.getElementById('dataTimestamp');
+    if (tsEl) {
+      const now = new Date();
+      tsEl.textContent = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    }
+
+    // 解析股票與大盤資料
+    parseMarketData();
+    parseStockRows();
+    applyFilters();
+  } catch (err) {
+    console.error("CSV 資料取得解析錯誤：", err);
+  }
+}
+
+// ==========================================
+// 3. 讀取並展示 AS14 開始的公告欄
+// ==========================================
+function loadAnnouncementsFromCsvGrid() {
+  const announcements = [];
+  // 從第 14 列 (索引 13) 遍歷至結尾
+  for (let r = 13; r < rawCsvGrid.length; r++) {
+    if (rawCsvGrid[r].length >= 45) {
+      const msg = rawCsvGrid[r][44]?.trim();
+      if (msg) {
+        announcements.push(msg);
+      }
+    }
+  }
+
+  if (announcements.length > 0) {
+    originalAnnouncements = announcements;
+    const marquee = document.getElementById('marqueeContainer');
+    if (marquee) {
+      marquee.textContent = originalAnnouncements.join(' ❖ ');
+    }
+  }
+}
+
+// 基礎大盤與個股架構示範解析
+function parseMarketData() {
+  if (rawCsvGrid.length < 2) return;
+  // 依據你的試算表加權指數欄位填入（假設位於前幾列）
+  const marketValEl = document.getElementById('marketIndex');
+  if (marketValEl && marketValEl.textContent === '--') {
+    marketValEl.textContent = "加載完成";
+  }
+}
+
+function parseStockRows() {
+  if (rawCsvGrid.length < 2) return;
+  // 示範提取資料列（略過 Header 列）
+  parsedStocks = rawCsvGrid.slice(1).map((r, idx) => ({
+    id: r[0] || '',
+    name: r[1] || '',
+    price: parseFloat(r[2]) || 0,
+    change: parseFloat(r[3]) || 0,
+    pct: parseFloat(r[4]) || 0,
+    vol: parseFloat(r[5]) || 0,
+    marketCap: parseFloat(r[6]) || 0,
+    group: r[7] || '未分類',
+    tag: r[8] || ''
+  })).filter(s => s.id && s.name);
+}
+
+function applyFilters() {
+  const tbody = document.getElementById('stockTableBody');
+  const countInfo = document.getElementById('tableCountInfo');
+  if (!tbody) return;
+
+  const kw = document.getElementById('stockFilterInput')?.value.trim().toLowerCase() || '';
+  
+  filteredStocks = parsedStocks.filter(s => {
+    const matchKw = !kw || s.id.toLowerCase().includes(kw) || s.name.toLowerCase().includes(kw) || s.group.toLowerCase().includes(kw);
+    const matchTag = currentTagFilter === 'ALL' || s.tag.includes(currentTagFilter);
+    return matchKw && matchTag;
+  });
+
+  tbody.innerHTML = filteredStocks.slice(0, 50).map(s => `
+    <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 cursor-pointer transition">
+      <td class="py-2.5 px-3 text-center">
+        <button onclick="toggleWatch('${s.id}')" class="text-slate-400 hover:text-amber-400">
+          <i class="fa-${userWatchlist.has(s.id) ? 'solid text-amber-400' : 'regular'} fa-star"></i>
+        </button>
+      </td>
+      <td class="py-2.5 px-3 hidden sm:table-cell text-slate-500">${s.group}</td>
+      <td class="py-2.5 px-3 font-bold text-slate-900 dark:text-slate-100">${s.name} <span class="text-[10px] text-slate-400">(${s.id})</span></td>
+      <td class="py-2.5 px-3 text-right">${formatTickPrice(s.price)}</td>
+      <td class="py-2.5 px-3 text-right ${s.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${s.change > 0 ? '+' : ''}${s.change}</td>
+      <td class="py-2.5 px-3 text-right ${s.pct >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${s.pct > 0 ? '+' : ''}${s.pct.toFixed(2)}%</td>
+      <td class="py-2.5 px-3 text-right hidden sm:table-cell">${s.vol.toLocaleString()}</td>
+      <td class="py-2.5 px-3 text-right hidden md:table-cell">${s.marketCap}</td>
+      <td class="py-2.5 px-3 text-center hidden sm:table-cell"><span class="px-2 py-0.5 rounded text-[10px] bg-slate-100 dark:bg-slate-800">${s.tag || '普通'}</span></td>
+    </tr>
+  `).join('');
+
+  if (countInfo) {
+    countInfo.textContent = `共顯示 ${filteredStocks.length} 檔標的`;
+  }
+}
+
+function setTagFilter(tag) {
+  currentTagFilter = tag;
+  applyFilters();
+}
+
+function toggleWatch(stockId) {
+  if (userWatchlist.has(stockId)) {
+    userWatchlist.delete(stockId);
+  } else {
+    userWatchlist.add(stockId);
+  }
+  saveWatchlist();
+  applyFilters();
+}
   </script>
 </body>
 </html>
