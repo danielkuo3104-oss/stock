@@ -2198,6 +2198,11 @@
       const tbody = document.getElementById('stockTableBody');
       if (!tbody) return;
 
+      if (!filteredStocks || filteredStocks.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" class="py-6 text-center text-slate-400">沒有符合條件的標的</td></tr>';
+        return;
+      }
+
       tbody.innerHTML = filteredStocks.map(s => {
         let priceBadgeClass = "font-bold text-slate-800 dark:text-slate-200";
         if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
