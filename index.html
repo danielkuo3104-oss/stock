@@ -1008,9 +1008,20 @@
 
       document.getElementById('modalStockName').textContent = stock.name;
       document.getElementById('modalStockId').textContent = stock.id;
+      // 判斷漲跌趨勢（紅綠色系）
+      const isUp = stock.change > 0 || (stock.pctNum && stock.pctNum > 0);
+      const isDown = stock.change < 0 || (stock.pctNum && stock.pctNum < 0);
+      const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-800 dark:text-slate-200');
+
+      // 帶入數值與對應的漲跌顏色
       document.getElementById('modalStockPrice').textContent = stock.price.toFixed(2);
+      document.getElementById('modalStockPrice').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
+
       document.getElementById('modalStockChange').textContent = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
+      document.getElementById('modalStockChange').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
+
       document.getElementById('modalStockPct').textContent = stock.pctStr;
+      document.getElementById('modalStockPct').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
       document.getElementById('modalStockVolume').textContent = stock.volume.toLocaleString();
       const turnoverYi = stock.turnover / 100000000;
       document.getElementById('modalStockTurnover').textContent = turnoverYi >= 1 
