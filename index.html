@@ -2451,60 +2451,85 @@
         `;
       }).join('');
 
-      // 2. 市值熱力圖模式：採用標準 Treemap 演算法配置矩形
-      // 準備數據：將成員轉換為演算法需要的格式（marketCap 使用市值 cap，pct 使用 pctNum）
+      // 2. 市值熱力圖模式：採用標準 Treemap 演算法配置矩形，並套用高質感卡片風格
       let rawNodes = grpData.members.map(s => ({
         id: s.id,
         name: s.name,
         marketCap: parseFloat(s.cap) || 10,
         pct: s.pctNum || 0,
-        price: s.price
+        price: s.price,
+        change: s.change,
+        pctStr: s.pctStr
       })).filter(n => n.marketCap > 0);
 
       // 由大到小排序
       rawNodes.sort((a, b) => b.marketCap - a.marketCap);
 
-      // 設定熱力圖容器繪製尺寸（例如寬 600 px，高 350 px）
+      // 設定熱力圖容器繪製尺寸
       const containerWidth = 600;
       const containerHeight = 360;
 
-      heatContainer.className = "relative w-full overflow-hidden rounded-2xl border border-slate-700 shadow-inner bg-slate-950";
+      heatContainer.className = "relative w-full overflow-hidden rounded-3xl border border-slate-700/60 shadow-inner bg-slate-950 p-1";
       heatContainer.style.height = `${containerHeight}px`;
 
       // 執行演算法計算各矩形座標
       const treemapLayout = computeTreemap(rawNodes, 0, 0, containerWidth, containerHeight);
 
       heatContainer.innerHTML = treemapLayout.map(node => {
-        const colorStyle = getHeatmapColor(node.pct);
+        // 顏色由當日漲跌幅決定 (使用原本的 getDynamicColorTier 取得高質感底色與標籤配色)
+        const heatTier = getDynamicColorTier(node.pctStr || (node.pct >= 0 ? `+${node.pct}%` : `${node.pct}%`));
         const formattedPct = (node.pct >= 0 ? '+' : '') + node.pct.toFixed(2) + '%';
+        const formattedChange = (node.change >= 0 ? '+' : '') + (node.change || 0).toFixed(2);
+        const priceColor = node.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
         
-        // 根據矩形大小決定是否顯示完整文字或精簡顯示
-        const isTooSmall = node.width < 50 || node.height < 45;
-        const isMicro = node.width < 30 || node.height < 30;
+        // 根據矩形面積大小決定資訊精簡層級
+        const isMicro = node.width < 45 || node.height < 45;
+        const isTooSmall = node.width < 90 || node.height < 75;
 
         let innerContent = '';
         if (isMicro) {
-          innerContent = `<div class="text-[9px] font-mono text-center truncate">${node.id}</div>`;
+          innerContent = `
+            <div class="flex flex-col items-center justify-center h-full p-1">
+              <span class="text-[10px] font-black truncate">${node.name}</span>
+              <span class="text-[9px] font-mono opacity-90">${formattedPct}</span>
+            </div>
+          `;
         } else if (isTooSmall) {
           innerContent = `
-            <div class="text-center">
-              <div class="text-[10px] font-bold truncate">${node.name}</div>
-              <div class="text-[9px] font-mono opacity-80">${formattedPct}</div>
+            <div class="flex flex-col justify-between h-full p-2.5 pointer-events-none">
+              <div class="flex justify-between items-start">
+                <span class="font-black text-xs truncate">${node.name}</span>
+                <span class="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
+              </div>
+              <div class="text-[9px] font-mono text-slate-400 truncate">市值:${Math.round(node.marketCap)}億</div>
             </div>
           `;
         } else {
+          // 完整精緻風格（大方塊）
           innerContent = `
-            <div class="flex flex-col justify-between h-full p-1.5 pointer-events-none">
-              <div class="flex justify-between items-start">
-                <span class="font-black text-xs sm:text-sm truncate">${node.name}</span>
-                <span class="font-mono text-[10px] font-bold opacity-90">${formattedPct}</span>
+            <div class="flex flex-col justify-between h-full p-3.5 pointer-events-none">
+              <div class="flex items-start justify-between gap-1">
+                <div class="min-w-0">
+                  <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${node.name}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">${node.id}</div>
+                </div>
+                <span class="font-mono text-xs font-black px-2 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
               </div>
-              <div class="text-center font-mono text-[10px] opacity-75">${node.id}</div>
+
+              <div class="my-auto py-1">
+                <span class="text-base sm:text-lg font-black font-mono ${priceColor}">${node.price.toFixed(2)}</span>
+                <span class="text-[10px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
+              </div>
+
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
+                <span>市值: ${Math.round(node.marketCap)}億</span>
+                <span class="font-semibold">點擊查線圖</span>
+              </div>
             </div>
           `;
         }
 
-        // 轉換為百分比絕對定位（支援響應式容器）
+        // 轉換為百分比絕對定位
         const leftPercent = (node.x / containerWidth) * 100;
         const topPercent = (node.y / containerHeight) * 100;
         const widthPercent = (node.width / containerWidth) * 100;
@@ -2512,9 +2537,9 @@
 
         return `
           <div onclick="closeSectorModal(); openStockModal('${node.id}')" 
-               title="${node.name} (${node.id}) | 市值: ${node.marketCap}億 | 漲跌幅: ${formattedPct}"
-               style="position: absolute; left: ${leftPercent}%; top: ${topPercent}%; width: ${widthPercent}%; height: ${heightPercent}%; ${colorStyle}" 
-               class="cursor-pointer border border-slate-900/40 transition hover:brightness-110 hover:z-10 flex flex-col justify-between overflow-hidden text-white">
+               title="${node.name} (${node.id}) | 市值: ${Math.round(node.marketCap)}億 | 漲跌幅: ${formattedPct}"
+               style="position: absolute; left: calc(${leftPercent}% + 2px); top: calc(${topPercent}% + 2px); width: calc(${widthPercent}% - 4px); height: calc(${heightPercent}% - 4px);" 
+               class="cursor-pointer rounded-2xl border transition hover:scale-[1.01] hover:z-10 shadow-md ${heatTier.bg} overflow-hidden">
             ${innerContent}
           </div>
         `;
