@@ -2454,13 +2454,15 @@
       const capVal = parseFloat(s.cap) || 100;
       const totalCap = grpData.members.reduce((acc, m) => acc + (parseFloat(m.cap) || 100), 0) || 100;
       
-      // 計算該標的佔該族群總市值的比例 (0 ~ 1)
-      const share = capVal / totalCap;
+      // 計算市值權重 (0 ~ 1)
+      const weight = capVal / totalCap;
       
-      // 換算成百分比寬度（最小保留 28% 確保版面不擠壓，大市值會自動佔據更多寬度）
-      const widthPercent = Math.max(Math.round(share * 100), 28);
-      // 高度也根據市值比例微調，讓面積大小更加直覺
-      const heightPx = Math.max(Math.round(95 + share * 110), 95);
+      // 根據權重的平方根計算寬高比例 (平方根能完美對應面積大小的視覺直覺)
+      const scale = Math.sqrt(weight);
+      
+      // 轉換成像素寬高（讓總體面積形成一個緊密長方形，大市值大、小市值小）
+      const widthPx = Math.max(Math.round(scale * 460), 120);
+      const heightPx = Math.max(Math.round(scale * 240), 75);
 
       const heatTier = getDynamicColorTier(s.pctStr || '0%');
       const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
@@ -2468,21 +2470,21 @@
       const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
 
       return `
-        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPercent}%; min-height: ${heightPx}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden">
+        <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="width: ${widthPx}px; height: ${heightPx}px;" class="cursor-pointer p-3 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg} overflow-hidden shrink-0">
           <div class="flex items-start justify-between gap-1">
             <div class="min-w-0">
-              <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${s.name}</div>
-              <div class="text-[10px] text-slate-400 font-mono">${s.id}</div>
+              <div class="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">${s.name}</div>
+              <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
             </div>
-            <span class="font-mono text-xs font-black px-2 py-0.5 rounded shrink-0 ${heatTier.badge}">${formattedPct}</span>
+            <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shrink-0 ${heatTier.badge}">${formattedPct}</span>
           </div>
 
-          <div class="my-auto py-1">
-            <span class="text-lg sm:text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
-            <span class="text-[11px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
+          <div class="my-auto py-0.5 text-center">
+            <span class="text-sm sm:text-base font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
+            <span class="text-[10px] font-bold font-mono ml-0.5 ${priceColor}">(${formattedChange})</span>
           </div>
 
-          <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
+          <div class="text-[9px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
             <span>市值: ${(s.cap || 0).toFixed(0)}億</span>
             <span class="font-semibold">點擊查線圖</span>
           </div>
