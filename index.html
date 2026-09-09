@@ -2397,13 +2397,13 @@
       if (mode === 'cards') {
         btnCards.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
         btnHeat.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
-        cardsGrid.classList.remove('hidden');
-        heatGrid.classList.add('hidden');
+        cardsGrid.style.display = 'grid';
+        heatGrid.style.display = 'none';
       } else {
         btnHeat.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
         btnCards.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
-        heatGrid.classList.remove('hidden');
-        cardsGrid.classList.add('hidden');
+        heatGrid.style.display = 'block';
+        cardsGrid.style.display = 'none';
       }
       if (groupMap[currentActiveSectorName]) renderSectorModalContent(groupMap[currentActiveSectorName]);
     }
@@ -2412,14 +2412,9 @@
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
-      // 初始化依目前模式顯示/隱藏（使用已宣告的 container 變數）
-      if (currentSectorModalMode === 'cards') {
-        cardsContainer.classList.remove('hidden');
-        heatContainer.classList.add('hidden');
-      } else {
-        heatContainer.classList.remove('hidden');
-        cardsContainer.classList.add('hidden');
-      }
+      // 嚴格依據當前模式切換顯示與隱藏
+      cardsContainer.style.display = currentSectorModalMode === 'cards' ? 'grid' : 'none';
+      heatContainer.style.display = currentSectorModalMode === 'heatmap' ? 'block' : 'none';
 
       // 1. 列表導覽模式內容
       cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
@@ -2460,7 +2455,7 @@
         `;
       }).join('');
 
-      // 2. 市值熱力圖模式：套用 Treemap 演算法
+      // 2. 市值熱力圖模式：採用標準 Treemap 演算法
       let rawNodes = grpData.members.map(s => ({
         id: s.id,
         name: s.name,
