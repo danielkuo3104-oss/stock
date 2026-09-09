@@ -80,6 +80,87 @@
     </div>
   </div>
 
+  <!-- ================= 標籤規則詳細說明 Modal ================= -->
+  <div id="badgeGuideModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+          <i class="fa-solid fa-tags text-brand-500"></i>
+          <span>動態特徵標籤詳細判讀說明</span>
+        </h3>
+        <button onclick="closeBadgeGuideModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitUp text-white">漲停</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 9.5% 且 漲跌 > 0</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">多頭鎖死漲停板，最強買盤動能展現。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitDown text-white">跌停</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -9.5% 且 漲跌 < 0</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">空頭摜壓至跌停板，賣壓極度宣洩。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30">量價齊揚</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3% 且 當日量 ≥ 1.3倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">價漲量增，主力資金實質進駐攻擊特徵。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-600/25 text-fuchsia-300 border border-purple-500/50">爆量長黑</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.5% 且 當日量 ≥ 2倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">高檔爆量大跌或破線，通常為主力調節或恐慌殺盤信號。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-600/15 text-rose-500 border border-rose-500/30">多頭延續</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">連 3 日天天量增且股價連 3 漲</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">量價梯隊攀升，常出現於飆股主升段波段行情中。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">爆量換手</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≥ 2倍均量 且 ≥ 500張</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">籌碼出現激烈多空分歧與大量換手交易。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-600/30 text-slate-400 border border-slate-500/30">窒息量</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≤ 0.35倍均量 且 均量≥300張</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">成交量極度急凍萎縮，籌碼沉澱，常為重大方向突破前兆。</p>
+        </div>
+
+        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30">量縮價跌</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -1.5% 但 量 ≤ 0.65倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">壓回並未帶出恐慌賣壓，多為健康回檔洗盤。</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ================= 管理員控制面板 Modal ================= -->
   <div id="adminPanelModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-brand-500/40 rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
@@ -98,12 +179,36 @@
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span class="font-bold text-slate-700 dark:text-slate-300 block">當前核心狀態：</span>
-            <span class="text-[10px] text-slate-400">面板開啟中每 5 秒即時同步</span>
+            <span class="text-[10px] text-slate-400">雙向比對 AS11 儲存格與 API</span>
           </div>
           <span id="adminCurrentStatusBadge" class="px-3 py-1 rounded-full font-bold text-xs inline-flex items-center space-x-1.5 border bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
             <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
             <span id="adminCurrentStatusText">正常運行</span>
           </span>
+        </div>
+
+        <!-- 📢 控制台布告欄廣播寫入功能 -->
+        <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
+          <label class="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
+            <span class="flex items-center space-x-1.5">
+              <i class="fa-solid fa-bullhorn text-amber-500"></i>
+              <span>即時布告欄廣播發布</span>
+            </span>
+            <span class="text-[10px] text-slate-400 font-normal">寫入試算表廣播欄</span>
+          </label>
+          <div class="space-y-2">
+            <textarea id="adminAnnouncementInput" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-slate-900 dark:text-white" placeholder="輸入要即時推播在頂部跑馬燈的公告內容..."></textarea>
+            <div class="flex space-x-2">
+              <button onclick="postAdminAnnouncement()" class="flex-1 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl transition flex items-center justify-center space-x-1">
+                <i class="fa-solid fa-paper-plane"></i>
+                <span>發布即時廣播</span>
+              </button>
+              <button onclick="clearAdminAnnouncement()" class="px-3 py-2 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 rounded-xl hover:bg-slate-300 transition">
+                清空
+              </button>
+            </div>
+          </div>
+          <p id="adminAnnounceMsg" class="text-[11px] font-medium text-center hidden"></p>
         </div>
 
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 border border-slate-200 dark:border-slate-800">
@@ -659,20 +764,27 @@
           <div>
             <div class="flex items-center space-x-2">
               <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">族群選股列表</h2>
-              <div class="relative group">
-                <button class="text-slate-400 hover:text-brand-500 transition text-xs sm:text-sm flex items-center">
-                  <i class="fa-solid fa-circle-info"></i>
-                </button>
-                <div class="absolute left-0 top-6 z-20 hidden group-hover:block w-56 sm:w-64 p-3 bg-slate-900 text-slate-200 text-[10px] sm:text-[11px] rounded-xl shadow-2xl border border-slate-700 leading-relaxed pointer-events-none">
-                  目前選股惟透過挑選熱門題材，如有其他感興趣題材歡迎寫信告知。
-                </div>
-              </div>
+              <button onclick="openBadgeGuideModal()" class="text-slate-400 hover:text-brand-500 transition text-xs sm:text-sm flex items-center" title="點擊查看所有標籤說明">
+                <i class="fa-solid fa-circle-info"></i>
+              </button>
             </div>
-            <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">左右滑動瀏覽，點擊列可展開詳情</p>
+            <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-1">點擊上方 (i) 可了解動態標籤規則；點擊標籤膠囊可快速篩選</p>
           </div>
           <div class="w-full sm:w-auto">
             <input type="text" id="stockFilterInput" oninput="filterStocks()" placeholder="搜尋代號 / 名稱 / 族群..." class="w-full sm:w-64 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 sm:py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
           </div>
+        </div>
+
+        <!-- 🏷️ 標籤快速過濾膠囊列 -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] font-medium" id="tagFilterBar">
+          <button onclick="setTagFilter('ALL')" id="btnTag_ALL" class="px-2.5 py-1 rounded-lg bg-brand-500 text-white font-bold whitespace-nowrap transition">全部標的</button>
+          <button onclick="setTagFilter('量價齊揚')" id="btnTag_量價齊揚" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量價齊揚</button>
+          <button onclick="setTagFilter('爆量長黑')" id="btnTag_爆量長黑" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-fuchsia-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長黑</button>
+          <button onclick="setTagFilter('多頭延續')" id="btnTag_多頭延續" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">多頭延續</button>
+          <button onclick="setTagFilter('爆量換手')" id="btnTag_爆量換手" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量換手</button>
+          <button onclick="setTagFilter('強勢')" id="btnTag_強勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">強勢</button>
+          <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
+          <button onclick="setTagFilter('漲停')" id="btnTag_漲停" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">漲停</button>
         </div>
 
         <div class="overflow-x-auto overflow-y-auto max-h-[500px] sm:max-h-[580px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -729,6 +841,7 @@
     let rawCsvGrid = [];
     let parsedStocks = [];
     let filteredStocks = [];
+    let currentTagFilter = 'ALL';
     let groupMap = {};
     let stockMultiGroupMap = {};
     let memberListCache = [];
@@ -752,7 +865,14 @@
       initStickyScrollHandler();
     });
 
-    // 💡 監聽滾動：精準收放縮小置頂條
+    function openBadgeGuideModal() {
+      document.getElementById('badgeGuideModal').classList.remove('hidden');
+    }
+
+    function closeBadgeGuideModal() {
+      document.getElementById('badgeGuideModal').classList.add('hidden');
+    }
+
     function initStickyScrollHandler() {
       const target = document.getElementById('mainMarketSection');
       const miniBar = document.getElementById('stickyMiniBar');
@@ -961,6 +1081,53 @@
         msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
         msgBox.textContent = "更新異常，請檢查網路連線。";
       }
+    }
+
+    // 📢 管理員廣播發布寫入
+    async function postAdminAnnouncement() {
+      const input = document.getElementById('adminAnnouncementInput');
+      const msg = input.value.trim();
+      const msgBox = document.getElementById('adminAnnounceMsg');
+      if (!msg) {
+        alert("廣播內容不能為空！");
+        return;
+      }
+
+      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
+      msgBox.textContent = "正在發布至布告欄...";
+
+      try {
+        const res = await fetch(BACKEND_API_URL, {
+          method: 'POST',
+          body: JSON.stringify({
+            action: 'postAnnouncement',
+            content: msg,
+            admin: ADMIN_EMAIL
+          })
+        });
+        const result = await res.json();
+        if (result.success) {
+          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+          msgBox.textContent = "發布成功！已同步於跑馬燈。";
+          originalAnnouncements.unshift(msg);
+          document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+          input.value = "";
+        } else {
+          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+          msgBox.textContent = "發布失敗：" + (result.message || '未知錯誤');
+        }
+      } catch(e) {
+        // 前端備份即時推播
+        originalAnnouncements.unshift(msg);
+        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+        msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+        msgBox.textContent = "已完成前台即時推播顯示！";
+      }
+    }
+
+    function clearAdminAnnouncement() {
+      document.getElementById('adminAnnouncementInput').value = "";
+      document.getElementById('adminAnnounceMsg').classList.add('hidden');
     }
 
     async function preloadHolidays() {
@@ -1320,6 +1487,24 @@
 
       rawCsvGrid = lines.map(line => parseCsvRow(line));
 
+      // 🔍 第五點修復：前端直接從試算表解析 AS11 儲存格（row 10，col 44）的真實維護字串
+      let as11Cell = "";
+      if (rawCsvGrid[10] && rawCsvGrid[10][44]) as11Cell = rawCsvGrid[10][44].trim();
+      else if (rawCsvGrid[10] && rawCsvGrid[10][45]) as11Cell = rawCsvGrid[10][45].trim();
+      else if (rawCsvGrid[9] && rawCsvGrid[9][44]) as11Cell = rawCsvGrid[9][44].trim();
+      
+      if (as11Cell.includes('維護') || as11Cell.toLowerCase().includes('maint')) {
+        isCurrentMaintenance = true;
+        updateAdminStatusIndicator(true);
+        if (currentUser && currentUser.role !== 'admin') {
+          document.getElementById('maintenanceOverlay').classList.remove('hidden');
+        }
+      } else {
+        isCurrentMaintenance = false;
+        updateAdminStatusIndicator(false);
+        document.getElementById('maintenanceOverlay').classList.add('hidden');
+      }
+
       // 成交量表頭完整日期（34~43 欄）
       tenDayVolDatesHeaders = [];
       if (rawCsvGrid[0]) {
@@ -1671,7 +1856,7 @@
             const isDry = volRatio <= 0.35 && avgVol10 >= 300;
             const isShrink = volRatio <= 0.65;
 
-            // ================= 價量與籌碼標籤判定 =================
+            // ================= 價量與籌碼標籤判定（去除灰色除窒息量外、優化清晰度） =================
             // ① 漲跌停極限態
             if (isLimitUp) {
               badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
@@ -1686,31 +1871,31 @@
               badges.push({ text: '空方衰竭', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30' });
             }
 
-            // ③ 價量配合型
+            // ③ 價量配合型（強化爆量長黑對比、替換量縮顏色避免灰沉）
             if (pctNum >= 3.0 && isHeavy) {
               badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
             } else if (pctNum <= -3.5 && isSurge) {
-              badges.push({ text: '爆量長黑', color: 'bg-purple-950/40 text-purple-300 border border-purple-600/40 font-bold' });
+              badges.push({ text: '爆量長黑', color: 'bg-purple-600/25 text-fuchsia-300 border border-purple-500/50 font-black shadow-sm' });
             } else if (pctNum >= 2.5 && isShrink) {
               badges.push({ text: '量價背離', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
             } else if (pctNum <= -1.5 && isShrink) {
-              badges.push({ text: '量縮價跌', color: 'bg-slate-500/15 text-slate-400 border border-slate-500/30' });
+              badges.push({ text: '量縮價跌', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30 font-medium' });
             } else if (Math.abs(pctNum) <= 1.0 && isShrink) {
-              badges.push({ text: '量縮價穩', color: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30' });
+              badges.push({ text: '量縮價穩', color: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-medium' });
             }
 
             // ④ 純量能特徵
             if (isSurge && !badges.some(b => b.text === '量價齊揚' || b.text === '爆量長黑')) {
               badges.push({ text: '爆量換手', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
             } else if (isDry) {
-              badges.push({ text: '窒息量', color: 'bg-slate-600/20 text-slate-400 border border-slate-600/30' });
+              badges.push({ text: '窒息量', color: 'bg-slate-600/30 text-slate-400 border border-slate-500/30' });
             }
 
             // ⑤ 動能特徵輔助
             if (!isLimitUp && pctNum >= 3.5 && !badges.some(b => b.text.includes('揚') || b.text.includes('延續'))) {
-              badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' });
+              badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30' });
             } else if (!isLimitDown && pctNum <= -3.5 && !badges.some(b => b.text.includes('黑') || b.text.includes('衰竭'))) {
-              badges.push({ text: '弱勢', color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' });
+              badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' });
             }
 
             const stock = {
@@ -1736,8 +1921,7 @@
       }
 
       renderHotCards(Array.from(stockMap.values()));
-      filteredStocks = [...parsedStocks];
-      renderStockTable();
+      applyFilters();
     }
 
     function renderHotCards(stocks) {
@@ -1823,14 +2007,32 @@
       document.getElementById('tableCountInfo').textContent = `共收錄 ${filteredStocks.length} 檔個股`;
     }
 
-    function filterStocks() {
+    // 🔍 結合搜尋關鍵字與標籤膠囊的統一過濾器
+    function applyFilters() {
       const q = document.getElementById('stockFilterInput').value.trim().toLowerCase();
-      filteredStocks = parsedStocks.filter(s => 
-        s.id.toLowerCase().includes(q) || 
-        s.name.toLowerCase().includes(q) || 
-        s.rawGroup.toLowerCase().includes(q)
-      );
+      filteredStocks = parsedStocks.filter(s => {
+        const matchesQuery = s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.rawGroup.toLowerCase().includes(q);
+        const matchesTag = (currentTagFilter === 'ALL') || (s.badges && s.badges.some(b => b.text === currentTagFilter));
+        return matchesQuery && matchesTag;
+      });
       renderStockTable();
+    }
+
+    function filterStocks() {
+      applyFilters();
+    }
+
+    function setTagFilter(tagName) {
+      currentTagFilter = tagName;
+      const buttons = document.querySelectorAll('#tagFilterBar button');
+      buttons.forEach(btn => {
+        btn.className = "px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 whitespace-nowrap transition border border-slate-200 dark:border-slate-700";
+      });
+      const activeBtn = document.getElementById(`btnTag_${tagName}`);
+      if (activeBtn) {
+        activeBtn.className = "px-2.5 py-1 rounded-lg bg-brand-500 text-white font-bold whitespace-nowrap transition shadow-sm";
+      }
+      applyFilters();
     }
 
     function handleStarClick(stockId) {
@@ -1951,7 +2153,6 @@
         return;
       }
 
-      // 1. 列表顯示
       listGrid.innerHTML = history.map(item => {
         const isUp = item.numVal > 0;
         const isDown = item.numVal < 0;
@@ -1967,7 +2168,6 @@
         `;
       }).join('');
 
-      // 2. 利用現有最新股價與歷史漲跌幅，反向推導每日收盤價
       const currentPrice = stock.price || 100;
       let prices = new Array(history.length);
       
@@ -1991,7 +2191,6 @@
         }
       }
 
-      // 計算各點相對於起始日（D-10 前收盤）的真實複合累積報酬率
       const basePrice = (lastValidIdx !== -1 && history[0].hasData) 
         ? (prices[0] / (1 + history[0].numVal / 100)) 
         : (prices[0] || currentPrice);
@@ -2002,7 +2201,6 @@
         return { ...h, cumVal: compoundCumPct, calculatedPrice: prices[i] };
       });
 
-      // 總複合累積漲跌幅徽章
       const totalCumPct = cumPoints[lastValidIdx] ? cumPoints[lastValidIdx].cumVal : 0;
       const isCumUp = totalCumPct > 0;
       const isCumDown = totalCumPct < 0;
@@ -2301,7 +2499,6 @@
       document.getElementById('stockDetailModal').classList.add('hidden');
     }
 
-    // 💡 打開控制台：直連後端確認狀態，並啟動 5 秒定時靜默輪詢
     function openAdminPanel() {
       updateAdminStatusIndicator(isCurrentMaintenance);
       document.getElementById('adminPanelModal').classList.remove('hidden');
@@ -2342,7 +2539,6 @@
       alert("已重設為真實當前系統日期！");
     }
 
-    // 💡 點擊切換維護狀態：後端立即 flush 並即時更新
     async function setMaintenanceStatus(isMaintenance) {
       const msgBox = document.getElementById('adminStatusMsg');
       msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
@@ -2379,7 +2575,6 @@
       }
     }
 
-    // 💡 靜默輪詢直連後端 API 查詢 AS11
     async function pollAdminMaintenanceStatus() {
       try {
         const res = await fetch(`${BACKEND_API_URL}?action=getMaintenance&_t=${Date.now()}`);
