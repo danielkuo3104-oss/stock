@@ -2244,9 +2244,24 @@
         mainGroupHierarchy[mg].push(g);
       });
 
+      // 根據漲跌趴數大小動態計算圓點的顏色與深淺階層
+      const getDotColorClass = (pctStr) => {
+        const val = parseFloat(pctStr.toString().replace('%', '')) || 0;
+        if (val >= 7.0) return 'bg-red-600 shadow-[0_0_8px_rgba(220,38,38,0.7)]';
+        if (val >= 4.0) return 'bg-red-500 shadow-[0_0_6px_rgba(239,68,68,0.5)]';
+        if (val >= 1.5) return 'bg-red-400';
+        if (val > 0.0)  return 'bg-red-300 dark:bg-red-400/80';
+        if (val <= -7.0) return 'bg-emerald-600 shadow-[0_0_8px_rgba(16,185,129,0.7)]';
+        if (val <= -4.0) return 'bg-emerald-500 shadow-[0_0_6px_rgba(34,197,94,0.5)]';
+        if (val <= -1.5) return 'bg-emerald-400';
+        if (val < 0.0)   return 'bg-emerald-300 dark:bg-emerald-400/80';
+        return 'bg-slate-400 dark:bg-slate-500';
+      };
+
       container.innerHTML = Object.entries(mainGroupHierarchy).map(([mainGroupName, subGroups]) => {
         const mainGroupChange = subGroups.length > 0 ? (subGroups[0].groupChange || '0.00%') : '0.00%';
         const mainTier = getDynamicColorTier(mainGroupChange);
+        const dotColor = getDotColorClass(mainGroupChange);
 
         const subCardsHtml = subGroups.map(grpData => {
           const groupPctStr = (grpData.groupChange && grpData.groupChange !== '-' && grpData.groupChange !== 'nan') ? grpData.groupChange : '0.00%';
@@ -2277,12 +2292,11 @@
           `;
         }).join('');
 
-        // 大卡片外框設定純色厚底背景 (bg-slate-50 dark:bg-slate-950)，並以 mainTier 邊框與柔和底色標記主族群
         return `
-          <div class="sector-category-card w-full inline-block mb-4 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3 bg-slate-50 dark:bg-slate-950/90 ${mainTier.bg}">
-            <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-800 pb-2.5">
+          <div class="sector-category-card w-full inline-block mb-4 p-4 rounded-3xl border border-slate-200/80 dark:border-slate-800 shadow-sm space-y-3 bg-slate-100/70 dark:bg-slate-900/80">
+            <div class="flex items-center justify-between border-b border-slate-200/70 dark:border-slate-800/80 pb-2.5">
               <div class="flex items-center space-x-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                <span class="w-2.5 h-2.5 rounded-full transition-all duration-300 ${dotColor}"></span>
                 <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">${mainGroupName}</h3>
               </div>
               <div class="flex items-center space-x-2">
