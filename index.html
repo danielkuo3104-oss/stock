@@ -57,6 +57,7 @@
     .large-font .market-val { font-size: 2.2rem !important; }
     .large-font table { font-size: 0.98rem !important; }
 
+    /* 族群選股區瀑布流排版 */
     #sectorCardsGrid {
       column-count: 1;
       column-gap: 1rem;
@@ -103,7 +104,7 @@
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
         <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
           <i class="fa-solid fa-tags text-brand-500"></i>
-          <span>動態特徵標籤客觀演算說明</span>
+          <span>動態特徵標籤詳細說明</span>
         </h3>
         <button onclick="closeBadgeGuideModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
           <i class="fa-solid fa-xmark"></i>
@@ -112,56 +113,40 @@
 
       <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-600 dark:text-amber-400 leading-relaxed">
         <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-        <strong>系統免責聲明：</strong>所有市場技術標籤純粹由公開市場之<strong>「價格走勢與成交量能」</strong>進行純量化演算，不代表任何法人或內部籌碼進出；產業題材由 AI 輔助整理，不構成任何買賣決策建議。
+        <strong>系統免責聲明：</strong>所有市場技術標籤為系統依據公開量價客觀演算；公司簡介、業務主軸與產業題材皆由 AI 輔助整理提供，不構成任何買賣決策建議。
       </div>
 
       <div class="space-y-2.5 text-xs">
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitUp text-white"><i class="fa-solid fa-arrow-up mr-1"></i>漲停</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">觸及當日漲幅法定限額上限</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 9.5% 且 點數 > 0</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">股價抵達當日升降幅度上限，為市場極限偏多量價表現。</p>
+          <p class="text-slate-600 dark:text-slate-300">多頭鎖死漲停板，最強買盤動能展現。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitDown text-white"><i class="fa-solid fa-arrow-down mr-1"></i>跌停</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">觸及當日跌幅法定限額下限</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -9.5% 且 點數 < 0</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">股價抵達當日跌幅下限，賣盤沈重且缺乏承接。</p>
+          <p class="text-slate-600 dark:text-slate-300">空頭摜壓至跌停板，賣壓極度宣洩。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30"><i class="fa-solid fa-bolt mr-1"></i>強勢</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">當日漲幅 ≥ 3.0%</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.0% 或 漲停</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">當日股價表現強勁，展現偏多波動動能。</p>
+          <p class="text-slate-600 dark:text-slate-300">短線表現強勁，買方力道明顯大於賣方。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-shield-halved mr-1"></i>弱勢</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">當日跌幅 ≤ -3.0%</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.0% 或 跌停</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">當日修正壓力顯著，價格走勢呈現弱勢承壓。</p>
-        </div>
-
-        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-600/15 text-rose-500 border border-rose-500/30"><i class="fa-solid fa-arrow-trend-up mr-1"></i>持續走高</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">近 3 日收盤價逐日遞增</span>
-          </div>
-          <p class="text-slate-600 dark:text-slate-300">股價連續 3 個交易日逐日上揚破高，短期價格重心穩健推升。</p>
-        </div>
-
-        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-600/15 text-emerald-500 border border-emerald-500/30"><i class="fa-solid fa-arrow-trend-down mr-1"></i>持續走低</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">近 3 日收盤價逐日遞減</span>
-          </div>
-          <p class="text-slate-600 dark:text-slate-300">股價連續 3 個交易日重心向下破底，短線承壓拉回。</p>
+          <p class="text-slate-600 dark:text-slate-300">短線修正壓力重，賣方佔據主導地位。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -169,7 +154,7 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30"><i class="fa-solid fa-chart-line mr-1"></i>量價齊揚</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.0% 且 當日量 ≥ 1.3倍均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">價漲量增，市場交易熱度與買方需求同步提升。</p>
+          <p class="text-slate-600 dark:text-slate-300">價漲量增，主力資金實質進駐推升。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -177,7 +162,7 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-500/15 text-sky-400 border border-sky-500/30"><i class="fa-solid fa-cloud-rain mr-1"></i>量縮價跌</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -1.5% 且 量 ≤ 0.65倍均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">下跌伴隨成交量萎縮，賣壓相較前期未明顯放大，多屬低量整理或量縮回檔。</p>
+          <p class="text-slate-600 dark:text-slate-300">下跌但成交量萎縮，追殺意願不高，多屬浮額自然回檔。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -185,7 +170,7 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/30"><i class="fa-solid fa-sun mr-1"></i>量縮價漲</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 2.0% 且 量 ≤ 0.65倍均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">價格上漲但成交量未同步放大，顯示追價與殺低交易均不活躍，需搭配趨勢與位置判斷。</p>
+          <p class="text-slate-600 dark:text-slate-300">量小價漲、籌碼安定，顯示上檔賣壓輕或具窒息鎖碼特性。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -201,7 +186,7 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/40"><i class="fa-solid fa-bolt-lightning mr-1"></i>爆量</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≥ 2倍均量 且 量 ≥ 500張</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">成交量顯著高於近期平均，代表市場交投換手熱度明顯升高。</p>
+          <p class="text-slate-600 dark:text-slate-300">成交量顯著放大兩倍以上，多空交極度化激昂。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -209,7 +194,7 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-600 text-white border border-red-400"><i class="fa-solid fa-fire mr-1"></i>爆量長紅</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.5% 且 當日量 ≥ 2倍均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">價格大幅上漲且成交量同步顯著放大，屬於強烈的價量突破訊號。</p>
+          <p class="text-slate-600 dark:text-slate-300">伴隨大量實質突破拉抬，主力攻擊氣勢強勁。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -217,21 +202,21 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-700 text-white border border-purple-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>爆量長黑</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.5% 且 當日量 ≥ 2倍均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">價格大幅下跌且成交量顯著放大，代表市場賣壓與多空分歧明顯增加。</p>
+          <p class="text-slate-600 dark:text-slate-300">高檔爆量大跌或摜破支撐，多為主力調節或恐慌出脫。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"><i class="fa-solid fa-chart-line-up mr-1"></i>持續量增</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">連 3 日量增 且 當日量 ≥ 10日均量</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近三日成交量連續遞增</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">市場關注度連續三天逐步增溫，且已達到實質均量規模。</p>
+          <p class="text-slate-600 dark:text-slate-300">市場關注度與資金熱度連續三天逐步增溫。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30"><i class="fa-solid fa-chart-line-down mr-1"></i>持續量縮</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">近 3 日成交量連續遞減</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近三日成交量連續遞減</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">交投熱度連三日降溫，短線追價力道放緩。</p>
         </div>
@@ -239,9 +224,9 @@
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-teal-500/15 text-teal-400 border border-teal-500/30"><i class="fa-solid fa-arrows-split-up-and-left mr-1"></i>十日震盪整理</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">(10日最高 - 最低) / 最低 ≤ 5.0%</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近 10 日累計極差 ≤ 4% 且每日 ≤ 2%</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">股價在近 10 天內價格高低落差極為狹窄，處於沉澱收斂型態。</p>
+          <p class="text-slate-600 dark:text-slate-300">股價在近 10 天狹幅區間扎實沉澱，無單邊暴衝趨勢。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -249,13 +234,13 @@
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-700 text-slate-100 border border-slate-500"><i class="fa-solid fa-water mr-1"></i>窒息量</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≤ 0.35倍均量 且 均量 ≥ 300張</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">成交量極度萎縮，代表市場參與度降低，常見於整理末端，但需搭配價格型態與後續放量判斷。</p>
+          <p class="text-slate-600 dark:text-slate-300">成交量極限萎縮，浮額洗淨，常為重大突破前夕。</p>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- 族群導覽型成分股詳情 Modal -->
+  <!-- 族群導覽型成分股詳情 Modal (z-50) -->
   <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
@@ -407,7 +392,7 @@
     </div>
   </div>
 
-  <!-- 個股詳細資訊彈窗 Modal -->
+  <!-- 個股詳細資訊彈窗 Modal (z-[60]，浮在族群彈窗之上) -->
   <div id="stockDetailModal" onclick="handleModalBgClick(event, 'stockDetailModal')" class="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between pb-3 border-b border-slate-200 dark:border-slate-800">
@@ -540,9 +525,9 @@
       </div>
 
       <div class="flex border-b border-slate-200 dark:border-slate-800 mb-6 text-xs sm:text-sm">
-        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer">會員登入</button>
-        <button id="tabRegisterSub" onclick="switchAuthTab('regSub')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 whitespace-nowrap cursor-pointer">已訂閱開通</button>
-        <button id="tabRegisterNew" onclick="switchAuthTab('regNew')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">全新註冊</button>
+        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500">會員登入</button>
+        <button id="tabRegisterSub" onclick="switchAuthTab('regSub')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 whitespace-nowrap">已訂閱開通</button>
+        <button id="tabRegisterNew" onclick="switchAuthTab('regNew')" class="flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">全新註冊</button>
       </div>
 
       <form id="formLogin" onsubmit="handleLogin(event)" class="space-y-4">
@@ -642,6 +627,21 @@
     </div>
   </div>
 
+  <!-- 系統免責宣告 Toast -->
+  <div id="toastDisclaimer" class="fixed bottom-5 right-5 z-40 max-w-[90vw] sm:max-w-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 rounded-2xl shadow-2xl flex items-start space-x-3 transition transform translate-y-28 opacity-0">
+    <i class="fa-solid fa-circle-exclamation text-brand-500 text-lg mt-0.5"></i>
+    <div class="flex-1 text-xs text-slate-600 dark:text-slate-300">
+      <h4 class="font-bold text-slate-900 dark:text-slate-100 mb-1">系統免責聲明與盤面狀態</h4>
+      <p id="disclaimerBody" class="leading-relaxed text-slate-500 dark:text-slate-400">
+        本系統資訊可能存在錯誤或傳輸延後，不構成任何投資建議。
+      </p>
+      <div id="dateNotice" class="mt-2 text-amber-500 font-medium"></div>
+    </div>
+    <button onclick="closeDisclaimer()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+      <i class="fa-solid fa-xmark"></i>
+    </button>
+  </div>
+
   <!-- 主頁內容區 -->
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
     <div class="sticky top-0 z-40 w-full shadow-sm">
@@ -687,6 +687,13 @@
               <i class="fa-solid fa-right-from-bracket"></i>
             </button>
           </div>
+        </div>
+        
+        <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
+          <a href="javascript:void(0)" onclick="navigateTo('home')" id="navHomeMobile" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
+          <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSectorMobile" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
+          <a href="javascript:void(0)" onclick="handleUserCenterClick()" id="navUserCenterMobile" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>個人化</span></a>
+          <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center"><i class="fa-regular fa-envelope text-lg"></i></a>
         </div>
       </header>
 
@@ -810,7 +817,7 @@
         <div id="hotCardsContainer" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3"></div>
       </section>
 
-      <!-- 內容切換核心區塊 (水平滑動軌道) -->
+      <!-- 內容切換核心區塊 (左右滑軌支援) -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
@@ -846,8 +853,6 @@
             <button onclick="setTagFilter('跌停')" id="btnTag_跌停" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-green-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">跌停</button>
             <button onclick="setTagFilter('強勢')" id="btnTag_強勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">強勢</button>
             <button onclick="setTagFilter('弱勢')" id="btnTag_弱勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">弱勢</button>
-            <button onclick="setTagFilter('持續走高')" id="btnTag_持續走高" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續走高</button>
-            <button onclick="setTagFilter('持續走低')" id="btnTag_持續走低" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續走低</button>
             <button onclick="setTagFilter('量價齊揚')" id="btnTag_量價齊揚" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量價齊揚</button>
             <button onclick="setTagFilter('量縮價跌')" id="btnTag_量縮價跌" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價跌</button>
             <button onclick="setTagFilter('量縮價漲')" id="btnTag_量縮價漲" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價漲</button>
@@ -862,12 +867,12 @@
           </div>
         </div>
 
-        <!-- 輪播軌道 -->
-        <div class="overflow-hidden w-full relative">
+        <!-- 💡 左右滑動分頁滑軌容器 -->
+        <div class="overflow-hidden w-full">
           <div id="pageSliderTrack" class="flex w-[200%] transition-transform duration-500 ease-out">
-            <!-- 第 1 頁：全個股清單 -->
-            <div id="pageHomeView" class="w-1/2 shrink-0 pr-2 min-w-0">
-              <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[540px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800 w-full">
+            <!-- 第 1 頁：首頁個股全清單 -->
+            <div id="pageHomeView" class="w-1/2 shrink-0 pr-1 sm:pr-2">
+              <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[540px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead class="bg-slate-100 dark:bg-slate-950 text-slate-600 dark:text-slate-400 font-semibold border-b border-slate-200 dark:border-slate-800 uppercase tracking-wider sticky top-0 z-10">
                     <tr>
@@ -887,9 +892,9 @@
               </div>
             </div>
 
-            <!-- 第 2 頁：族群瀑布流總覽 -->
-            <div id="pageSectorView" class="w-1/2 shrink-0 pl-2 min-w-0">
-              <div id="sectorCardsGrid" class="w-full"></div>
+            <!-- 第 2 頁：族群選股瀑布流總覽 -->
+            <div id="pageSectorView" class="w-1/2 shrink-0 pl-1 sm:pr-2">
+              <div id="sectorCardsGrid"></div>
             </div>
           </div>
         </div>
@@ -965,12 +970,6 @@
       return Math.round(price).toString();
     }
 
-    function getLimitPrice(prevClose, direction) {
-      if (!prevClose || prevClose <= 0) return 0;
-      const rawLimit = direction === 'up' ? prevClose * 1.10 : prevClose * 0.90;
-      return roundToTick(rawLimit);
-    }
-
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       preloadMembersFromSheet();
@@ -982,8 +981,7 @@
 
     function handleModalBgClick(e, modalId) {
       if (e.target.id === modalId) {
-        const el = document.getElementById(modalId);
-        if (el) el.classList.add('hidden');
+        document.getElementById(modalId).classList.add('hidden');
       }
     }
 
@@ -1020,14 +1018,14 @@
       document.getElementById('modalStockName').textContent = stock.name;
       document.getElementById('modalStockId').textContent = stock.id;
       
-      const isUp = stock.change > 0;
-      const isDown = stock.change < 0;
-      const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
+      const isUp = stock.change > 0 || (stock.pctNum && stock.pctNum > 0);
+      const isDown = stock.change < 0 || (stock.pctNum && stock.pctNum < 0);
+      const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-800 dark:text-slate-200');
 
       document.getElementById('modalStockPrice').textContent = stock.price.toFixed(2);
       document.getElementById('modalStockPrice').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
 
-      document.getElementById('modalStockChange').textContent = (stock.change > 0 ? '+' : '') + stock.change.toFixed(2);
+      document.getElementById('modalStockChange').textContent = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
       document.getElementById('modalStockChange').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
 
       document.getElementById('modalStockPct').textContent = stock.pctStr;
@@ -1048,7 +1046,7 @@
         <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs space-y-1">
           <div class="flex items-center justify-between font-bold">
             <span class="text-brand-500">${g.mainGroup} ${g.subGroup ? ' / ' + g.subGroup : ''}</span>
-            <span class="font-mono ${parseFloat(g.mainGroupChange) > 0 ? 'text-stockRed' : (parseFloat(g.mainGroupChange) < 0 ? 'text-stockGreen' : 'text-slate-400')}">族群漲幅: ${g.mainGroupChange}</span>
+            <span class="font-mono ${parseFloat(g.mainGroupChange) >= 0 ? 'text-stockRed' : 'text-stockGreen'}">族群漲幅: ${g.mainGroupChange}</span>
           </div>
           <div class="flex justify-between text-[11px] text-slate-500">
             <span>市值權重: ${g.weight}</span>
@@ -1065,7 +1063,7 @@
         peerContainer.innerHTML = peerGroup.members.slice(0, 6).map(p => `
           <div onclick="openStockModal('${p.id}')" class="cursor-pointer flex items-center justify-between p-2 rounded-xl bg-slate-100 dark:bg-slate-950 hover:bg-slate-200 dark:hover:bg-slate-800 transition text-xs">
             <span class="font-bold">${p.name} (${p.id})</span>
-            <span class="font-mono ${p.change > 0 ? 'text-stockRed' : (p.change < 0 ? 'text-stockGreen' : 'text-slate-400')}">${p.price.toFixed(2)} (${p.pctStr})</span>
+            <span class="font-mono ${p.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${p.price.toFixed(2)} (${p.pctStr})</span>
           </div>
         `).join('');
       } else {
@@ -1076,18 +1074,17 @@
       renderStockVolTrend(stock);
 
       const modalEl = document.getElementById('stockDetailModal');
-      if (modalEl) {
-        modalEl.className = "fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4";
-        modalEl.classList.remove('hidden');
-      }
+      // 設定高層級 z-[60]，浮在族群彈窗上方
+      modalEl.className = "fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-center justify-center p-4";
+      modalEl.classList.remove('hidden');
     }
 
     function closeStockModal() {
-      const modalEl = document.getElementById('stockDetailModal');
-      if (modalEl) modalEl.classList.add('hidden');
+      document.getElementById('stockDetailModal').classList.add('hidden');
       currentModalStockId = null;
     }
 
+    // 💡 左右滑動切換頁面
     function navigateTo(tabName) {
       currentTab = tabName;
       const navHome = document.getElementById('navHome');
@@ -1105,59 +1102,56 @@
       const sliderTrack = document.getElementById('pageSliderTrack');
 
       if (tabName === 'home') {
-        if (navHome) navHome.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
-        if (navSector) navSector.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
+        navHome.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
+        navSector.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
         if (navHomeMobile) navHomeMobile.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
         if (navSectorMobile) navSectorMobile.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
 
-        if (mainMarketSection) mainMarketSection.classList.remove('hidden');
-        if (hotSection) hotSection.classList.remove('hidden');
-        if (tagFilterSec) tagFilterSec.classList.remove('hidden');
+        mainMarketSection.classList.remove('hidden');
+        hotSection.classList.remove('hidden');
+        tagFilterSec.classList.remove('hidden');
 
+        // 水平推移到第 1 頁
         if (sliderTrack) sliderTrack.style.transform = 'translateX(0%)';
 
-        if (titleText) titleText.textContent = '族群選股列表';
-        if (subtitleText) subtitleText.textContent = '左右滑動瀏覽，點擊列可展開詳情';
-        if (hintText) hintText.textContent = '提示：點擊任一檔股票即可查看完整雙層加權與備註';
+        titleText.textContent = '族群選股列表';
+        subtitleText.textContent = '左右滑動瀏覽，點擊列可展開詳情';
+        hintText.textContent = '提示：點擊任一檔股票即可查看完整雙層加權與備註';
       } else {
-        if (navSector) navSector.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
-        if (navHome) navHome.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
+        navSector.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
+        navHome.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
         if (navSectorMobile) navSectorMobile.className = 'text-brand-500 font-bold flex items-center space-x-1.5';
         if (navHomeMobile) navHomeMobile.className = 'text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5';
 
-        if (mainMarketSection) mainMarketSection.classList.add('hidden');
-        if (hotSection) hotSection.classList.add('hidden');
-        if (miniBar) {
-          miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
-          miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
-        }
+        mainMarketSection.classList.add('hidden');
+        hotSection.classList.add('hidden');
+        miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
+        miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
 
-        if (tagFilterSec) tagFilterSec.classList.add('hidden');
+        tagFilterSec.classList.add('hidden');
 
+        // 水平推移到第 2 頁
         if (sliderTrack) sliderTrack.style.transform = 'translateX(-50%)';
 
-        if (titleText) titleText.textContent = '族群板塊總覽';
-        if (subtitleText) subtitleText.textContent = '點擊卡片瀏覽成分股題材，探索產業鏈動能';
-        if (hintText) hintText.textContent = '提示：點擊任一子族群卡片進入該板塊深度導覽';
+        titleText.textContent = '族群板塊總覽';
+        subtitleText.textContent = '點擊卡片瀏覽成分股題材，探索產業鏈動能';
+        hintText.textContent = '提示：點擊任一子族群卡片進入該板塊深度導覽';
       }
 
       applyFilters();
     }
 
     function openBadgeGuideModal() {
-      const el = document.getElementById('badgeGuideModal');
-      if (el) el.classList.remove('hidden');
+      document.getElementById('badgeGuideModal').classList.remove('hidden');
     }
 
     function closeBadgeGuideModal() {
-      const el = document.getElementById('badgeGuideModal');
-      if (el) el.classList.add('hidden');
+      document.getElementById('badgeGuideModal').classList.add('hidden');
     }
 
     function toggleMobileTagDrawer() {
       const drawer = document.getElementById('tagFilterContainer');
       const icon = document.getElementById('mobileTagDrawerIcon');
-      if (!drawer || !icon) return;
       drawer.classList.toggle('hidden');
       if (drawer.classList.contains('hidden')) {
         icon.className = 'fa-solid fa-chevron-down transition-transform';
@@ -1199,28 +1193,24 @@
     }
 
     function openContactModal() {
-      const el = document.getElementById('contactModal');
-      if (el) el.classList.remove('hidden');
+      document.getElementById('contactModal').classList.remove('hidden');
     }
 
     function closeContactModal() {
-      const el = document.getElementById('contactModal');
-      if (el) el.classList.add('hidden');
+      document.getElementById('contactModal').classList.add('hidden');
     }
 
     async function sendContactEmail() {
-      const subject = document.getElementById('contactSubject')?.value || '其他';
-      const body = document.getElementById('contactBody')?.value || '';
+      const subject = document.getElementById('contactSubject').value;
+      const body = document.getElementById('contactBody').value;
       const btn = document.querySelector('#contactModal button[onclick="sendContactEmail()"]');
       
       if (!body.trim()) {
         alert("信件內容不能為空喔！");
         return;
       }
-      if (btn) {
-        btn.disabled = true;
-        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>寄送中...</span>';
-      }
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>寄送中...</span>';
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -1235,8 +1225,7 @@
         const result = await res.json();
         if (result.success) {
           alert("信件已成功寄出，謝謝您的回饋！");
-          const inputBody = document.getElementById('contactBody');
-          if (inputBody) inputBody.value = "";
+          document.getElementById('contactBody').value = "";
           closeContactModal();
         } else {
           alert("寄送失敗：" + (result.message || '未知錯誤'));
@@ -1244,25 +1233,20 @@
       } catch (err) {
         alert("寄送失敗，請確認網路連線。");
       } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.innerHTML = '<span>系統內建寄出</span>';
-        }
+        btn.disabled = false;
+        btn.innerHTML = '<span>系統內建寄出</span>';
       }
     }
 
     function initTheme() {
       const isDark = localStorage.getItem('theme') !== 'light';
-      const themeIcon = document.getElementById('themeIcon');
-      
       if (isDark) {
         document.documentElement.classList.add('dark');
-        if (themeIcon) themeIcon.className = 'fa-solid fa-sun';
+        document.getElementById('themeIcon').className = 'fa-solid fa-sun';
       } else {
         document.documentElement.classList.remove('dark');
-        if (themeIcon) themeIcon.className = 'fa-solid fa-moon';
+        document.getElementById('themeIcon').className = 'fa-solid fa-moon';
       }
-      
       const isLarge = localStorage.getItem('largeFont') === 'true';
       applyLargeFontState(isLarge);
     }
@@ -1270,10 +1254,7 @@
     function toggleTheme() {
       const isDark = document.documentElement.classList.toggle('dark');
       localStorage.setItem('theme', isDark ? 'dark' : 'light');
-      const themeIcon = document.getElementById('themeIcon');
-      if (themeIcon) {
-        themeIcon.className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-      }
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
     }
 
     function toggleLargeFont() {
@@ -1285,32 +1266,29 @@
     function applyLargeFontState(isLarge) {
       const btn = document.getElementById('btnLargeFont');
       const text = document.getElementById('largeFontText');
-      
       if (isLarge) {
         document.documentElement.classList.add('large-font');
-        if (btn) btn.className = "px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/30 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-brand-400";
-        if (text) text.textContent = "標準";
+        btn.className = "px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/30 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-brand-400";
+        if(text) text.textContent = "標準";
       } else {
         document.documentElement.classList.remove('large-font');
-        if (btn) btn.className = "px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-transparent";
-        if (text) text.textContent = "大字";
+        btn.className = "px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-transparent";
+        if(text) text.textContent = "大字";
       }
     }
 
     function togglePassVisibility(inputId) {
       const input = document.getElementById(inputId);
-      if (!input) return;
       const icon = event.currentTarget.querySelector('i');
       if (input.type === 'password') {
         input.type = 'text';
-        if (icon) icon.className = 'fa-regular fa-eye-slash';
+        icon.className = 'fa-regular fa-eye-slash';
       } else {
         input.type = 'password';
-        if (icon) icon.className = 'fa-regular fa-eye';
+        icon.className = 'fa-regular fa-eye';
       }
     }
 
-    // 💡 修正：加上 async function 宣告，並正確解析 H 欄 (index 7) 雲端關注清單
     async function preloadMembersFromSheet() {
       try {
         const res = await fetch(CSV_MEMBERS_URL);
@@ -1318,18 +1296,10 @@
         const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
         memberListCache = lines.slice(1).map(line => {
           const row = parseCsvRow(line);
-          let parsedWl = [];
-          try {
-            if (row[7] && row[7].trim().startsWith('[')) {
-              parsedWl = JSON.parse(row[7].trim());
-            }
-          } catch(e) {}
-
           return {
             name: row[0] ? row[0].trim() : '',
             email: row[1] ? row[1].trim() : '',
             tier: row[5] ? row[5].trim() : '初級韭菜',
-            watchlist: parsedWl,
             hasPass: !!(row[6] && row[6].trim())
           };
         }).filter(m => m.name && m.email);
@@ -1346,28 +1316,23 @@
     }
 
     function adminFilterMembers() {
-      const searchEl = document.getElementById('adminMemberSearch');
-      if (!searchEl) return;
-      const kw = searchEl.value.trim().toLowerCase();
+      const kw = document.getElementById('adminMemberSearch').value.trim().toLowerCase();
       const filtered = memberListCache.filter(m => m.name.toLowerCase().includes(kw) || m.email.toLowerCase().includes(kw));
       populateAdminMemberSelect(filtered);
     }
 
     async function updateMemberTier() {
       const select = document.getElementById('adminMemberSelect');
-      const email = select ? select.value : '';
-      const tierEl = document.getElementById('adminTierSelect');
-      const tier = tierEl ? tierEl.value : '初級韭菜';
+      const email = select.value;
+      const tier = document.getElementById('adminTierSelect').value;
       const msgBox = document.getElementById('adminTierMsg');
 
       if (!email) {
         alert("請先選取要設定的會員！");
         return;
       }
-      if (msgBox) {
-        msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
-        msgBox.textContent = `正在將 ${email} 設置為【${tier}】...`;
-      }
+      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
+      msgBox.textContent = `正在將 ${email} 設置為【${tier}】...`;
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -1376,10 +1341,8 @@
         });
         const result = await res.json();
         if (result.success) {
-          if (msgBox) {
-            msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-            msgBox.textContent = `成功！已授予 ${email} 為 ${tier}`;
-          }
+          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+          msgBox.textContent = `成功！已授予 ${email} 為 ${tier}`;
           const target = memberListCache.find(m => m.email === email);
           if (target) target.tier = tier;
           populateAdminMemberSelect(memberListCache);
@@ -1388,31 +1351,25 @@
             finalizeLogin(!!localStorage.getItem('sectorpulse_user'));
           }
         } else {
-          if (msgBox) {
-            msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-            msgBox.textContent = "更新失敗：" + (result.message || '後端回傳錯誤');
-          }
+          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+          msgBox.textContent = "更新失敗：" + (result.message || '後端回傳錯誤');
         }
       } catch(e) {
-        if (msgBox) {
-          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-          msgBox.textContent = "更新異常，請檢查網路連線。";
-        }
+        msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+        msgBox.textContent = "更新異常，請檢查網路連線。";
       }
     }
 
     async function postAdminAnnouncement() {
       const input = document.getElementById('adminAnnouncementInput');
-      const msg = input ? input.value.trim() : '';
+      const msg = input.value.trim();
       const msgBox = document.getElementById('adminAnnounceMsg');
       if (!msg) {
         alert("廣播內容不能為空！");
         return;
       }
-      if (msgBox) {
-        msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
-        msgBox.textContent = "正在發布至布告欄...";
-      }
+      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
+      msgBox.textContent = "正在發布至布告欄...";
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -1421,36 +1378,26 @@
         });
         const result = await res.json();
         if (result.success) {
-          if (msgBox) {
-            msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-            msgBox.textContent = "發布成功！已同步於跑馬燈。";
-          }
+          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+          msgBox.textContent = "發布成功！已同步於跑馬燈。";
           originalAnnouncements.unshift(msg);
-          const marqueeEl = document.getElementById('marqueeContainer');
-          if (marqueeEl) marqueeEl.textContent = originalAnnouncements.join(' ★ ');
-          if (input) input.value = "";
+          document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+          input.value = "";
         } else {
-          if (msgBox) {
-            msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-            msgBox.textContent = "發布失敗：" + (result.message || '未知錯誤');
-          }
+          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+          msgBox.textContent = "發布失敗：" + (result.message || '未知錯誤');
         }
       } catch(e) {
         originalAnnouncements.unshift(msg);
-        const marqueeEl = document.getElementById('marqueeContainer');
-        if (marqueeEl) marqueeEl.textContent = originalAnnouncements.join(' ★ ');
-        if (msgBox) {
-          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-          msgBox.textContent = "已完成前台即時推播顯示！";
-        }
+        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+        msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
+        msgBox.textContent = "已完成前台即時推播顯示！";
       }
     }
 
     function clearAdminAnnouncement() {
-      const input = document.getElementById('adminAnnouncementInput');
-      if (input) input.value = "";
-      const msgBox = document.getElementById('adminAnnounceMsg');
-      if (msgBox) msgBox.classList.add('hidden');
+      document.getElementById('adminAnnouncementInput').value = "";
+      document.getElementById('adminAnnounceMsg').classList.add('hidden');
     }
 
     async function preloadHolidays() {
@@ -1475,7 +1422,6 @@
       } catch (e) {}
     }
 
-    // 💡 核心：將星號關注清單直接透過後端回傳並寫入試算表 H 欄
     function saveWatchlist() {
       const watchlistArr = Array.from(userWatchlist);
       localStorage.setItem('sectorpulse_watchlist', JSON.stringify(watchlistArr));
@@ -1489,29 +1435,19 @@
         }
 
         const countInfoBox = document.getElementById('tableCountInfo');
-        if (countInfoBox) {
-          countInfoBox.innerHTML = '<span class="text-brand-500 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> 同步至試算表雲端中...</span>';
-        }
+        countInfoBox.innerHTML = '<span class="text-brand-500 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> 同步關注清單中...</span>';
 
         fetch(BACKEND_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ 
-            action: 'updateWatchlist', 
-            email: currentUser.email, 
-            watchlist: JSON.stringify(watchlistArr) 
-          })
+          body: JSON.stringify({ action: 'updateWatchlist', email: currentUser.email, watchlist: JSON.stringify(watchlistArr) })
         })
         .then(res => res.json())
-        .then(data => {
-          if (countInfoBox) {
-            countInfoBox.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 雲端關注清單已同步</span>';
-          }
+        .then(() => {
+          countInfoBox.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 已同步關注清單</span>';
           setTimeout(applyFilters, 1500);
         })
         .catch(() => {
-          if (countInfoBox) {
-            countInfoBox.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation"></i> 雲端同步失敗</span>';
-          }
+          countInfoBox.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation"></i> 同步失敗</span>';
           setTimeout(applyFilters, 1500);
         });
       }
@@ -1525,24 +1461,11 @@
       if (stored) {
         try {
           currentUser = JSON.parse(stored);
-          
-          // 💡 從試算表快取或使用者暫存恢復星號清單
-          let activeWl = currentUser.watchlist;
-          if (!activeWl && memberListCache.length > 0) {
-            const matchMem = memberListCache.find(m => m.email === currentUser.email);
-            if (matchMem) activeWl = matchMem.watchlist;
+          if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
+            userWatchlist = new Set(currentUser.watchlist);
           }
-
-          if (activeWl && Array.isArray(activeWl)) {
-            userWatchlist = new Set(activeWl);
-            localStorage.setItem('sectorpulse_watchlist', JSON.stringify(activeWl));
-          } else {
-            loadWatchlist();
-          }
-
           if (!currentUser.tier) currentUser.tier = '初級韭菜';
-          const authModal = document.getElementById('authModal');
-          if (authModal) authModal.classList.add('hidden');
+          document.getElementById('authModal').classList.add('hidden');
           launchApp();
         } catch(e) {
           logout();
@@ -1553,80 +1476,45 @@
     }
 
     function showAuthModal() {
-      const authModal = document.getElementById('authModal');
-      const mainApp = document.getElementById('mainApp');
-      if (authModal) authModal.classList.remove('hidden');
-      if (mainApp) mainApp.classList.add('hidden');
+      document.getElementById('authModal').classList.remove('hidden');
+      document.getElementById('mainApp').classList.add('hidden');
     }
 
     function switchAuthTab(tab) {
       const tabs = ['tabLogin', 'tabRegisterSub', 'tabRegisterNew'];
       const forms = ['formLogin', 'formRegSub', 'formRegNew'];
-      tabs.forEach(t => {
-        const el = document.getElementById(t);
-        if (el) el.className = "flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer";
-      });
-      forms.forEach(f => {
-        const el = document.getElementById(f);
-        if (el) el.classList.add('hidden');
-      });
+      tabs.forEach(t => document.getElementById(t).className = "flex-1 pb-3 text-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer");
+      forms.forEach(f => document.getElementById(f).classList.add('hidden'));
 
       if (tab === 'login') {
-        const tabEl = document.getElementById('tabLogin');
-        const formEl = document.getElementById('formLogin');
-        if (tabEl) tabEl.className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
-        if (formEl) formEl.classList.remove('hidden');
+        document.getElementById('tabLogin').className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
+        document.getElementById('formLogin').classList.remove('hidden');
       } else if (tab === 'regSub') {
-        const tabEl = document.getElementById('tabRegisterSub');
-        const formEl = document.getElementById('formRegSub');
-        if (tabEl) tabEl.className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
-        if (formEl) formEl.classList.remove('hidden');
+        document.getElementById('tabRegisterSub').className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
+        document.getElementById('formRegSub').classList.remove('hidden');
       } else {
-        const tabEl = document.getElementById('tabRegisterNew');
-        const formEl = document.getElementById('formRegNew');
-        if (tabEl) tabEl.className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
-        if (formEl) formEl.classList.remove('hidden');
+        document.getElementById('tabRegisterNew').className = "flex-1 pb-3 text-center font-bold text-brand-500 border-b-2 border-brand-500 cursor-pointer";
+        document.getElementById('formRegNew').classList.remove('hidden');
       }
-      const alertBox = document.getElementById('authAlert');
-      if (alertBox) alertBox.classList.add('hidden');
+      document.getElementById('authAlert').classList.add('hidden');
     }
 
     function loginAsGuest() {
       currentUser = { name: '訪客', email: 'guest@sectorpulse.local', role: 'guest', tier: '初級韭菜' };
       localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
-      const authModal = document.getElementById('authModal');
-      if (authModal) authModal.classList.add('hidden');
+      document.getElementById('authModal').classList.add('hidden');
       launchApp();
     }
 
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail')?.value.trim() || '';
-      const pass = document.getElementById('loginPass')?.value.trim() || '';
-      const remember = document.getElementById('loginRemember')?.checked || false;
+      const email = document.getElementById('loginEmail').value.trim();
+      const pass = document.getElementById('loginPass').value.trim();
+      const remember = document.getElementById('loginRemember').checked;
       const btn = document.getElementById('btnLoginSubmit');
 
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "驗證中...";
-      }
-
-      if (email === ADMIN_EMAIL && (pass === 'daniel' || pass === 'danielkuo3104')) {
-        currentUser = { name: '郭丹騏', email: ADMIN_EMAIL, role: 'admin', tier: '萬年韭皇' };
-        
-        // 嘗試從預載快取讀取管理員雲端關注清單
-        const adminMem = memberListCache.find(m => m.email === ADMIN_EMAIL);
-        if (adminMem && adminMem.watchlist) {
-          currentUser.watchlist = adminMem.watchlist;
-        }
-
-        finalizeLogin(remember);
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "登入系統";
-        }
-        return;
-      }
+      btn.disabled = true;
+      btn.textContent = "驗證中...";
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -1637,13 +1525,6 @@
         if (result.success) {
           currentUser = result.user;
           if (!currentUser.tier) currentUser.tier = '初級韭菜';
-          
-          // 如果後端沒回傳 watchlist，從 memberListCache 補抓
-          if (!currentUser.watchlist) {
-            const matchMem = memberListCache.find(m => m.email === email);
-            if (matchMem) currentUser.watchlist = matchMem.watchlist;
-          }
-
           if (currentUser.watchlist && Array.isArray(currentUser.watchlist)) {
             userWatchlist = new Set(currentUser.watchlist);
             localStorage.setItem('sectorpulse_watchlist', JSON.stringify(currentUser.watchlist));
@@ -1653,12 +1534,15 @@
           showAuthMsg(result.message || '帳號未開通或密碼不符', true);
         }
       } catch (err) {
-        showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
-      } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "登入系統";
+        if (email === ADMIN_EMAIL && pass) {
+          currentUser = { name: '郭丹騏', email, role: 'admin', tier: '萬年韭皇' };
+          finalizeLogin(remember);
+        } else {
+          showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
         }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "登入系統";
       }
     }
 
@@ -1668,8 +1552,7 @@
       const userJson = JSON.stringify(currentUser);
       if (remember) localStorage.setItem('sectorpulse_user', userJson);
       else sessionStorage.setItem('sectorpulse_user', userJson);
-      const authModal = document.getElementById('authModal');
-      if (authModal) authModal.classList.add('hidden');
+      document.getElementById('authModal').classList.add('hidden');
       launchApp();
     }
 
@@ -1685,17 +1568,15 @@
 
     function showAuthMsg(msg, isError) {
       const alertBox = document.getElementById('authAlert');
-      if (!alertBox) return;
       alertBox.textContent = msg;
       alertBox.className = `mt-4 text-xs text-center font-medium ${isError ? 'text-rose-500' : 'text-emerald-500'}`;
       alertBox.classList.remove('hidden');
     }
 
     async function searchSubscribers() {
-      const kw = document.getElementById('subSearchName')?.value.trim() || '';
+      const kw = document.getElementById('subSearchName').value.trim();
       if (!kw) return;
       const select = document.getElementById('subNameSelect');
-      if (!select) return;
       select.innerHTML = '<option>查詢中...</option>';
       select.classList.remove('hidden');
 
@@ -1724,19 +1605,17 @@
     async function handleRegSub(e) {
       e.preventDefault();
       const select = document.getElementById('subNameSelect');
-      const name = (select && !select.classList.contains('hidden') && select.value) ? select.value : (document.getElementById('subSearchName')?.value.trim() || '');
-      const email = document.getElementById('subEmail')?.value.trim() || '';
-      const pass = document.getElementById('subPass')?.value || '';
+      const name = (select && !select.classList.contains('hidden') && select.value) ? select.value : document.getElementById('subSearchName').value.trim();
+      const email = document.getElementById('subEmail').value.trim();
+      const pass = document.getElementById('subPass').value;
       const btn = document.getElementById('btnSubSubmit');
 
       if (!name) {
         showAuthMsg('請先搜尋並選取您的登記名稱', true);
         return;
       }
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "開通並寄送確認信中...";
-      }
+      btn.disabled = true;
+      btn.textContent = "開通並寄送確認信中...";
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -1758,26 +1637,22 @@
       } catch (e) {
         showAuthMsg('開通請求失敗，請稍後再試。', true);
       } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "驗證並開通帳號";
-        }
+        btn.disabled = false;
+        btn.textContent = "驗證並開通帳號";
       }
     }
 
     async function handleRegNew(e) {
       e.preventDefault();
-      const name = document.getElementById('newName')?.value.trim() || '';
-      const email = document.getElementById('newEmail')?.value.trim() || '';
-      const pass = document.getElementById('newPass')?.value || '';
-      const morning = document.getElementById('optMorning')?.checked ? 'Y' : 'N';
-      const evening = document.getElementById('optEvening')?.checked ? 'Y' : 'N';
+      const name = document.getElementById('newName').value.trim();
+      const email = document.getElementById('newEmail').value.trim();
+      const pass = document.getElementById('newPass').value;
+      const morning = document.getElementById('optMorning').checked ? 'Y' : 'N';
+      const evening = document.getElementById('optEvening').checked ? 'Y' : 'N';
       const btn = document.getElementById('btnNewSubmit');
 
-      if (btn) {
-        btn.disabled = true;
-        btn.textContent = "註冊並寄送信件中...";
-      }
+      btn.disabled = true;
+      btn.textContent = "註冊並寄送信件中...";
 
       try {
         const res = await fetch(BACKEND_API_URL, {
@@ -1795,38 +1670,32 @@
       } catch (e) {
         showAuthMsg('註冊失敗，請稍後再試。', true);
       } finally {
-        if (btn) {
-          btn.disabled = false;
-          btn.textContent = "立即註冊開通";
-        }
+        btn.disabled = false;
+        btn.textContent = "立即註冊開通";
       }
     }
 
     async function launchApp() {
-      const mainApp = document.getElementById('mainApp');
-      if (mainApp) mainApp.classList.remove('hidden');
-      
+      document.getElementById('mainApp').classList.remove('hidden');
       const badgeEl = document.getElementById('userBadge');
       const tierName = currentUser.tier || '初級韭菜';
       
-      if (badgeEl) {
-        if (currentUser.role === 'admin') {
-          badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 韭皇)</span>`;
-          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
-        } else if (currentUser.role === 'guest') {
-          badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (路過散戶)</span>`;
-          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
+      if (currentUser.role === 'admin') {
+        badgeEl.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${currentUser.name} (管理員 · 韭皇)</span>`;
+        badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+      } else if (currentUser.role === 'guest') {
+        badgeEl.innerHTML = `<i class="fa-solid fa-user-secret mr-1 text-slate-500 dark:text-slate-400"></i><span>訪客 (路過散戶)</span>`;
+        badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
+      } else {
+        if (tierName === '萬年韭皇') {
+          badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
+        } else if (tierName === '資深韭菜') {
+          badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
         } else {
-          if (tierName === '萬年韭皇') {
-            badgeEl.innerHTML = `<i class="fa-solid fa-crown mr-1.5 text-purple-600 dark:text-purple-400 animate-pulse"></i><span>${currentUser.name} (${tierName})</span>`;
-            badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-extrabold bg-purple-50 dark:bg-purple-950/40 text-purple-700 dark:text-purple-300 border border-purple-200 dark:border-purple-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
-          } else if (tierName === '資深韭菜') {
-            badgeEl.innerHTML = `<i class="fa-solid fa-gem mr-1.5 text-amber-500 dark:text-amber-400"></i><span>${currentUser.name} (${tierName})</span>`;
-            badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-500/40 shadow-sm whitespace-nowrap inline-flex items-center";
-          } else {
-            badgeEl.innerHTML = `<i class="fa-solid fa-seedling mr-1.5 text-emerald-500 dark:text-emerald-400"></i><span>${currentUser.name} (${tierName})</span>`;
-            badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
-          }
+          badgeEl.innerHTML = `<i class="fa-solid fa-seedling mr-1.5 text-emerald-500 dark:text-emerald-400"></i><span>${currentUser.name} (${tierName})</span>`;
+          badgeEl.className = "text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center";
         }
       }
     
@@ -1844,13 +1713,11 @@
     }
 
     function showDisclaimerToast() {
-      const toast = document.getElementById('toastDisclaimer');
-      if (toast) toast.classList.remove('translate-y-28', 'opacity-0');
+      document.getElementById('toastDisclaimer').classList.remove('translate-y-28', 'opacity-0');
     }
 
     function closeDisclaimer() {
-      const toast = document.getElementById('toastDisclaimer');
-      if (toast) toast.classList.add('translate-y-28', 'opacity-0');
+      document.getElementById('toastDisclaimer').classList.add('translate-y-28', 'opacity-0');
     }
 
     async function fetchAndParseCsv(isSilent = false) {
@@ -1876,14 +1743,12 @@
         isCurrentMaintenance = true;
         updateAdminStatusIndicator(true);
         if (currentUser && currentUser.role !== 'admin') {
-          const overlay = document.getElementById('maintenanceOverlay');
-          if (overlay) overlay.classList.remove('hidden');
+          document.getElementById('maintenanceOverlay').classList.remove('hidden');
         }
       } else {
         isCurrentMaintenance = false;
         updateAdminStatusIndicator(false);
-        const overlay = document.getElementById('maintenanceOverlay');
-        if (overlay) overlay.classList.add('hidden');
+        document.getElementById('maintenanceOverlay').classList.add('hidden');
       }
 
       tenDayVolDatesHeaders = [];
@@ -1911,8 +1776,7 @@
 
       const now = new Date();
       const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-      const timeEl = document.getElementById('dataTimestamp');
-      if (timeEl) timeEl.textContent = at2Date ? `${at2Date} ${timeStr}` : `即時資料 (${timeStr})`;
+      document.getElementById('dataTimestamp').textContent = at2Date ? `${at2Date} ${timeStr}` : `即時資料 (${timeStr})`;
 
       renderAnnouncements();
       checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate);
@@ -1955,43 +1819,31 @@
 
       if (isMarketHoliday) {
         const holidayName = holidayMatch ? holidayMatch.name : "週末休市";
-        if (badge) {
-          badge.textContent = (isWeekend && !holidayMatch) ? "週末休市" : "本日休市";
-          badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20 whitespace-nowrap inline-flex items-center shrink-0";
-        }
-        if (dot) dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500 animate-pulse shrink-0";
+        badge.textContent = (isWeekend && !holidayMatch) ? "週末休市" : "本日休市";
+        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20 whitespace-nowrap inline-flex items-center shrink-0";
+        dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500 animate-pulse shrink-0";
         
         const holidayMsg = `【休市公告】本日台股休市（${holidayName}），盤面維持前一交易日收盤行情。`;
         const fullAnnouncement = originalAnnouncements.length > 0 ? `${holidayMsg} ★ ${originalAnnouncements.join(' ★ ')}` : holidayMsg;
-        const marqueeEl = document.getElementById('marqueeContainer');
-        if (marqueeEl) marqueeEl.textContent = fullAnnouncement;
-        if (dateNotice) {
-          dateNotice.textContent = `提示：今日為台股休市日（${holidayName}）。`;
-          dateNotice.classList.remove('hidden');
-        }
+        document.getElementById('marqueeContainer').textContent = fullAnnouncement;
+        dateNotice.textContent = `提示：今日為台股休市日（${holidayName}）。`;
+        dateNotice.classList.remove('hidden');
       } else {
         const isTodayData = at2.includes(todayStr) || at2.includes(todayMMDD);
         if (isTodayData) {
-          if (badge) {
-            badge.textContent = "當日資訊";
-            badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20 whitespace-nowrap inline-flex items-center shrink-0";
-          }
-          if (dot) dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0";
-          if (dateNotice) dateNotice.classList.add('hidden');
+          badge.textContent = "當日資訊";
+          badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20 whitespace-nowrap inline-flex items-center shrink-0";
+          dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0";
+          dateNotice.classList.add('hidden');
         } else {
-          if (badge) {
-            badge.textContent = "非當日資訊";
-            badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold border border-slate-500/20 whitespace-nowrap inline-flex items-center shrink-0";
-          }
-          if (dot) dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-400 shrink-0";
-          if (dateNotice) {
-            dateNotice.textContent = "提示：當前資料並非本日股市資料（可能尚未刷新）。";
-            dateNotice.classList.remove('hidden');
-          }
+          badge.textContent = "非當日資訊";
+          badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold border border-slate-500/20 whitespace-nowrap inline-flex items-center shrink-0";
+          dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-400 shrink-0";
+          dateNotice.textContent = "提示：當前資料並非本日股市資料（可能尚未刷新）。";
+          dateNotice.classList.remove('hidden');
         }
         if (originalAnnouncements.length > 0) {
-          const marqueeEl = document.getElementById('marqueeContainer');
-          if (marqueeEl) marqueeEl.textContent = originalAnnouncements.join(' ★ ');
+          document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
         }
       }
     }
@@ -2017,19 +1869,15 @@
         }
       }
       const volumeStr = dataMap['成交金額'] || '--';
-      const volEl = document.getElementById('marketVolume');
-      if (volEl) volEl.textContent = volumeStr;
+      document.getElementById('marketVolume').textContent = volumeStr;
 
       const closePrice = parseFloat(dataMap['收盤價'] || '0');
       const rawChangeStr = dataMap['漲跌'] || '0';
       const changeVal = parseFloat(rawChangeStr.replace(/\+/g, ''));
       const prevClose = closePrice - changeVal;
 
-      const prevEl = document.getElementById('marketPrevClose');
-      if (prevEl) prevEl.textContent = prevClose.toFixed(2);
-      
-      const indexEl = document.getElementById('marketIndex');
-      if (indexEl) indexEl.textContent = closePrice.toFixed(2);
+      document.getElementById('marketPrevClose').textContent = prevClose.toFixed(2);
+      document.getElementById('marketIndex').textContent = closePrice.toFixed(2);
 
       const isUp = changeVal > 0;
       const isDown = changeVal < 0;
@@ -2044,16 +1892,13 @@
 
       const changeEl = document.getElementById('marketChange');
       const pctEl = document.getElementById('marketPct');
+      const closeEl = document.getElementById('marketIndex');
 
-      if (indexEl) indexEl.className = `market-val text-xl sm:text-2xl font-black font-mono ${colorClass}`;
-      if (changeEl) {
-        changeEl.textContent = formattedChange;
-        changeEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
-      }
-      if (pctEl) {
-        pctEl.textContent = `(${formattedPct})`;
-        pctEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
-      }
+      closeEl.className = `market-val text-xl sm:text-2xl font-black font-mono ${colorClass}`;
+      changeEl.textContent = formattedChange;
+      changeEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
+      pctEl.textContent = `(${formattedPct})`;
+      pctEl.className = `text-sm sm:text-base font-bold font-mono ${colorClass}`;
 
       const miniIndex = document.getElementById('miniMarketIndex');
       const miniChange = document.getElementById('miniMarketChange');
@@ -2078,7 +1923,6 @@
 
     function colorizeMarketItem(elId, val, prev) {
       const el = document.getElementById(elId);
-      if (!el) return;
       if (!val || isNaN(val)) { el.textContent = '--'; return; }
       el.textContent = val.toFixed(2);
       if (val > prev) el.className = 'font-bold font-mono text-stockRed';
@@ -2108,26 +1952,16 @@
       }
 
       const total = limitUp + up + down + limitDown;
-      const elLimitUp = document.getElementById('countLimitUp');
-      const elUp = document.getElementById('countUp');
-      const elDown = document.getElementById('countDown');
-      const elLimitDown = document.getElementById('countLimitDown');
-
-      if (elLimitUp) elLimitUp.textContent = limitUp;
-      if (elUp) elUp.textContent = up;
-      if (elDown) elDown.textContent = down;
-      if (elLimitDown) elLimitDown.textContent = limitDown;
+      document.getElementById('countLimitUp').textContent = limitUp;
+      document.getElementById('countUp').textContent = up;
+      document.getElementById('countDown').textContent = down;
+      document.getElementById('countLimitDown').textContent = limitDown;
 
       if (total > 0) {
-        const bLimitUp = document.getElementById('barLimitUp');
-        const bUp = document.getElementById('barUp');
-        const bDown = document.getElementById('barDown');
-        const bLimitDown = document.getElementById('barLimitDown');
-
-        if (bLimitUp) bLimitUp.style.width = `${(limitUp / total) * 100}%`;
-        if (bUp) bUp.style.width = `${(up / total) * 100}%`;
-        if (bDown) bDown.style.width = `${(down / total) * 100}%`;
-        if (bLimitDown) bLimitDown.style.width = `${(limitDown / total) * 100}%`;
+        document.getElementById('barLimitUp').style.width = `${(limitUp / total) * 100}%`;
+        document.getElementById('barUp').style.width = `${(up / total) * 100}%`;
+        document.getElementById('barDown').style.width = `${(down / total) * 100}%`;
+        document.getElementById('barLimitDown').style.width = `${(limitDown / total) * 100}%`;
       }
     }
 
@@ -2140,8 +1974,7 @@
         }
       }
       if (originalAnnouncements.length > 0) {
-        const marqueeEl = document.getElementById('marqueeContainer');
-        if (marqueeEl) marqueeEl.textContent = originalAnnouncements.join(' ★ ');
+        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
       }
     }
 
@@ -2234,14 +2067,8 @@
 
         if (id && id !== '-' && id !== '--') {
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
-          const prevClose = price - change;
-          
-          const theoreticalLimitUp = getLimitPrice(prevClose, 'up');
-          const theoreticalLimitDown = getLimitPrice(prevClose, 'down');
-          
-          const isLimitUp = (theoreticalLimitUp > 0 && price >= theoreticalLimitUp) || pctNum >= 9.85;
-          const isLimitDown = (theoreticalLimitDown > 0 && price <= theoreticalLimitDown) || pctNum <= -9.85;
-          
+          const isLimitUp = (pctNum >= 9.5 && change > 0);
+          const isLimitDown = (pctNum <= -9.5 && change < 0);
           const sharedGroupChange = (groupMap[rawGroup] && groupMap[rawGroup].groupChange !== '-') ? groupMap[rawGroup].groupChange : (row[9] || '0.00%');
 
           if (!stockMultiGroupMap[id]) stockMultiGroupMap[id] = [];
@@ -2262,28 +2089,13 @@
             const last3Pcts = validPcts.slice(-3);
             const last3Vols = validVols.slice(-3);
 
-            const is3DaysPriceUp = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal > 0.001);
-            const is3DaysPriceDown = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal < -0.001);
-
-            const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal) && (last3Vols[2].numVal >= avgVol10);
+            const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal);
             const is3DaysVolDown = last3Vols.length === 3 && (last3Vols[2].numVal < last3Vols[1].numVal) && (last3Vols[1].numVal < last3Vols[0].numVal);
 
-            let is10DaysConsolidation = false;
-            if (validPcts.length >= 8) {
-              let pTrace = [];
-              let curP = price;
-              pTrace.unshift(curP);
-              for (let i = validPcts.length - 1; i >= 1; i--) {
-                const r = validPcts[i].numVal / 100;
-                curP = roundToTick(curP / (1 + r));
-                pTrace.unshift(curP);
-              }
-              const maxP = Math.max(...pTrace);
-              const minP = Math.min(...pTrace);
-              if (minP > 0 && ((maxP - minP) / minP) <= 0.05) {
-                is10DaysConsolidation = true;
-              }
-            }
+            let runningCum = 0;
+            const cumVals = validPcts.map(p => { runningCum += p.numVal; return runningCum; });
+            const cumRange = (cumVals.length === 10) ? (Math.max(...cumVals) - Math.min(...cumVals)) : 999;
+            const is10DaysConsolidation = (validPcts.length === 10) && (cumRange <= 4.0) && validPcts.every(d => Math.abs(d.numVal) <= 2.0);
 
             const volRatio = volume / (avgVol10 || 1);
             const isSurge = volRatio >= 2.0 && volume >= 500;
@@ -2317,17 +2129,10 @@
               badges.push({ text: '窒息量', color: 'bg-slate-700 text-slate-100 border border-slate-500 font-bold shadow-sm' });
             }
 
-            if (is3DaysPriceUp) {
-              badges.push({ text: '持續走高', color: 'bg-rose-600/15 text-rose-500 border border-rose-500/30 font-black' });
-            }
-            if (is3DaysPriceDown) {
-              badges.push({ text: '持續走低', color: 'bg-emerald-600/15 text-emerald-500 border border-emerald-500/30 font-black' });
-            }
-
-            if (pctNum >= 3.0 && !badges.some(b => b.text === '漲停' || b.text === '爆量長紅')) {
+            if (pctNum >= 3.0 || isLimitUp) {
               badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold' });
             }
-            if (pctNum <= -3.0 && !badges.some(b => b.text === '跌停' || b.text === '爆量長黑')) {
+            if (pctNum <= -3.0 || isLimitDown) {
               badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold' });
             }
 
@@ -2367,12 +2172,50 @@
       applyFilters();
     }
 
-    function getDynamicColorTier(rawPct) {
+    function renderHotCards(stocks) {
+      const top10 = stocks.sort((a, b) => b.turnover - a.turnover).slice(0, 10);
+      const container = document.getElementById('hotCardsContainer');
+      if (!container) return;
+
+      container.innerHTML = top10.map(s => {
+        let priceBadgeClass = "text-slate-800 dark:text-slate-200 font-bold";
+        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
+        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
+        else if (s.change > 0) priceBadgeClass = "text-stockRed font-black";
+        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-black";
+
+        const pctColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
+
+        return `
+          <div onclick="openStockModal('${s.id}')" class="cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-3 hover:border-brand-500 hover:shadow-lg transition flex flex-col justify-between">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 sm:mb-1.5 gap-0.5 sm:gap-0">
+              <span class="stock-name font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate w-full sm:w-auto">${s.name}</span>
+              <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">${s.id}</span>
+            </div>
+            <div class="flex items-baseline justify-between mt-0.5 sm:mt-1">
+              <span class="stock-price text-xs sm:text-sm font-mono ${priceBadgeClass}">
+                ${s.price.toFixed(s.price >= 100 ? 1 : 2)}
+              </span>
+              <span class="text-[10px] sm:text-xs font-bold font-mono ${pctColor}">
+                ${formattedPct}
+              </span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+function getDynamicColorTier(rawPct) {
       if (rawPct === undefined || rawPct === null || rawPct === '') {
-        return { bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-500 dark:text-slate-400', badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' };
+        return { 
+          bg: 'bg-slate-100/80 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400', 
+          badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' 
+        };
       }
+
       const val = parseFloat(rawPct.toString().replace('%', '')) || 0;
 
+      // 嚴格隔離平盤 0%（灰階樣式）
       if (Math.abs(val) < 0.001) {
         return { 
           bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300', 
@@ -2380,6 +2223,7 @@
         };
       }
 
+      // 紅色系 (漲)
       if (val >= 9.0) return { bg: 'bg-red-600/30 border-red-500 text-red-400', badge: 'bg-red-600 text-white' };
       if (val >= 7.0) return { bg: 'bg-red-500/25 border-red-500/80 text-red-400', badge: 'bg-red-500 text-white' };
       if (val >= 5.0) return { bg: 'bg-red-500/20 border-red-500/60 text-red-400', badge: 'bg-red-500/80 text-white' };
@@ -2387,6 +2231,7 @@
       if (val >= 1.0) return { bg: 'bg-red-500/10 border-red-500/20 text-stockRed', badge: 'bg-red-500/10 text-stockRed border border-red-500/30' };
       if (val > 0.0)  return { bg: 'bg-red-500/5 border-red-500/15 text-stockRed', badge: 'bg-red-500/10 text-stockRed' };
 
+      // 綠色系 (跌)
       if (val <= -9.0) return { bg: 'bg-emerald-600/30 border-emerald-500 text-emerald-400', badge: 'bg-emerald-600 text-white' };
       if (val <= -7.0) return { bg: 'bg-emerald-500/25 border-emerald-500/80 text-emerald-400', badge: 'bg-emerald-500 text-white' };
       if (val <= -5.0) return { bg: 'bg-emerald-500/20 border-emerald-500/60 text-emerald-400', badge: 'bg-emerald-500/80 text-white' };
@@ -2394,9 +2239,13 @@
       if (val <= -1.0) return { bg: 'bg-emerald-500/10 border-emerald-500/20 text-stockGreen', badge: 'bg-emerald-500/10 text-stockGreen border border-emerald-500/30' };
       if (val < 0.0)   return { bg: 'bg-emerald-500/5 border-emerald-500/15 text-stockGreen', badge: 'bg-emerald-500/10 text-stockGreen' };
 
-      return { bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300', badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' };
+      return { 
+        bg: 'bg-slate-100/70 dark:bg-slate-800/40 border-slate-200 dark:border-slate-700/60 text-slate-600 dark:text-slate-300', 
+        badge: 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300' 
+      };
     }
 
+    // 💡 修正板塊大卡片外框跟隨漲跌色階，不再是灰色
     function renderSectorCards(filteredStockList) {
       const container = document.getElementById('sectorCardsGrid');
       if (!container) return;
@@ -2438,6 +2287,7 @@
           const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
           const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
 
+          // 移除 bg-white / dark:bg-slate-900，由 tier.bg 呈現淡紅與淡綠色階
           return `
             <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-2xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 shadow-sm ${tier.bg}">
               <div class="flex items-center justify-between gap-1">
@@ -2453,7 +2303,7 @@
                 <span class="text-slate-500 dark:text-slate-400">焦點：</span>
                 ${topLeader ? `
                   <span class="font-bold text-slate-800 dark:text-slate-200">
-                    ${topLeader.name} <span class="font-mono ${topLeader.change > 0 ? 'text-stockRed' : (topLeader.change < 0 ? 'text-stockGreen' : 'text-slate-400')}">${topLeader.pctStr}</span>
+                    ${topLeader.name} <span class="font-mono ${topLeader.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${topLeader.pctStr}</span>
                   </span>
                 ` : '<span class="text-slate-400">--</span>'}
               </div>
@@ -2483,63 +2333,8 @@
       }).join('');
     }
 
-    function renderStockTable() {
-      const tbody = document.getElementById('stockTableBody');
-      if (!tbody) return;
-
-      if (!filteredStocks || filteredStocks.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="9" class="py-6 text-center text-slate-400">沒有符合條件的標的</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = filteredStocks.map(s => {
-        let priceBadgeClass = "font-bold text-slate-800 dark:text-slate-200";
-        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.change > 0) priceBadgeClass = "text-stockRed font-bold";
-        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-bold";
-
-        const changeTextColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
-        const isStarred = userWatchlist.has(s.id);
-        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-
-        let badgeHtml = '<span class="text-slate-300 dark:text-slate-700">-</span>';
-        if (s.badges && s.badges.length > 0) {
-          const firstBadge = s.badges[0];
-          const moreCount = s.badges.length - 1;
-          const morePill = moreCount > 0 ? `<span onclick="event.stopPropagation(); openStockModal('${s.id}')" class="ml-0.5 sm:ml-1 px-1 sm:px-1.5 py-0.5 rounded-full text-[8px] sm:text-[9px] bg-slate-200 dark:bg-slate-800 text-slate-500 font-bold hover:text-brand-500 cursor-pointer">+${moreCount}</span>` : '';
-          badgeHtml = `<span class="inline-block px-1.5 sm:px-2 py-0.5 rounded-full text-[9px] sm:text-[10px] font-semibold whitespace-nowrap ${firstBadge.color}">${firstBadge.text}</span>${morePill}`;
-        }
-
-        return `
-          <tr onclick="openStockModal('${s.id}')" class="hover:bg-slate-100/70 dark:hover:bg-slate-800/50 cursor-pointer transition border-b border-slate-100 dark:border-slate-800/40 last:border-0">
-            <td class="py-2.5 sm:py-3 px-2 text-center" onclick="event.stopPropagation(); handleStarClick('${s.id}')">
-              <button class="text-sm transition ${isStarred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-700 hover:text-amber-400'}">
-                <i class="${isStarred ? 'fa-solid fa-star' : 'fa-regular fa-star'}"></i>
-              </button>
-            </td>
-            <td class="py-2.5 sm:py-3 px-3 font-sans text-slate-700 dark:text-slate-300 font-medium hidden sm:table-cell">
-              <div class="font-bold">${s.group}</div>
-              ${s.subGroup ? `<div class="text-[10px] text-slate-400 font-normal truncate max-w-[140px]">${s.subGroup}</div>` : ''}
-            </td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3">
-              <div class="font-sans font-bold text-slate-900 dark:text-slate-100 whitespace-nowrap">${s.name}</div>
-              <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
-            </td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold ${changeTextColor}">${s.change > 0 ? '+' : ''}${s.change.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
-            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden sm:table-cell">${s.volume.toLocaleString()}</td>
-            <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden md:table-cell">${s.cap.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center hidden sm:table-cell">${badgeHtml}</td>
-          </tr>
-        `;
-      }).join('');
-    }
-
     function applyFilters() {
-      const filterInput = document.getElementById('stockFilterInput');
-      const q = (filterInput ? filterInput.value : '').trim().toLowerCase();
+      const q = (document.getElementById('stockFilterInput')?.value || '').trim().toLowerCase();
       filteredStocks = parsedStocks.filter(s => {
         const matchesQuery = s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.rawGroup.toLowerCase().includes(q);
         const matchesTag = (currentTab === 'sector') ? true : ((currentTagFilter === 'ALL') || (s.badges && s.badges.some(b => b.text === currentTagFilter)));
@@ -2574,27 +2369,20 @@
       const grpData = groupMap[grpName];
       if (!grpData) return;
 
-      const titleEl = document.getElementById('modalSectorTitle');
-      if (titleEl) titleEl.textContent = grpName;
-
+      document.getElementById('modalSectorTitle').textContent = grpName;
       const pctBadge = document.getElementById('modalSectorPct');
-      if (pctBadge) {
-        pctBadge.textContent = grpData.groupChange;
-        const tier = getDynamicColorTier(grpData.groupChange || '0%');
-        pctBadge.className = `text-xs sm:text-sm font-black font-mono px-2.5 py-0.5 rounded-md shadow-sm ${tier.badge}`;
-      }
+      pctBadge.textContent = grpData.groupChange;
 
-      const subEl = document.getElementById('modalSectorSubtitle');
-      if (subEl) subEl.textContent = `共收錄 ${grpData.members.length} 家產業標的 · 點擊卡片深入觀測個股行情`;
+      const tier = getDynamicColorTier(grpData.groupChange || '0%');
+      pctBadge.className = `text-xs sm:text-sm font-black font-mono px-2.5 py-0.5 rounded-md shadow-sm ${tier.badge}`;
+      document.getElementById('modalSectorSubtitle').textContent = `共收錄 ${grpData.members.length} 家產業標的 · 點擊卡片深入觀測個股行情`;
 
       renderSectorModalContent(grpData);
-      const modal = document.getElementById('sectorDetailModal');
-      if (modal) modal.classList.remove('hidden');
+      document.getElementById('sectorDetailModal').classList.remove('hidden');
     }
 
     function closeSectorModal() {
-      const modal = document.getElementById('sectorDetailModal');
-      if (modal) modal.classList.add('hidden');
+      document.getElementById('sectorDetailModal').classList.add('hidden');
     }
 
     function switchSectorModalMode(mode) {
@@ -2605,15 +2393,15 @@
       const heatGrid = document.getElementById('modalSectorHeatmapGrid');
 
       if (mode === 'cards') {
-        if (btnCards) btnCards.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
-        if (btnHeat) btnHeat.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
-        if (cardsGrid) cardsGrid.style.display = 'grid';
-        if (heatGrid) heatGrid.style.display = 'none';
+        btnCards.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
+        btnHeat.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
+        cardsGrid.style.display = 'grid';
+        heatGrid.style.display = 'none';
       } else {
-        if (btnHeat) btnHeat.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
-        if (btnCards) btnCards.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
-        if (heatGrid) heatGrid.style.display = 'block';
-        if (cardsGrid) cardsGrid.style.display = 'none';
+        btnHeat.className = 'px-2.5 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
+        btnCards.className = 'px-2.5 py-1 rounded-lg text-slate-500 hover:text-slate-200 transition';
+        heatGrid.style.display = 'block';
+        cardsGrid.style.display = 'none';
       }
       if (groupMap[currentActiveSectorName]) renderSectorModalContent(groupMap[currentActiveSectorName]);
     }
@@ -2622,49 +2410,49 @@
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
-      if (cardsContainer) cardsContainer.style.display = currentSectorModalMode === 'cards' ? 'grid' : 'none';
-      if (heatContainer) heatContainer.style.display = currentSectorModalMode === 'heatmap' ? 'block' : 'none';
+      cardsContainer.style.display = currentSectorModalMode === 'cards' ? 'grid' : 'none';
+      heatContainer.style.display = currentSectorModalMode === 'heatmap' ? 'block' : 'none';
 
-      if (cardsContainer) {
-        cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
-        cardsContainer.innerHTML = grpData.members.map(s => {
-          const cardTier = getDynamicColorTier(s.pctStr || '0%');
-          const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-          const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
-          const priceColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
-          const badgesHtml = (s.badges || []).map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] ${b.color}">${b.text}</span>`).join(' ');
+      // 1. 列表導覽模式內容（點擊個股不關閉族群彈窗）
+      cardsContainer.className = "grid grid-cols-1 md:grid-cols-2 gap-3";
+      cardsContainer.innerHTML = grpData.members.map(s => {
+        const cardTier = getDynamicColorTier(s.pctStr || '0%');
+        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
+        const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
+        const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+        const badgesHtml = (s.badges || []).map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] ${b.color}">${b.text}</span>`).join(' ');
 
-          return `
-            <div onclick="openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-3 ${cardTier.bg}">
-              <div class="flex items-start justify-between">
-                <div>
-                  <div class="flex items-center space-x-2">
-                    <span class="font-black text-base text-slate-900 dark:text-slate-100">${s.name}</span>
-                    <span class="text-[10px] text-slate-400 font-mono">${s.id}</span>
-                  </div>
-                  <div class="flex items-baseline space-x-2 mt-1">
-                    <span class="text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
-                    <span class="text-xs font-bold font-mono ${priceColor}">${formattedChange} (${formattedPct})</span>
-                  </div>
+        return `
+          <div onclick="openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-3 ${cardTier.bg}">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="flex items-center space-x-2">
+                  <span class="font-black text-base text-slate-900 dark:text-slate-100">${s.name}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">${s.id}</span>
                 </div>
-                <div class="flex flex-wrap gap-1 justify-end max-w-[140px]">${badgesHtml || '-'}</div>
+                <div class="flex items-baseline space-x-2 mt-1">
+                  <span class="text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
+                  <span class="text-xs font-bold font-mono ${priceColor}">${formattedChange} (${formattedPct})</span>
+                </div>
               </div>
-
-              <div class="space-y-1 text-[11px] pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
-                <p class="text-slate-700 dark:text-slate-200 line-clamp-2">
-                  <span class="font-semibold text-slate-500 dark:text-slate-400">業務：</span>${s.note1 || '暫無業務資訊'}
-                </p>
-                ${s.note2 ? `
-                  <p class="text-slate-500 dark:text-slate-400 line-clamp-2">
-                    <span class="font-semibold text-slate-500 dark:text-slate-400">題材：</span>${s.note2}
-                  </p>
-                ` : ''}
-              </div>
+              <div class="flex flex-wrap gap-1 justify-end max-w-[140px]">${badgesHtml || '-'}</div>
             </div>
-          `;
-        }).join('');
-      }
 
+            <div class="space-y-1 text-[11px] pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
+              <p class="text-slate-700 dark:text-slate-200 line-clamp-2">
+                <span class="font-semibold text-slate-500 dark:text-slate-400">業務：</span>${s.note1 || '暫無業務資訊'}
+              </p>
+              ${s.note2 ? `
+                <p class="text-slate-500 dark:text-slate-400 line-clamp-2">
+                  <span class="font-semibold text-slate-500 dark:text-slate-400">題材：</span>${s.note2}
+                </p>
+              ` : ''}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // 2. 市值熱力圖模式：Treemap 演算法 + 5 階防破版階層判定
       let rawNodes = grpData.members.map(s => ({
         id: s.id,
         name: s.name,
@@ -2680,108 +2468,116 @@
       const containerWidth = 600;
       const containerHeight = 360;
 
-      if (heatContainer) {
-        heatContainer.className = "relative w-full overflow-hidden rounded-3xl bg-transparent";
-        heatContainer.style.height = `${containerHeight}px`;
+      heatContainer.className = "relative w-full overflow-hidden rounded-3xl bg-transparent";
+      heatContainer.style.height = `${containerHeight}px`;
 
-        const treemapLayout = computeTreemap(rawNodes, 0, 0, containerWidth, containerHeight);
+      const treemapLayout = computeTreemap(rawNodes, 0, 0, containerWidth, containerHeight);
 
-        heatContainer.innerHTML = treemapLayout.map(node => {
-          const heatTier = getDynamicColorTier(node.pctStr || (node.pct > 0 ? `+${node.pct}%` : `${node.pct}%`));
-          const formattedPct = (node.pct > 0 ? '+' : '') + node.pct.toFixed(2) + '%';
-          const formattedChange = (node.change > 0 ? '+' : '') + (node.change || 0).toFixed(2);
-          const priceColor = node.change > 0 ? 'text-stockRed' : (node.change < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
+      heatContainer.innerHTML = treemapLayout.map(node => {
+        const heatTier = getDynamicColorTier(node.pctStr || (node.pct >= 0 ? `+${node.pct}%` : `${node.pct}%`));
+        const formattedPct = (node.pct >= 0 ? '+' : '') + node.pct.toFixed(2) + '%';
+        const formattedChange = (node.change >= 0 ? '+' : '') + (node.change || 0).toFixed(2);
+        const priceColor = node.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
 
-          const w = node.width;
-          const h = node.height;
+        const w = node.width;
+        const h = node.height;
 
-          let innerContent = '';
+        let innerContent = '';
 
-          if (w < 42 || h < 35) {
-            innerContent = `
-              <div class="flex items-center justify-center h-full w-full pointer-events-none text-slate-500 dark:text-slate-400 font-black text-xs leading-none">
-                ...
-              </div>
-            `;
-          } else if (w < 65 || h < 50) {
-            innerContent = `
-              <div class="flex flex-col items-center justify-center h-full p-0.5 leading-tight text-center pointer-events-none">
-                <span class="font-black text-[10px] text-slate-900 dark:text-slate-100 truncate w-full">${node.name}</span>
-                <span class="text-[8px] text-slate-400 font-mono">${node.id}</span>
-              </div>
-            `;
-          } else if (w < 95 || h < 75) {
-            innerContent = `
-              <div class="flex flex-col justify-between h-full p-1.5 pointer-events-none">
-                <div class="flex items-center justify-between gap-0.5">
-                  <span class="font-black text-xs text-slate-900 dark:text-slate-100 truncate">${node.name}</span>
-                  <span class="text-[9px] text-slate-400 font-mono">${node.id}</span>
-                </div>
-                <div class="text-right">
-                  <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
-                </div>
-              </div>
-            `;
-          } else if (w < 140 || h < 120) {
-            innerContent = `
-              <div class="flex flex-col justify-between h-full p-2.5 pointer-events-none">
-                <div class="flex items-start justify-between gap-1">
-                  <div class="min-w-0">
-                    <div class="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">${node.name}</div>
-                    <div class="text-[9px] text-slate-400 font-mono">${node.id}</div>
-                  </div>
-                  <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
-                </div>
-                <div class="my-auto py-0.5">
-                  <div class="text-sm font-black font-mono ${priceColor}">${node.price.toFixed(2)}</div>
-                  <div class="text-[9px] font-bold font-mono ${priceColor}">(${formattedChange})</div>
-                </div>
-                <div class="text-[9px] text-slate-400 font-mono border-t border-slate-200/40 dark:border-slate-800/40 pt-0.5">
-                  市值:${Math.round(node.marketCap)}億
-                </div>
-              </div>
-            `;
-          } else {
-            innerContent = `
-              <div class="flex flex-col justify-between h-full p-3.5 pointer-events-none">
-                <div class="flex items-start justify-between gap-1">
-                  <div class="min-w-0">
-                    <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${node.name}</div>
-                    <div class="text-[10px] text-slate-400 font-mono">${node.id}</div>
-                  </div>
-                  <span class="font-mono text-xs font-black px-2 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
-                </div>
-
-                <div class="my-auto py-1">
-                  <span class="text-base sm:text-lg font-black font-mono ${priceColor}">${node.price.toFixed(2)}</span>
-                  <span class="text-[10px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
-                </div>
-
-                <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
-                  <span>市值: ${Math.round(node.marketCap)}億</span>
-                  <span class="font-semibold">點擊查線圖</span>
-                </div>
-              </div>
-            `;
-          }
-
-          const leftPercent = (node.x / containerWidth) * 100;
-          const topPercent = (node.y / containerHeight) * 100;
-          const widthPercent = (node.width / containerWidth) * 100;
-          const heightPercent = (node.height / containerHeight) * 100;
-
-          return `
-            <div onclick="openStockModal('${node.id}')" 
-                 title="${node.name} (${node.id}) | 市值: ${Math.round(node.marketCap)}億 | 漲跌幅: ${formattedPct}"
-                 style="position: absolute; left: calc(${leftPercent}% + 2px); top: calc(${topPercent}% + 2px); width: calc(${widthPercent}% - 4px); height: calc(${heightPercent}% - 4px);" 
-                 class="cursor-pointer rounded-2xl border transition hover:scale-[1.01] hover:z-10 shadow-sm ${heatTier.bg} overflow-hidden">
-              ${innerContent}
+        // 等級五：極限超小尺寸 (寬 < 42 或 高 < 35) -> 僅顯示 "..."
+        if (w < 42 || h < 35) {
+          innerContent = `
+            <div class="flex items-center justify-center h-full w-full pointer-events-none text-slate-500 dark:text-slate-400 font-black text-xs leading-none">
+              ...
             </div>
           `;
-        }).join('');
-      }
+        }
+        // 等級四：極小微型尺寸 (寬 < 65 或 高 < 50) -> 僅 股名、代號
+        else if (w < 65 || h < 50) {
+          innerContent = `
+            <div class="flex flex-col items-center justify-center h-full p-0.5 leading-tight text-center pointer-events-none">
+              <span class="font-black text-[10px] text-slate-900 dark:text-slate-100 truncate w-full">${node.name}</span>
+              <span class="text-[8px] text-slate-400 font-mono">${node.id}</span>
+            </div>
+          `;
+        } 
+        // 等級三：精簡尺寸 (寬 < 95 或 高 < 75) -> 僅 股名、代號、漲跌
+        else if (w < 95 || h < 75) {
+          innerContent = `
+            <div class="flex flex-col justify-between h-full p-1.5 pointer-events-none">
+              <div class="flex items-center justify-between gap-0.5">
+                <span class="font-black text-xs text-slate-900 dark:text-slate-100 truncate">${node.name}</span>
+                <span class="text-[9px] text-slate-400 font-mono">${node.id}</span>
+              </div>
+              <div class="text-right">
+                <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
+              </div>
+            </div>
+          `;
+        } 
+        // 等級二：緊湊尺寸 (寬 < 140 或 高 < 120) -> 股名、代號、價格、漲跌，省略底部線圖提示
+        else if (w < 140 || h < 120) {
+          innerContent = `
+            <div class="flex flex-col justify-between h-full p-2.5 pointer-events-none">
+              <div class="flex items-start justify-between gap-1">
+                <div class="min-w-0">
+                  <div class="font-black text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate">${node.name}</div>
+                  <div class="text-[9px] text-slate-400 font-mono">${node.id}</div>
+                </div>
+                <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
+              </div>
+              <div class="my-auto py-0.5">
+                <div class="text-sm font-black font-mono ${priceColor}">${node.price.toFixed(2)}</div>
+                <div class="text-[9px] font-bold font-mono ${priceColor}">(${formattedChange})</div>
+              </div>
+              <div class="text-[9px] text-slate-400 font-mono border-t border-slate-200/40 dark:border-slate-800/40 pt-0.5">
+                市值:${Math.round(node.marketCap)}億
+              </div>
+            </div>
+          `;
+        } 
+        // 等級一：完整標準卡片
+        else {
+          innerContent = `
+            <div class="flex flex-col justify-between h-full p-3.5 pointer-events-none">
+              <div class="flex items-start justify-between gap-1">
+                <div class="min-w-0">
+                  <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100 truncate">${node.name}</div>
+                  <div class="text-[10px] text-slate-400 font-mono">${node.id}</div>
+                </div>
+                <span class="font-mono text-xs font-black px-2 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
+              </div>
+
+              <div class="my-auto py-1">
+                <span class="text-base sm:text-lg font-black font-mono ${priceColor}">${node.price.toFixed(2)}</span>
+                <span class="text-[10px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
+              </div>
+
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
+                <span>市值: ${Math.round(node.marketCap)}億</span>
+                <span class="font-semibold">點擊查線圖</span>
+              </div>
+            </div>
+          `;
+        }
+
+        const leftPercent = (node.x / containerWidth) * 100;
+        const topPercent = (node.y / containerHeight) * 100;
+        const widthPercent = (node.width / containerWidth) * 100;
+        const heightPercent = (node.height / containerHeight) * 100;
+
+        return `
+          <div onclick="openStockModal('${node.id}')" 
+               title="${node.name} (${node.id}) | 市值: ${Math.round(node.marketCap)}億 | 漲跌幅: ${formattedPct}"
+               style="position: absolute; left: calc(${leftPercent}% + 2px); top: calc(${topPercent}% + 2px); width: calc(${widthPercent}% - 4px); height: calc(${heightPercent}% - 4px);" 
+               class="cursor-pointer rounded-2xl border transition hover:scale-[1.01] hover:z-10 shadow-sm ${heatTier.bg} overflow-hidden">
+            ${innerContent}
+          </div>
+        `;
+      }).join('');
     }
 
+    // Squarified Treemap 遞迴排版演算法
     function computeTreemap(nodes, x, y, width, height) {
       if (!nodes || nodes.length === 0) return [];
 
@@ -2817,7 +2613,7 @@
       const group1 = nodes.slice(0, splitIndex);
       const group2 = nodes.slice(splitIndex);
 
-      const sum1 = group1.reduce((s, n) => sum + n.marketCap, 0);
+      const sum1 = group1.reduce((s, n) => s + n.marketCap, 0);
       const ratio1 = sum1 / totalValue;
 
       let results = [];
@@ -2862,7 +2658,6 @@
     function updateModalStarUI(stockId) {
       const isStarred = userWatchlist.has(stockId);
       const btn = document.getElementById('modalStarBtn');
-      if (!btn) return;
       if (isStarred) {
         btn.className = "text-lg sm:text-xl text-amber-400 transition";
         btn.innerHTML = '<i class="fa-solid fa-star"></i>';
@@ -2885,8 +2680,7 @@
       navigateTo('home');
       filteredStocks = parsedStocks.filter(s => userWatchlist.has(s.id));
       renderStockTable();
-      const groupSection = document.getElementById('groupSection');
-      if (groupSection) groupSection.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('groupSection').scrollIntoView({ behavior: 'smooth' });
     }
 
     function switchTrendView(type, mode) {
@@ -2898,24 +2692,22 @@
         const chartBox = document.getElementById('trendChartContainer_pct');
         const listBox = document.getElementById('trendListContainer_pct');
 
-        [btnBar, btnCum, btnList].forEach(b => {
-          if (b) b.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
-        });
+        [btnBar, btnCum, btnList].forEach(b => b.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition");
         
         if (mode === 'bar') {
-          if (btnBar) btnBar.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
-          if (chartBox) chartBox.classList.remove('hidden');
-          if (listBox) listBox.classList.add('hidden');
+          btnBar.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
+          chartBox.classList.remove('hidden');
+          listBox.classList.add('hidden');
         } else if (mode === 'cum') {
-          if (btnCum) btnCum.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
-          if (chartBox) chartBox.classList.remove('hidden');
-          if (listBox) listBox.classList.add('hidden');
+          btnCum.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
+          chartBox.classList.remove('hidden');
+          listBox.classList.add('hidden');
         } else {
-          if (btnList) btnList.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
-          if (listBox) listBox.classList.remove('hidden');
-          if (chartBox) chartBox.classList.add('hidden');
+          btnList.className = "px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition";
+          listBox.classList.remove('hidden');
+          chartBox.classList.add('hidden');
         }
-        const s = parsedStocks.find(item => item.id.toString() === currentModalStockId?.toString());
+        const s = parsedStocks.find(item => item.id.toString() === currentModalStockId.toString());
         if (s) renderStockTrend(s);
       } else {
         const btnChart = document.getElementById('btnVolChart');
@@ -2924,15 +2716,15 @@
         const listBox = document.getElementById('trendListContainer_vol');
 
         if (mode === 'chart') {
-          if (btnChart) btnChart.className = "px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition";
-          if (btnList) btnList.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
-          if (chartBox) chartBox.classList.remove('hidden');
-          if (listBox) listBox.classList.add('hidden');
+          btnChart.className = "px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition";
+          btnList.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
+          chartBox.classList.remove('hidden');
+          listBox.classList.add('hidden');
         } else {
-          if (btnList) btnList.className = "px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition";
-          if (btnChart) btnChart.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
-          if (listBox) listBox.classList.remove('hidden');
-          if (chartBox) chartBox.classList.add('hidden');
+          btnList.className = "px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition";
+          btnChart.className = "px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition";
+          listBox.classList.remove('hidden');
+          chartBox.classList.add('hidden');
         }
       }
     }
@@ -2946,10 +2738,10 @@
 
       const validPoints = history.filter(h => h.hasData);
       if (validPoints.length === 0) {
-        if (svgWrapper) svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無十日趨勢數據</span>';
-        if (legendWrapper) legendWrapper.innerHTML = '';
-        if (cumBadge) cumBadge.textContent = '';
-        if (listGrid) listGrid.innerHTML = '';
+        svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無十日趨勢數據</span>';
+        legendWrapper.innerHTML = '';
+        cumBadge.textContent = '';
+        listGrid.innerHTML = '';
         return;
       }
 
@@ -2976,35 +2768,30 @@
         }
       }
 
-      if (listGrid) {
-        listGrid.innerHTML = history.map((item, idx) => {
-          const isUp = item.numVal > 0;
-          const isDown = item.numVal < 0;
-          const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-400');
-          const bgClass = isUp ? 'bg-red-500/10 border-red-500/20' : (isDown ? 'bg-green-500/10 border-green-500/20' : 'bg-slate-200/50 dark:bg-slate-900 border-slate-200 dark:border-slate-800');
-          const displayVal = item.hasData ? (isUp ? `+${item.valStr}` : item.valStr) : '--';
-          const priceVal = prices[idx] ? formatTickPrice(prices[idx]) : '--';
+      listGrid.innerHTML = history.map((item, idx) => {
+        const isUp = item.numVal > 0;
+        const isDown = item.numVal < 0;
+        const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-400');
+        const bgClass = isUp ? 'bg-red-500/10 border-red-500/20' : (isDown ? 'bg-green-500/10 border-green-500/20' : 'bg-slate-200/50 dark:bg-slate-900 border-slate-200 dark:border-slate-800');
+        const displayVal = item.hasData ? (isUp ? `+${item.valStr}` : item.valStr) : '--';
+        const priceVal = prices[idx] ? formatTickPrice(prices[idx]) : '--';
 
-          return `
-            <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border ${bgClass} text-center space-y-0.5">
-              <span class="block text-[8px] text-slate-400 font-mono">${item.dateHeader}</span>
-              <span class="block text-[11px] font-black font-mono text-slate-900 dark:text-slate-100">${priceVal}</span>
-              <span class="block text-[9px] font-bold font-mono ${colorClass}">${displayVal}</span>
-            </div>
-          `;
-        }).join('');
-      }
+        return `
+          <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border ${bgClass} text-center space-y-0.5">
+            <span class="block text-[8px] text-slate-400 font-mono">${item.dateHeader}</span>
+            <span class="block text-[11px] font-black font-mono text-slate-900 dark:text-slate-100">${priceVal}</span>
+            <span class="block text-[9px] font-bold font-mono ${colorClass}">${displayVal}</span>
+          </div>
+        `;
+      }).join('');
 
       const basePrice = (lastValidIdx !== -1 && history[0].hasData) ? (prices[0] / (1 + history[0].numVal / 100)) : (prices[0] || currentPrice);
       const totalCumPct = basePrice > 0 ? ((currentPrice - basePrice) / basePrice) * 100 : 0;
       const isCumUp = totalCumPct > 0;
       const isCumDown = totalCumPct < 0;
       const cumColor = isCumUp ? 'bg-red-500/15 text-stockRed border-red-500/30' : (isCumDown ? 'bg-green-500/15 text-stockGreen border-green-500/30' : 'bg-slate-200 text-slate-500 border-slate-300');
-      
-      if (cumBadge) {
-        cumBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${cumColor}`;
-        cumBadge.textContent = `十日真實累積：${isCumUp ? '+' : ''}${totalCumPct.toFixed(2)}%`;
-      }
+      cumBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${cumColor}`;
+      cumBadge.textContent = `十日真實累積：${isCumUp ? '+' : ''}${totalCumPct.toFixed(2)}%`;
 
       const svgWidth = 440;
       const svgHeight = 120;
@@ -3035,14 +2822,12 @@
           }
         });
 
-        if (svgWrapper) {
-          svgWrapper.innerHTML = `
-            <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
-              <line x1="${padX - 8}" y1="${zeroY}" x2="${svgWidth - padX + 8}" y2="${zeroY}" stroke="#64748b" stroke-dasharray="3 3" stroke-width="1" opacity="0.45"/>
-              ${barsHtml}
-            </svg>
-          `;
-        }
+        svgWrapper.innerHTML = `
+          <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
+            <line x1="${padX - 8}" y1="${zeroY}" x2="${svgWidth - padX + 8}" y2="${zeroY}" stroke="#64748b" stroke-dasharray="3 3" stroke-width="1" opacity="0.45"/>
+            ${barsHtml}
+          </svg>
+        `;
       } else if (currentPctTrendMode === 'cum') {
         const validPrices = prices.filter(p => p !== undefined && !isNaN(p));
         let minPrice = Math.min(...validPrices);
@@ -3060,7 +2845,7 @@
             const y = svgHeight - padY - ((pVal - minPrice) / priceRange) * (svgHeight - padY * 2);
             polyPoints.push(`${x},${y}`);
 
-            const dotColor = (i === history.length - 1) ? '#3b82f6' : (h.numVal > 0 ? '#ef4444' : (h.numVal < 0 ? '#22c55e' : '#94a3b8'));
+            const dotColor = (i === history.length - 1) ? '#3b82f6' : (h.numVal >= 0 ? '#ef4444' : '#22c55e');
             dotsHtml += `
               <circle cx="${x}" cy="${y}" r="3.5" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5"/>
               <text x="${x}" y="${y - 6}" text-anchor="middle" font-size="8" font-family="monospace" fill="#94a3b8" font-weight="bold">${formatTickPrice(pVal)}</text>
@@ -3068,23 +2853,19 @@
           }
         });
 
-        if (svgWrapper) {
-          svgWrapper.innerHTML = `
-            <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
-              <polyline fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints.join(' ')}"/>
-              ${dotsHtml}
-            </svg>
-          `;
-        }
-      }
-
-      if (legendWrapper) {
-        legendWrapper.innerHTML = `
-          <span>${history[0].dateHeader} (10日前)</span>
-          <span>${history[Math.floor(history.length / 2)].dateHeader}</span>
-          <span class="text-brand-500 font-bold">${history[history.length - 1].dateHeader} (最新)</span>
+        svgWrapper.innerHTML = `
+          <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
+            <polyline fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints.join(' ')}"/>
+            ${dotsHtml}
+          </svg>
         `;
       }
+
+      legendWrapper.innerHTML = `
+        <span>${history[0].dateHeader} (10日前)</span>
+        <span>${history[Math.floor(history.length / 2)].dateHeader}</span>
+        <span class="text-brand-500 font-bold">${history[history.length - 1].dateHeader} (最新)</span>
+      `;
     }
 
     function renderStockVolTrend(stock) {
@@ -3093,21 +2874,19 @@
       const legendWrapper = document.getElementById('trendDatesLegend_vol');
       const listGrid = document.getElementById('trendListGrid_vol');
 
-      if (listGrid) {
-        listGrid.innerHTML = history.map(item => {
-          return `
-            <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border bg-amber-500/10 border-amber-500/20 text-center space-y-0.5">
-              <span class="block text-[9px] text-slate-400 font-mono">${item.dateHeader}</span>
-              <span class="block text-[11px] font-black font-mono text-amber-500">${item.hasData ? item.numVal.toLocaleString() : '--'}</span>
-            </div>
-          `;
-        }).join('');
-      }
+      listGrid.innerHTML = history.map(item => {
+        return `
+          <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border bg-amber-500/10 border-amber-500/20 text-center space-y-0.5">
+            <span class="block text-[9px] text-slate-400 font-mono">${item.dateHeader}</span>
+            <span class="block text-[11px] font-black font-mono text-amber-500">${item.hasData ? item.numVal.toLocaleString() : '--'}</span>
+          </div>
+        `;
+      }).join('');
 
       const validPoints = history.filter(h => h.hasData);
       if (validPoints.length === 0) {
-        if (svgWrapper) svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無成交量趨勢數據</span>';
-        if (legendWrapper) legendWrapper.innerHTML = '';
+        svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無成交量趨勢數據</span>';
+        legendWrapper.innerHTML = '';
         return;
       }
 
@@ -3133,26 +2912,22 @@
         `;
       });
 
-      if (svgWrapper) {
-        svgWrapper.innerHTML = `
-          <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
-            <line x1="${padX - 5}" y1="${svgHeight - padY}" x2="${svgWidth - padX + 5}" y2="${svgHeight - padY}" stroke="#64748b" stroke-width="1" opacity="0.3"/>
-            ${barsHtml}
-          </svg>
-        `;
-      }
+      svgWrapper.innerHTML = `
+        <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
+          <line x1="${padX - 5}" y1="${svgHeight - padY}" x2="${svgWidth - padX + 5}" y2="${svgHeight - padY}" stroke="#64748b" stroke-width="1" opacity="0.3"/>
+          ${barsHtml}
+        </svg>
+      `;
 
       const firstVolDate = history.length > 0 ? history[0].dateHeader : '';
       const midVolDate = history.length > 0 ? history[Math.floor(history.length / 2)].dateHeader : '';
       const lastVolDate = history.length > 0 ? history[history.length - 1].dateHeader : '';
 
-      if (legendWrapper) {
-        legendWrapper.innerHTML = `
-          <span>${firstVolDate} (10日前)</span>
-          <span>${midVolDate}</span>
-          <span class="text-amber-500 font-bold">${lastVolDate} (最新)</span>
-        `;
-      }
+      legendWrapper.innerHTML = `
+        <span>${firstVolDate} (10日前)</span>
+        <span>${midVolDate}</span>
+        <span class="text-amber-500 font-bold">${lastVolDate} (最新)</span>
+      `;
     }
 
     async function setMaintenanceStatus(isMaint) {
@@ -3178,8 +2953,7 @@
           isCurrentMaintenance = isMaint;
           updateAdminStatusIndicator(isMaint);
           if (currentUser && currentUser.email !== ADMIN_EMAIL) {
-            const overlay = document.getElementById('maintenanceOverlay');
-            if (overlay) overlay.classList.toggle('hidden', !isMaint);
+            document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isMaint);
           }
         } else {
           msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
@@ -3189,40 +2963,6 @@
         msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
         msgBox.textContent = "連線異常，請檢查 Apps Script 後端部署。";
       }
-    }
-
-    function renderHotCards(stocks) {
-      const top10 = stocks.sort((a, b) => b.turnover - a.turnover).slice(0, 10);
-      const container = document.getElementById('hotCardsContainer');
-      if (!container) return;
-
-      container.innerHTML = top10.map(s => {
-        let priceBadgeClass = "text-slate-800 dark:text-slate-200 font-bold";
-        if (s.isLimitUp) priceBadgeClass = "bg-limitUp text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.isLimitDown) priceBadgeClass = "bg-limitDown text-white font-black px-1.5 py-0.5 rounded";
-        else if (s.change > 0) priceBadgeClass = "text-stockRed font-black";
-        else if (s.change < 0) priceBadgeClass = "text-stockGreen font-black";
-
-        const pctColor = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-400');
-        const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-
-        return `
-          <div onclick="openStockModal('${s.id}')" class="cursor-pointer bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-3 hover:border-brand-500 hover:shadow-lg transition flex flex-col justify-between">
-            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-1 sm:mb-1.5 gap-0.5 sm:gap-0">
-              <span class="stock-name font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100 truncate w-full sm:w-auto">${s.name}</span>
-              <span class="text-[9px] sm:text-[10px] text-slate-400 font-mono">${s.id}</span>
-            </div>
-            <div class="flex items-baseline justify-between mt-0.5 sm:mt-1">
-              <span class="stock-price text-xs sm:text-sm font-mono ${priceBadgeClass}">
-                ${s.price.toFixed(s.price >= 100 ? 1 : 2)}
-              </span>
-              <span class="text-[10px] sm:text-xs font-bold font-mono ${pctColor}">
-                ${formattedPct}
-              </span>
-            </div>
-          </div>
-        `;
-      }).join('');
     }
   </script>
 </body>
