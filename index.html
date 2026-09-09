@@ -56,6 +56,24 @@
     .large-font .stock-name { font-size: 1.25rem !important; }
     .large-font .market-val { font-size: 2.2rem !important; }
     .large-font table { font-size: 0.98rem !important; }
+
+    /* 💡 族群選股區緊密堆疊瀑布流排版 */
+    #sectorCardsGrid {
+      column-count: 1;
+      column-gap: 1rem;
+    }
+    @media (min-width: 768px) {
+      #sectorCardsGrid { column-count: 2; }
+    }
+    @media (min-width: 1024px) {
+      #sectorCardsGrid { column-count: 3; }
+    }
+    .sector-category-card {
+      break-inside: avoid;
+      margin-bottom: 1rem;
+      display: inline-block;
+      width: 100%;
+    }
   </style>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
@@ -80,7 +98,7 @@
     </div>
   </div>
 
-  <!-- 標籤規則詳細說明 Modal (已補齊所有完整指標說明) -->
+  <!-- 標籤規則詳細說明 Modal -->
   <div id="badgeGuideModal" onclick="handleModalBgClick(event, 'badgeGuideModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -220,7 +238,7 @@
         </div>
       </div>
     </div>
-  
+  </div>
 
   <!-- 族群導覽型成分股詳情 Modal -->
   <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
@@ -492,7 +510,6 @@
       </div>
     </div>
   </div>
-</div>
 
   <!-- 登入 / 註冊 彈窗視窗 -->
   <div id="authModal" class="fixed inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4">
@@ -850,8 +867,8 @@
           </div>
         </div>
 
-        <!-- 💡 第三點：緊密堆疊佈局 (grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start) -->
-        <div id="sectorCardsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
+        <!-- 族群選股瀑布流卡片容器 -->
+        <div id="sectorCardsGrid" class="hidden"></div>
 
         <!-- 首頁時顯示：全個股清單 -->
         <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -887,7 +904,7 @@
     </footer>
   </div>
 
-  <!-- 核心邏輯腳本 (包含補齊的 openStockModal, openAdminPanel, pollAdminMaintenanceStatus) -->
+  <!-- 核心邏輯腳本 -->
   <script>
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
     const CSV_MEMBERS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=0&single=true&output=csv';
@@ -959,7 +976,6 @@
       }
     }
 
-    // 💡 補齊遺漏的 管理員彈窗與維護輪詢函式
     function openAdminPanel() {
       const el = document.getElementById('adminPanelModal');
       if (el) el.classList.remove('hidden');
@@ -985,7 +1001,6 @@
       } catch (e) {}
     }
 
-    // 💡 補齊遺漏的個股詳細資訊彈窗函式 (openStockModal / closeStockModal)
     function openStockModal(stockId) {
       const stock = parsedStocks.find(s => s.id.toString() === stockId.toString());
       if (!stock) return;
@@ -1007,7 +1022,6 @@
 
       updateModalStarUI(stockId);
 
-      // 雙層群組標籤
       const groups = stockMultiGroupMap[stock.id] || [{ rawGroup: stock.rawGroup, mainGroup: stock.group, subGroup: stock.subGroup, weight: stock.weight, contribution: stock.contribution, mainGroupChange: stock.groupChange }];
       document.getElementById('modalDoubleGroupContainer').innerHTML = groups.map(g => `
         <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 text-xs space-y-1">
@@ -1022,10 +1036,8 @@
         </div>
       `).join('');
 
-      // 特徵標籤
       document.getElementById('modalFeatureBadges').innerHTML = (stock.badges || []).map(b => `<span class="px-2 py-0.5 rounded text-[10px] ${b.color}">${b.text}</span>`).join(' ');
 
-      // 同族群其他股票
       const peerGroup = groupMap[stock.rawGroup];
       const peerContainer = document.getElementById('modalPeerStocks');
       if (peerGroup && peerGroup.members) {
@@ -2209,7 +2221,8 @@
 
       container.innerHTML = Object.entries(mainGroupHierarchy).map(([mainGroupName, subGroups]) => {
         const subCardsHtml = subGroups.map(grpData => {
-          const tier = getDynamicColorTier(grpData.groupChange || '0%');
+          const groupPctStr = (grpData.groupChange && grpData.groupChange !== '-' && grpData.groupChange !== 'nan') ? grpData.groupChange : '0.00%';
+          const tier = getDynamicColorTier(groupPctStr);
           const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
           const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
 
@@ -2221,7 +2234,7 @@
                   <span class="text-[9px] text-slate-400 font-mono">${grpData.members.length} 檔成分股</span>
                 </div>
                 <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${tier.badge}">
-                  ${grpData.groupChange}
+                  ${groupPctStr}
                 </span>
               </div>
               <div class="pt-1.5 border-t border-slate-200/40 dark:border-slate-800/50 flex items-center justify-between text-[10px]">
@@ -2237,7 +2250,7 @@
         }).join('');
 
         return `
-          <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+          <div class="sector-category-card bg-slate-50 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
             <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-2">
               <div class="flex items-center space-x-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
@@ -2751,7 +2764,6 @@
       `;
     }
 
-    // 💡 補齊遺漏的維護狀態設定函式 (給管理員控制台使用)
     async function setMaintenanceStatus(isMaint) {
       const msgBox = document.getElementById('adminStatusMsg');
       if (!msgBox) return;
