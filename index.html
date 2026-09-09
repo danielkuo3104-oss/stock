@@ -158,7 +158,7 @@
     </div>
   </div>
 
-  <!-- 族群導覽型成分股詳情 Modal -->
+  <!-- 💡 族群導覽型成分股詳情 Modal (卡片收盤價加強放大 + 市值熱力圖重構) -->
   <div id="sectorDetailModal" onclick="handleModalBgClick(event, 'sectorDetailModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-4xl p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4" onclick="event.stopPropagation()">
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-3 border-b border-slate-200 dark:border-slate-800 gap-2">
@@ -188,7 +188,7 @@
       </div>
 
       <div id="modalSectorCardsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2 w-full min-h-[300px]"></div>
+      <div id="modalSectorHeatmapGrid" class="hidden flex flex-wrap gap-2.5 w-full min-h-[340px] items-stretch content-start"></div>
     </div>
   </div>
 
@@ -365,13 +365,13 @@
           <div class="flex items-center space-x-2">
             <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
               <i class="fa-solid fa-chart-line text-brand-500"></i>
-              <span>近十日漲跌趨勢</span>
+              <span>近十日價格走勢 (收盤價)</span>
             </h4>
             <span id="trendCumPctBadge" class="text-[10px] font-mono px-2 py-0.5 rounded-full font-bold">--</span>
           </div>
           <div class="flex items-center bg-white dark:bg-slate-900 rounded-lg p-0.5 border border-slate-200 dark:border-slate-800 text-[10px]">
-            <button id="btnTrendBar" onclick="switchTrendView('pct', 'bar')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">單日柱狀</button>
-            <button id="btnTrendCum" onclick="switchTrendView('pct', 'cum')" class="px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition">累積走勢</button>
+            <button id="btnTrendBar" onclick="switchTrendView('pct', 'bar')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">單日漲跌</button>
+            <button id="btnTrendCum" onclick="switchTrendView('pct', 'cum')" class="px-2 py-1 rounded-md font-bold bg-brand-500 text-white transition">價格曲線</button>
             <button id="btnTrendList" onclick="switchTrendView('pct', 'list')" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">數據列表</button>
           </div>
         </div>
@@ -571,8 +571,6 @@
 
   <!-- 主頁內容區 -->
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
-    
-    <!-- Header 標頭吸頂容器 -->
     <div class="sticky top-0 z-40 w-full shadow-sm">
       <header id="mainHeader" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
         <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
@@ -626,7 +624,7 @@
         </div>
       </header>
 
-      <!-- 加權縮小置頂條 -->
+      <!-- 💡 加權縮小置頂條 -->
       <div id="stickyMiniBar" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 shadow-md transition-all duration-300 -translate-y-full opacity-0 pointer-events-none px-3 sm:px-8 py-2 w-full">
         <div class="max-w-7xl mx-auto flex items-center justify-between text-xs sm:text-sm font-mono">
           <div class="flex items-center space-x-2">
@@ -663,7 +661,7 @@
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
 
-      <!-- 大盤指數儀表板 -->
+      <!-- 大盤指數儀表板 (族群選股頁時隱藏) -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
@@ -723,7 +721,7 @@
         </div>
       </section>
 
-      <!-- 今日熱門 Top 10 方塊 -->
+      <!-- 今日熱門 Top 10 方塊 (族群選股頁時隱藏) -->
       <section id="hotSection">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-y-1">
           <div class="flex items-center space-x-2">
@@ -748,11 +746,6 @@
 
       <!-- 內容切換核心區塊 -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
-        <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-2xl text-[11px] text-amber-600 dark:text-amber-400 leading-relaxed mb-4">
-          <i class="fa-solid fa-triangle-exclamation mr-1"></i>
-          <strong>系統免責聲明：</strong>所有市場技術標籤為客觀演算結果；公司簡介與產業題材皆由 AI 輔助整理提供，不構成任何實質投資建議。
-        </div>
-
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
             <div class="flex items-center space-x-2">
@@ -761,7 +754,8 @@
                 <i class="fa-solid fa-circle-info"></i>
               </button>
             </div>
-            <p id="sectionSubtitleText" class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">左右滑動瀏覽，點擊列可展開詳情</p>
+            <!-- 💡 第一點：次標題文案淨化 -->
+            <p id="sectionSubtitleText" class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">點擊卡片瀏覽成分股題材，探索產業鏈動能</p>
           </div>
 
           <div class="w-full sm:w-auto" id="searchFilterBox">
@@ -769,7 +763,7 @@
           </div>
         </div>
 
-        <!-- 標籤快速過濾列 -->
+        <!-- 標籤快速過濾列 (首頁顯示，族群頁隱藏) -->
         <div id="tagFilterSection">
           <div class="block sm:hidden">
             <button onclick="toggleMobileTagDrawer()" class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
@@ -788,16 +782,21 @@
             <button onclick="setTagFilter('強勢')" id="btnTag_強勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">強勢</button>
             <button onclick="setTagFilter('弱勢')" id="btnTag_弱勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">弱勢</button>
             <button onclick="setTagFilter('量價齊揚')" id="btnTag_量價齊揚" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量價齊揚</button>
+            <button onclick="setTagFilter('量縮價跌')" id="btnTag_量縮價跌" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價跌</button>
+            <button onclick="setTagFilter('量縮價漲')" id="btnTag_量縮價漲" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量縮價漲</button>
+            <button onclick="setTagFilter('帶量下殺')" id="btnTag_帶量下殺" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">帶量下殺</button>
             <button onclick="setTagFilter('爆量')" id="btnTag_爆量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量</button>
             <button onclick="setTagFilter('爆量長紅')" id="btnTag_爆量長紅" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長紅</button>
             <button onclick="setTagFilter('爆量長黑')" id="btnTag_爆量長黑" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-fuchsia-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長黑</button>
+            <button onclick="setTagFilter('持續量增')" id="btnTag_持續量增" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量增</button>
+            <button onclick="setTagFilter('持續量縮')" id="btnTag_持續量縮" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量縮</button>
             <button onclick="setTagFilter('十日震盪整理')" id="btnTag_十日震盪整理" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-teal-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">十日震盪整理</button>
             <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
           </div>
         </div>
 
-        <!-- 族群選股頁時顯示：族群卡片網格 -->
-        <div id="sectorCardsGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+        <!-- 💡 族群選股頁時顯示：主族群嵌套子族群板塊 (依你的手繪草圖重構) -->
+        <div id="sectorCardsGrid" class="hidden grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-start"></div>
 
         <!-- 首頁時顯示：全個股清單 -->
         <div id="stockListContainer" class="overflow-x-auto overflow-y-auto max-h-[520px] rounded-xl sm:rounded-2xl border border-slate-200 dark:border-slate-800">
@@ -870,6 +869,27 @@
     let currentPctTrendMode = 'cum';
     let adminStatusPollInterval = null;
 
+    // 💡 依台股升降級距對價格做精準四捨五入規整
+    function roundToTick(price) {
+      if (price <= 0 || isNaN(price)) return 0;
+      let tick = 0.01;
+      if (price < 10) tick = 0.01;
+      else if (price < 50) tick = 0.05;
+      else if (price < 100) tick = 0.1;
+      else if (price < 500) tick = 0.5;
+      else if (price < 1000) tick = 1.0;
+      else tick = 5.0;
+      return Math.round(price / tick) * tick;
+    }
+
+    function formatTickPrice(price) {
+      if (price < 10) return price.toFixed(2);
+      if (price < 50) return price.toFixed(2);
+      if (price < 100) return price.toFixed(1);
+      if (price < 500) return price.toFixed(1);
+      return Math.round(price).toString();
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       preloadMembersFromSheet();
@@ -932,9 +952,9 @@
         grid.classList.remove('hidden');
         tagFilterSec.classList.add('hidden');
 
-        titleText.textContent = '族群板塊總覽 (點擊卡片瀏覽公司題材導覽)';
-        subtitleText.textContent = '依當日族群漲跌深淺顯示，點擊卡片認識成分股業務';
-        hintText.textContent = '提示：點擊任一族群卡片進入該產業成分股導覽';
+        titleText.textContent = '族群板塊總覽';
+        subtitleText.textContent = '點擊卡片瀏覽成分股題材，探索產業鏈動能';
+        hintText.textContent = '提示：點擊任一子族群卡片進入該板塊深度導覽';
       }
 
       applyFilters();
@@ -1784,7 +1804,7 @@
       stockMultiGroupMap = {};
       const stockMap = new Map();
 
-      // 先建立群組骨幹，排除空名稱
+      // 先建立群組骨幹
       for (let r = 1; r < rawCsvGrid.length; r++) {
         const row = rawCsvGrid[r];
         const rawGroup = row[0] ? row[0].trim() : '';
@@ -1806,9 +1826,7 @@
 
           if (!groupMap[rawGroup]) {
             groupMap[rawGroup] = {
-              rawGroup,
-              mainGroup,
-              subGroup,
+              rawGroup, mainGroup, subGroup,
               groupChange: (groupChangeJ && groupChangeJ !== 'nan' && groupChangeJ !== '-') ? groupChangeJ : ((groupChangeK && groupChangeK !== 'nan' && groupChangeK !== '-') ? groupChangeK : '0.00%'),
               members: []
             };
@@ -1889,8 +1907,14 @@
             const avgVol10 = validVols.length > 0 ? (sumVol / validVols.length) : (volume || 1);
 
             const validPcts = tenDayHistory.filter(h => h.hasData);
+            const last3Pcts = validPcts.slice(-3);
+            const last3Vols = validVols.slice(-3);
 
-            // 嚴格十日震盪整理判定 (累積極差 <= 4% 且每日在 +-2% 內)
+            const is3DaysUp = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal > 0);
+            const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal);
+            const is3DaysVolDown = last3Vols.length === 3 && (last3Vols[2].numVal < last3Vols[1].numVal) && (last3Vols[1].numVal < last3Vols[0].numVal);
+
+            // 💡 第一點：更新十日震盪整理嚴格判定
             let runningCum = 0;
             const cumVals = validPcts.map(p => { runningCum += p.numVal; return runningCum; });
             const cumRange = (cumVals.length === 10) ? (Math.max(...cumVals) - Math.min(...cumVals)) : 999;
@@ -1900,7 +1924,9 @@
             const isSurge = volRatio >= 2.0 && volume >= 500;
             const isHeavy = volRatio >= 1.3 && volume >= 300;
             const isDry = volRatio <= 0.35 && avgVol10 >= 300;
+            const isShrink = volRatio <= 0.65;
 
+            // 補齊所有價量關係判斷
             if (isLimitUp) badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
             else if (isLimitDown) badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
 
@@ -1913,6 +1939,12 @@
 
             if (pctNum >= 3.0 && isHeavy && !badges.some(b => b.text === '爆量長紅')) {
               badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
+            } else if (pctNum <= -1.5 && isShrink) {
+              badges.push({ text: '量縮價跌', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30 font-medium' });
+            } else if (pctNum >= 2.0 && isShrink) {
+              badges.push({ text: '量縮價漲', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30 font-medium' });
+            } else if (pctNum <= -2.0 && isHeavy && !badges.some(b => b.text === '爆量長黑')) {
+              badges.push({ text: '帶量下殺', color: 'bg-rose-700/20 text-rose-500 border border-rose-600/30 font-bold' });
             }
 
             if (isSurge && !badges.some(b => b.text.includes('長'))) {
@@ -1927,6 +1959,9 @@
             if (pctNum <= -3.0 || isLimitDown) {
               badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold' });
             }
+
+            if (is3DaysVolUp) badges.push({ text: '持續量增', color: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30' });
+            else if (is3DaysVolDown) badges.push({ text: '持續量縮', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30' });
 
             if (is10DaysConsolidation) {
               badges.push({ text: '十日震盪整理', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30 font-semibold' });
@@ -1996,6 +2031,7 @@
       }).join('');
     }
 
+    // 💡 第三點：0, 1, 3, 5, 7, 9% 嚴謹色階
     function getDynamicColorTier(rawPct) {
       if (!rawPct) return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
       const val = parseFloat(rawPct.toString().replace('%', '')) || 0;
@@ -2016,6 +2052,7 @@
       return { bg: 'bg-slate-100/70 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-400', badge: 'bg-slate-500/10 text-slate-400' };
     }
 
+    // 💡 第三點：主族群大卡片包著子族群板塊 (依草圖重構，不再是死板單列)
     function renderSectorCards(filteredStockList) {
       const container = document.getElementById('sectorCardsGrid');
       if (!container) return;
@@ -2034,32 +2071,27 @@
       });
 
       container.innerHTML = Object.entries(mainGroupHierarchy).map(([mainGroupName, subGroups]) => {
-        const cardsHtml = subGroups.map(grpData => {
+        // 計算主族群整體表現
+        const subCardsHtml = subGroups.map(grpData => {
           const tier = getDynamicColorTier(grpData.groupChange || '0%');
           const topLeader = [...grpData.members].sort((a, b) => (b.volume || 0) - (a.volume || 0))[0];
           const displayName = grpData.subGroup ? grpData.subGroup : grpData.rawGroup;
 
           return `
-            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3.5 rounded-2xl transition hover:shadow-xl hover:scale-[1.01] flex flex-col justify-between space-y-2.5 ${tier.bg}">
-              <div>
-                <div class="flex items-start justify-between gap-1.5">
-                  <div>
-                    <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
-                      <span class="w-2 h-2 rounded-full bg-current"></span>
-                      <span>${displayName}</span>
-                    </h4>
-                    <span class="text-[10px] text-slate-400 font-mono mt-0.5 block">${grpData.members.length} 檔成分股</span>
-                  </div>
-                  <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${tier.badge}">
-                    ${grpData.groupChange}
-                  </span>
+            <div onclick="openSectorModal('${grpData.rawGroup}')" class="cursor-pointer border p-3 rounded-xl transition hover:shadow-md hover:scale-[1.01] flex flex-col justify-between space-y-2 ${tier.bg}">
+              <div class="flex items-center justify-between gap-1">
+                <div>
+                  <h4 class="font-bold text-xs sm:text-sm text-slate-900 dark:text-slate-100">${displayName}</h4>
+                  <span class="text-[9px] text-slate-400 font-mono">${grpData.members.length} 檔成分股</span>
                 </div>
+                <span class="font-mono text-xs font-black px-2 py-0.5 rounded-lg shadow-sm ${tier.badge}">
+                  ${grpData.groupChange}
+                </span>
               </div>
-
-              <div class="pt-1.5 border-t border-slate-200/50 dark:border-slate-800/60 flex items-center justify-between text-[11px]">
-                <span class="text-slate-500 dark:text-slate-400 text-[10px]">指標股：</span>
+              <div class="pt-1.5 border-t border-slate-200/40 dark:border-slate-800/50 flex items-center justify-between text-[10px]">
+                <span class="text-slate-500 dark:text-slate-400">焦點：</span>
                 ${topLeader ? `
-                  <span class="font-bold text-slate-800 dark:text-slate-200 text-[10px]">
+                  <span class="font-bold text-slate-800 dark:text-slate-200">
                     ${topLeader.name} <span class="font-mono ${topLeader.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${topLeader.pctStr}</span>
                   </span>
                 ` : '<span class="text-slate-400">--</span>'}
@@ -2069,13 +2101,16 @@
         }).join('');
 
         return `
-          <div class="col-span-full space-y-2 pt-2 first:pt-0">
-            <div class="flex items-center space-x-2 border-b border-slate-200 dark:border-slate-800 pb-1.5">
-              <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
-              <h3 class="text-sm font-black text-slate-800 dark:text-slate-200">${mainGroupName}</h3>
+          <div class="bg-slate-50 dark:bg-slate-900/60 p-4 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
+            <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-2">
+              <div class="flex items-center space-x-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+                <h3 class="text-sm sm:text-base font-black text-slate-900 dark:text-slate-100">${mainGroupName}</h3>
+              </div>
+              <span class="text-[10px] text-slate-400 font-mono">${subGroups.length} 個子板塊</span>
             </div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              ${cardsHtml}
+            <div class="space-y-2">
+              ${subCardsHtml}
             </div>
           </div>
         `;
@@ -2122,7 +2157,7 @@
             </td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right"><span class="${priceBadgeClass}">${s.price.toFixed(2)}</span></td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold ${changeTextColor}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</td>
-            <td class="py-2.5 sm:py-3 px-2 sm:px-3 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
+            <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-right font-bold font-mono ${changeTextColor}">${formattedPct}</td>
             <td class="py-2.5 sm:py-3 px-3 text-right text-slate-700 dark:text-slate-300 hidden sm:table-cell">${s.volume.toLocaleString()}</td>
             <td class="py-2.5 sm:py-3 px-3 text-right text-slate-500 hidden md:table-cell">${s.cap.toFixed(2)}</td>
             <td class="py-2.5 sm:py-3 px-2 sm:px-4 text-center hidden sm:table-cell">${badgeHtml}</td>
@@ -2173,7 +2208,7 @@
 
       const tier = getDynamicColorTier(grpData.groupChange || '0%');
       pctBadge.className = `text-xs sm:text-sm font-black font-mono px-2.5 py-0.5 rounded-md shadow-sm ${tier.badge}`;
-      document.getElementById('modalSectorSubtitle').textContent = `共收錄 ${grpData.members.length} 家產業標的 · 提供業務主軸導覽與熱力圖透視`;
+      document.getElementById('modalSectorSubtitle').textContent = `共收錄 ${grpData.members.length} 家產業標的 · 點擊卡片深入觀測個股行情`;
 
       renderSectorModalContent(grpData);
       document.getElementById('sectorDetailModal').classList.remove('hidden');
@@ -2204,26 +2239,31 @@
       if (groupMap[currentActiveSectorName]) renderSectorModalContent(groupMap[currentActiveSectorName]);
     }
 
+    // 💡 第四點、第五點與第六點：彈窗卡片加強收盤價、熱力圖每 100 億一個等級
     function renderSectorModalContent(grpData) {
       const cardsContainer = document.getElementById('modalSectorCardsGrid');
       const heatContainer = document.getElementById('modalSectorHeatmapGrid');
 
+      // 1. 列表導覽模式（卡片收盤價放大、配合漲跌上色）
       cardsContainer.innerHTML = grpData.members.map(s => {
         const cardTier = getDynamicColorTier(s.pctStr || '0%');
         const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
+        const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
+        const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
         const badgesHtml = (s.badges || []).map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] ${b.color}">${b.text}</span>`).join(' ');
 
         return `
-          <div onclick="closeSectorModal(); openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-2.5 ${cardTier.bg}">
+          <div onclick="closeSectorModal(); openStockModal('${s.id}')" class="cursor-pointer p-4 rounded-2xl border transition hover:shadow-lg space-y-3 ${cardTier.bg}">
             <div class="flex items-start justify-between">
               <div>
                 <div class="flex items-center space-x-2">
-                  <span class="font-bold text-sm sm:text-base text-slate-900 dark:text-slate-100">${s.name}</span>
+                  <span class="font-black text-base text-slate-900 dark:text-slate-100">${s.name}</span>
                   <span class="text-[10px] text-slate-400 font-mono">${s.id}</span>
                 </div>
-                <div class="flex items-center space-x-2 mt-0.5">
-                  <span class="text-xs font-black font-mono text-slate-800 dark:text-slate-200">${s.price.toFixed(2)}</span>
-                  <span class="text-xs font-bold font-mono ${s.change >= 0 ? 'text-stockRed' : 'text-stockGreen'}">${formattedPct}</span>
+                <!-- 💡 第四點：收盤價顯眼突出並上色 -->
+                <div class="flex items-baseline space-x-2 mt-1">
+                  <span class="text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
+                  <span class="text-xs font-bold font-mono ${priceColor}">${formattedChange} (${formattedPct})</span>
                 </div>
               </div>
               <div class="flex flex-wrap gap-1 justify-end max-w-[140px]">${badgesHtml || '-'}</div>
@@ -2243,29 +2283,38 @@
         `;
       }).join('');
 
-      const totalCap = grpData.members.reduce((acc, cur) => acc + (cur.cap || 1), 0);
+      // 2. 💡 第五與第六點：熱力圖每 100 億一個等級階梯，收盤漲跌作為核心主角
       heatContainer.innerHTML = grpData.members.map(s => {
-        const sharePct = Math.max(((s.cap || 1) / totalCap) * 100, 15);
+        const capVal = s.cap || 10;
+        // 每 100 億為 1 級，基底 120px，每級 +35px，上限 320px
+        const tierLevel = Math.min(Math.floor(capVal / 100), 6); 
+        const flexWidth = 140 + tierLevel * 35;
+        const minHeight = 100 + tierLevel * 15;
+
         const heatTier = getDynamicColorTier(s.pctStr || '0%');
         const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
         const formattedChange = (s.change > 0 ? '+' : '') + s.change.toFixed(2);
-        const changeColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
+        const priceColor = s.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
 
         return `
-          <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="flex: ${sharePct} 1 140px; min-height: 90px;" class="cursor-pointer p-3 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg}">
+          <div onclick="closeSectorModal(); openStockModal('${s.id}')" style="flex: 1 1 ${flexWidth}px; min-height: ${minHeight}px;" class="cursor-pointer p-3.5 rounded-2xl border transition hover:scale-[1.02] flex flex-col justify-between shadow-sm ${heatTier.bg}">
             <div class="flex items-start justify-between">
               <div>
-                <div class="font-black text-sm text-slate-900 dark:text-slate-100">${s.name}</div>
-                <div class="text-[9px] text-slate-400 font-mono">${s.id}</div>
+                <div class="font-black text-sm sm:text-base text-slate-900 dark:text-slate-100">${s.name}</div>
+                <div class="text-[10px] text-slate-400 font-mono">${s.id}</div>
               </div>
-              <span class="font-mono text-xs font-black px-1.5 py-0.5 rounded ${heatTier.badge}">${formattedPct}</span>
+              <span class="font-mono text-xs font-black px-2 py-0.5 rounded ${heatTier.badge}">${formattedPct}</span>
             </div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400 flex justify-between items-baseline pt-1.5 border-t border-slate-200/40 dark:border-slate-800/40 mt-1">
+
+            <!-- 核心收盤價放中間，不擠在備註 -->
+            <div class="my-auto py-1">
+              <span class="text-xl sm:text-2xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
+              <span class="text-xs font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
+            </div>
+
+            <div class="text-[10px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/40 dark:border-slate-800/40 flex justify-between">
               <span>市值: ${(s.cap || 0).toFixed(0)}億</span>
-              <div class="space-x-1 font-mono">
-                <span class="font-black text-slate-900 dark:text-slate-100">${s.price.toFixed(2)}</span>
-                <span class="${changeColor}">(${formattedChange})</span>
-              </div>
+              <span class="font-semibold">點擊查線圖</span>
             </div>
           </div>
         `;
@@ -2371,6 +2420,7 @@
       }
     }
 
+    // 💡 第二點：累積走勢圖直接改為顯示「真實收盤價」，並嚴格遵守台股升降級距跳動
     function renderStockTrend(stock) {
       const history = stock.tenDayHistory || [];
       const svgWrapper = document.getElementById('trendSvgWrapper_pct');
@@ -2387,21 +2437,7 @@
         return;
       }
 
-      listGrid.innerHTML = history.map(item => {
-        const isUp = item.numVal > 0;
-        const isDown = item.numVal < 0;
-        const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-400');
-        const bgClass = isUp ? 'bg-red-500/10 border-red-500/20' : (isDown ? 'bg-green-500/10 border-green-500/20' : 'bg-slate-200/50 dark:bg-slate-900 border-slate-200 dark:border-slate-800');
-        const displayVal = item.hasData ? (isUp ? `+${item.valStr}` : item.valStr) : '--';
-
-        return `
-          <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border ${bgClass} text-center space-y-0.5">
-            <span class="block text-[9px] text-slate-400 font-mono">${item.dateHeader}</span>
-            <span class="block text-[11px] font-black font-mono ${colorClass}">${displayVal}</span>
-          </div>
-        `;
-      }).join('');
-
+      // 依台股跳動單位逆推每日真實收盤價
       const currentPrice = stock.price || 100;
       let prices = new Array(history.length);
       let lastValidIdx = -1;
@@ -2417,21 +2453,35 @@
         for (let i = lastValidIdx; i > 0; i--) {
           if (history[i].hasData) {
             const r = history[i].numVal / 100;
-            prices[i - 1] = prices[i] / (1 + r);
+            const unrounded = prices[i] / (1 + r);
+            prices[i - 1] = roundToTick(unrounded);
           } else {
             prices[i - 1] = prices[i];
           }
         }
       }
 
-      const basePrice = (lastValidIdx !== -1 && history[0].hasData) ? (prices[0] / (1 + history[0].numVal / 100)) : (prices[0] || currentPrice);
-      const cumPoints = history.map((h, i) => {
-        if (!h.hasData || !prices[i]) return { ...h, cumVal: 0 };
-        const compoundCumPct = ((prices[i] - basePrice) / basePrice) * 100;
-        return { ...h, cumVal: compoundCumPct, calculatedPrice: prices[i] };
-      });
+      // 列表顯示
+      listGrid.innerHTML = history.map((item, idx) => {
+        const isUp = item.numVal > 0;
+        const isDown = item.numVal < 0;
+        const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-400');
+        const bgClass = isUp ? 'bg-red-500/10 border-red-500/20' : (isDown ? 'bg-green-500/10 border-green-500/20' : 'bg-slate-200/50 dark:bg-slate-900 border-slate-200 dark:border-slate-800');
+        const displayVal = item.hasData ? (isUp ? `+${item.valStr}` : item.valStr) : '--';
+        const priceVal = prices[idx] ? formatTickPrice(prices[idx]) : '--';
 
-      const totalCumPct = cumPoints[lastValidIdx] ? cumPoints[lastValidIdx].cumVal : 0;
+        return `
+          <div class="flex-1 min-w-[58px] p-1.5 rounded-xl border ${bgClass} text-center space-y-0.5">
+            <span class="block text-[8px] text-slate-400 font-mono">${item.dateHeader}</span>
+            <span class="block text-[11px] font-black font-mono text-slate-900 dark:text-slate-100">${priceVal}</span>
+            <span class="block text-[9px] font-bold font-mono ${colorClass}">${displayVal}</span>
+          </div>
+        `;
+      }).join('');
+
+      // 計算複合累積漲跌幅
+      const basePrice = (lastValidIdx !== -1 && history[0].hasData) ? (prices[0] / (1 + history[0].numVal / 100)) : (prices[0] || currentPrice);
+      const totalCumPct = basePrice > 0 ? ((currentPrice - basePrice) / basePrice) * 100 : 0;
       const isCumUp = totalCumPct > 0;
       const isCumDown = totalCumPct < 0;
       const cumColor = isCumUp ? 'bg-red-500/15 text-stockRed border-red-500/30' : (isCumDown ? 'bg-green-500/15 text-stockGreen border-green-500/30' : 'bg-slate-200 text-slate-500 border-slate-300');
@@ -2441,7 +2491,7 @@
       const svgWidth = 440;
       const svgHeight = 120;
       const padX = 24;
-      const padY = 18;
+      const padY = 20;
       const stepX = (svgWidth - padX * 2) / Math.max(history.length - 1, 1);
 
       if (currentPctTrendMode === 'bar') {
@@ -2474,48 +2524,34 @@
           </svg>
         `;
       } else if (currentPctTrendMode === 'cum') {
-        const cumVals = cumPoints.filter(p => p.hasData).map(p => p.cumVal);
-        let minVal = Math.min(...cumVals, 0);
-        let maxVal = Math.max(...cumVals, 0);
-        if (maxVal === minVal) { maxVal = 2; minVal = -2; }
-        const valRange = (maxVal - minVal) || 1;
-        const zeroY = svgHeight - padY - ((0 - minVal) / valRange) * (svgHeight - padY * 2);
+        // 價格曲線折線圖 (直接標註實際收盤價)
+        const validPrices = prices.filter(p => p !== undefined && !isNaN(p));
+        let minPrice = Math.min(...validPrices);
+        let maxPrice = Math.max(...validPrices);
+        if (minPrice === maxPrice) { minPrice *= 0.98; maxPrice *= 1.02; }
+        const priceRange = (maxPrice - minPrice) || 1;
 
         let polyPoints = [];
-        let areaPoints = [];
         let dotsHtml = '';
 
-        cumPoints.forEach((p, i) => {
+        history.forEach((h, i) => {
           const x = padX + i * stepX;
-          const y = svgHeight - padY - ((p.cumVal - minVal) / valRange) * (svgHeight - padY * 2);
-          if (p.hasData) {
+          const pVal = prices[i];
+          if (h.hasData && pVal) {
+            const y = svgHeight - padY - ((pVal - minPrice) / priceRange) * (svgHeight - padY * 2);
             polyPoints.push(`${x},${y}`);
-            if (polyPoints.length === 1) areaPoints.push(`${x},${zeroY}`);
-            areaPoints.push(`${x},${y}`);
-            const dotColor = p.cumVal > 0 ? '#ef4444' : (p.cumVal < 0 ? '#22c55e' : '#94a3b8');
+
+            const dotColor = (i === history.length - 1) ? '#3b82f6' : (h.numVal >= 0 ? '#ef4444' : '#22c55e');
             dotsHtml += `
-              <circle cx="${x}" cy="${y}" r="3" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5"/>
-              <text x="${x}" y="${y < zeroY ? y - 6 : y + 12}" text-anchor="middle" font-size="7.5" font-family="monospace" fill="${dotColor}" font-weight="bold">${p.cumVal > 0 ? '+' : ''}${p.cumVal.toFixed(1)}%</text>
+              <circle cx="${x}" cy="${y}" r="3.5" fill="${dotColor}" stroke="#ffffff" stroke-width="1.5"/>
+              <text x="${x}" y="${y - 6}" text-anchor="middle" font-size="8" font-family="monospace" fill="#94a3b8" font-weight="bold">${formatTickPrice(pVal)}</text>
             `;
           }
         });
 
-        if (areaPoints.length > 0) {
-          const lastX = polyPoints[polyPoints.length - 1].split(',')[0];
-          areaPoints.push(`${lastX},${zeroY}`);
-        }
-
         svgWrapper.innerHTML = `
           <svg viewBox="0 0 ${svgWidth} ${svgHeight}" class="w-full h-full overflow-visible">
-            <defs>
-              <linearGradient id="cumGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" stop-color="#3b82f6" stop-opacity="0.3"/>
-                <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.0"/>
-              </linearGradient>
-            </defs>
-            <line x1="${padX - 5}" y1="${zeroY}" x2="${svgWidth - padX + 5}" y2="${zeroY}" stroke="#64748b" stroke-dasharray="3 3" stroke-width="1" opacity="0.4"/>
-            <polygon points="${areaPoints.join(' ')}" fill="url(#cumGrad)"/>
-            <polyline fill="none" stroke="#3b82f6" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints.join(' ')}"/>
+            <polyline fill="none" stroke="#3b82f6" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="${polyPoints.join(' ')}"/>
             ${dotsHtml}
           </svg>
         `;
@@ -2579,235 +2615,15 @@
         </svg>
       `;
 
-      const firstVolDate = history[0] ? history[0].dateHeader : '';
-      const midVolDate = history[Math.floor(history.length / 2)] ? history[Math.floor(history.length / 2)].dateHeader : '';
-      const lastVolDate = history[history.length - 1] ? history[history.length - 1].dateHeader : '';
+      const firstVolDate = history.length > 0 ? history[0].dateHeader : '';
+      const midVolDate = history.length > 0 ? history[Math.floor(history.length / 2)].dateHeader : '';
+      const lastVolDate = history.length > 0 ? history[history.length - 1].dateHeader : '';
 
       legendWrapper.innerHTML = `
         <span>${firstVolDate} (10日前)</span>
         <span>${midVolDate}</span>
         <span class="text-amber-500 font-bold">${lastVolDate} (最新)</span>
       `;
-    }
-
-    function openStockModal(stockId) {
-      const s = parsedStocks.find(item => item.id.toString() === stockId.toString());
-      if (!s) return;
-
-      currentModalStockId = s.id;
-      updateModalStarUI(s.id);
-
-      document.getElementById('modalStockName').textContent = s.name;
-      document.getElementById('modalStockId').textContent = s.id;
-
-      const groupsData = stockMultiGroupMap[s.id] || [{
-        rawGroup: s.rawGroup, mainGroup: s.group, subGroup: s.subGroup,
-        weight: s.weight, contribution: s.contribution,
-        mainGroupChange: s.groupChange, subGroupChange: '-'
-      }];
-
-      const grpBadges = document.getElementById('modalGroupsBadges');
-      grpBadges.innerHTML = groupsData.map(g => `
-        <span class="text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-brand-500/10 text-brand-500 font-semibold border border-brand-500/20 whitespace-nowrap inline-flex items-center space-x-1">
-          <span>${g.mainGroup}</span>
-          ${g.subGroup ? `<span class="opacity-60 text-[9px]">/ ${g.subGroup}</span>` : ''}
-        </span>
-      `).join('');
-
-      const featBadgesBox = document.getElementById('modalFeatureBadges');
-      if (s.badges && s.badges.length > 0) {
-        featBadgesBox.classList.remove('hidden');
-        featBadgesBox.innerHTML = '<span class="text-[10px] font-bold text-slate-400 self-center mr-1">特徵:</span>' + s.badges.map(b => `
-          <span class="px-2 py-0.5 rounded-md text-[10px] whitespace-nowrap ${b.color}">${b.text}</span>
-        `).join('');
-      } else {
-        featBadgesBox.classList.add('hidden');
-        featBadgesBox.innerHTML = '';
-      }
-
-      const isUp = s.change >= 0;
-      const colorClass = isUp ? 'text-stockRed' : 'text-stockGreen';
-      const formattedPct = (s.change > 0 && !s.pctStr.startsWith('+')) ? `+${s.pctStr}` : s.pctStr;
-
-      const priceEl = document.getElementById('modalStockPrice');
-      priceEl.textContent = s.price.toFixed(2);
-      priceEl.className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
-
-      const changeEl = document.getElementById('modalStockChange');
-      changeEl.textContent = `${isUp ? '+' : ''}${s.change.toFixed(2)}`;
-      changeEl.className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
-
-      const pctEl = document.getElementById('modalStockPct');
-      pctEl.textContent = formattedPct;
-      pctEl.className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
-
-      document.getElementById('modalStockVolume').textContent = s.volume.toLocaleString();
-      const turnoverInYi = (s.volume * 1000 * s.price) / 100000000;
-      document.getElementById('modalStockTurnover').textContent = turnoverInYi >= 1 ? `${turnoverInYi.toFixed(2)} 億元` : `${((s.volume * 1000 * s.price) / 10000).toFixed(0)} 萬元`;
-      document.getElementById('modalStockCap').textContent = `${s.cap.toFixed(2)} 億元`;
-
-      const doubleGrpContainer = document.getElementById('modalDoubleGroupContainer');
-      doubleGrpContainer.innerHTML = groupsData.map((g, idx) => {
-        const isMainUp = g.mainGroupChange.includes('+') || (!g.mainGroupChange.includes('-') && parseFloat(g.mainGroupChange) > 0);
-        const isMainDown = g.mainGroupChange.includes('-');
-        const mainColor = isMainUp ? 'text-stockRed' : (isMainDown ? 'text-stockGreen' : 'text-slate-400');
-        const mainDotBg = isMainUp ? 'bg-stockRed' : (isMainDown ? 'bg-stockGreen' : 'bg-slate-400');
-
-        let subGroupHtml = '';
-        if (g.subGroup) {
-          const isSubUp = g.subGroupChange.includes('+') || (!g.subGroupChange.includes('-') && parseFloat(g.subGroupChange) > 0);
-          const isSubDown = g.subGroupChange.includes('-');
-          const subColor = isSubUp ? 'text-stockRed' : (isSubDown ? 'text-stockGreen' : 'text-slate-400');
-          const subDotBg = isSubUp ? 'bg-stockRed' : (isSubDown ? 'bg-stockGreen' : 'bg-slate-400');
-
-          subGroupHtml = `
-            <div class="mt-2 pt-2 border-t border-slate-200/60 dark:border-slate-800/60 flex items-center justify-between">
-              <span class="text-[10px] sm:text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center space-x-1.5">
-                <span class="w-1.5 h-1.5 rounded-full ${subDotBg}"></span>
-                <span>子族群：${g.subGroup}</span>
-              </span>
-              <span class="text-xs sm:text-sm font-bold font-mono ${subColor}">${g.subGroupChange}</span>
-            </div>
-          `;
-        }
-
-        return `
-          <div class="p-3 sm:p-3.5 rounded-xl sm:rounded-2xl border bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 space-y-1.5">
-            <div class="flex items-center justify-between">
-              <span class="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center space-x-1.5">
-                <span class="w-2 h-2 rounded-full ${mainDotBg}"></span>
-                <span>主族群 ${idx + 1}：${g.mainGroup}</span>
-              </span>
-              <span class="text-sm sm:text-base font-black font-mono ${mainColor}">${g.mainGroupChange}</span>
-            </div>
-            ${subGroupHtml}
-            <div class="grid grid-cols-2 gap-2 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-slate-200/50 dark:border-slate-800/50">
-              <div>佔該族群權重：<strong class="text-slate-700 dark:text-slate-200">${g.weight}</strong></div>
-              <div class="text-right">加權貢獻點數：<strong class="text-slate-700 dark:text-slate-200">${g.contribution}</strong></div>
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      renderStockTrend(s);
-      renderStockVolTrend(s);
-
-      document.getElementById('modalStockNote1').textContent = s.note1 ? `業務主軸：${s.note1}` : '暫無業務主軸資料';
-      document.getElementById('modalStockNote2').textContent = s.note2 ? `產業題材：${s.note2}` : '';
-
-      const peerContainer = document.getElementById('modalPeerStocks');
-      peerContainer.innerHTML = groupsData.map(g => {
-        const peers = (groupMap[g.rawGroup] && groupMap[g.rawGroup].members) ? groupMap[g.rawGroup].members : [];
-        return `
-          <div class="space-y-1 sm:space-y-1.5">
-            <div class="text-[10px] sm:text-[11px] font-bold text-slate-400">【${g.rawGroup}】其他成分股：</div>
-            <div class="flex flex-wrap gap-1.5 sm:gap-2">
-              ${peers.map(p => {
-                const isCurrent = p.id.toString() === s.id.toString();
-                const pColor = p.change >= 0 ? 'text-stockRed' : 'text-stockGreen';
-                const pFormattedPct = (p.change > 0 && !p.pctStr.startsWith('+')) ? `+${p.pctStr}` : p.pctStr;
-                if (isCurrent) {
-                  return `<span class="px-2 py-1 sm:px-2.5 sm:py-1 rounded-xl bg-brand-500 text-white font-bold text-[11px] sm:text-xs shadow-sm">${p.name} <span class="text-[9px] sm:text-[10px] opacity-90">${p.id}</span></span>`;
-                } else {
-                  return `
-                    <button onclick="openStockModal('${p.id}')" class="px-2 py-1 sm:px-2.5 sm:py-1 rounded-xl bg-slate-100 dark:bg-slate-800 hover:border-brand-500 border border-slate-200 dark:border-slate-700 text-[11px] sm:text-xs text-slate-700 dark:text-slate-300 transition flex items-center space-x-1 sm:space-x-1.5">
-                      <span>${p.name}</span>
-                      <span class="font-mono text-[9px] sm:text-[10px] ${pColor}">${pFormattedPct}</span>
-                    </button>
-                  `;
-                }
-              }).join('')}
-            </div>
-          </div>
-        `;
-      }).join('');
-
-      document.getElementById('stockDetailModal').classList.remove('hidden');
-    }
-
-    function closeStockModal() {
-      document.getElementById('stockDetailModal').classList.add('hidden');
-    }
-
-    function openAdminPanel() {
-      updateAdminStatusIndicator(isCurrentMaintenance);
-      document.getElementById('adminPanelModal').classList.remove('hidden');
-      pollAdminMaintenanceStatus();
-      if (adminStatusPollInterval) clearInterval(adminStatusPollInterval);
-      adminStatusPollInterval = setInterval(pollAdminMaintenanceStatus, 5000);
-    }
-
-    function closeAdminPanel() {
-      document.getElementById('adminPanelModal').classList.add('hidden');
-      if (adminStatusPollInterval) {
-        clearInterval(adminStatusPollInterval);
-        adminStatusPollInterval = null;
-      }
-    }
-
-    function applyAdminDate() {
-      const val = document.getElementById('adminCustomDate').value;
-      if (val) {
-        customSimulatedDate = val.replace(/-/g, '/');
-        const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
-        const arHeader = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
-        const ahHeader = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
-        checkSystemIntegrity(at2Date, arHeader, ahHeader);
-        alert(`已切換模擬日期為：${customSimulatedDate}，大盤狀態已即時重新計算！`);
-      }
-    }
-
-    function resetAdminDate() {
-      customSimulatedDate = null;
-      document.getElementById('adminCustomDate').value = "";
-      const at2Date = (rawCsvGrid[1] && rawCsvGrid[1][45]) ? rawCsvGrid[1][45].trim() : '';
-      const arHeader = (rawCsvGrid[0] && rawCsvGrid[0][43]) ? rawCsvGrid[0][43].trim() : '';
-      const ahHeader = (rawCsvGrid[0] && rawCsvGrid[0][33]) ? rawCsvGrid[0][33].trim() : '';
-      checkSystemIntegrity(at2Date, arHeader, ahHeader);
-      alert("已重設為真實當前系統日期！");
-    }
-
-    async function setMaintenanceStatus(isMaintenance) {
-      const msgBox = document.getElementById('adminStatusMsg');
-      msgBox.className = "text-[11px] font-medium text-center text-amber-500 block";
-      msgBox.textContent = isMaintenance ? "正在將試算表 AS11 寫入「維護中」..." : "正在解除「維護中」狀態...";
-
-      try {
-        const res = await fetch(BACKEND_API_URL, {
-          method: 'POST',
-          body: JSON.stringify({ action: 'setMaintenance', status: isMaintenance ? '維護中' : '', admin: ADMIN_EMAIL })
-        });
-        const result = await res.json();
-        if (result.success) {
-          isCurrentMaintenance = result.isMaintenance;
-          updateAdminStatusIndicator(isCurrentMaintenance);
-          msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-          msgBox.textContent = result.message || (isMaintenance ? "已切換為「維護中」！" : "已切換為「正常運行」！");
-          if (currentUser && currentUser.email !== ADMIN_EMAIL) {
-            document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isCurrentMaintenance);
-          }
-        } else {
-          msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-          msgBox.textContent = "操作失敗：" + result.message;
-        }
-      } catch (e) {
-        msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-        msgBox.textContent = "請求發生異常，請確認網路或後端部署。";
-      }
-    }
-
-    async function pollAdminMaintenanceStatus() {
-      try {
-        const res = await fetch(`${BACKEND_API_URL}?action=getMaintenance&_t=${Date.now()}`);
-        const data = await res.json();
-        if (data.success) {
-          isCurrentMaintenance = data.isMaintenance;
-          updateAdminStatusIndicator(isCurrentMaintenance);
-          if (currentUser && currentUser.email !== ADMIN_EMAIL) {
-            document.getElementById('maintenanceOverlay').classList.toggle('hidden', !isCurrentMaintenance);
-          }
-        }
-      } catch (e) {}
     }
   </script>
 </body>
