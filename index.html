@@ -1643,16 +1643,58 @@
 
           if (!stockMap.has(id)) {
             const badges = [];
-            if (isLimitUp) badges.push({ text: '漲停', color: 'bg-red-500/10 text-red-500 border border-red-500/30' });
-            if (isLimitDown) badges.push({ text: '跌停', color: 'bg-green-500/10 text-green-500 border border-green-500/30' });
-            if (volume > 100000) badges.push({ text: '爆量', color: 'bg-amber-500/10 text-amber-500 border border-amber-500/30' });
-            if (pctNum >= 3.0 && pctNum < 9.5) badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/30' });
+
+            // 1. 計算十日均量 (排除當日如果有的話，或取十日歷史的有效平均)
+            const validVols = tenDayVolHistory.filter(v => v.hasData && v.numVal > 0);
+            const sumVol = validVols.reduce((acc, cur) => acc + cur.numVal, 0);
+            const avgVol10 = validVols.length > 0 ? (sumVol / validVols.length) : volume;
+
+            // 2. 歷史走勢特徵（連續漲跌天數與短期動能）
+            const validPctHistory = tenDayHistory.filter(h => h.hasData);
+            const last3Days = validPctHistory.slice(-3); // 最近三筆
+            const is3DaysUp = last3Days.length === 3 && last3Days.every(d => d.numVal > 0);
+            const is3DaysDown = last3Days.length === 3 && last3Days.every(d => d.numVal < 0);
+            const sum3Pct = last3Days.reduce((acc, cur) => acc + cur.numVal, 0);
+
+            // ================= 標籤判定規則 =================
+            // ① 漲跌停
+            if (isLimitUp) {
+              badges.push({ text: '漲停', color: 'bg-red-600/15 text-red-500 border border-red-500/40 font-black' });
+            } else if (isLimitDown) {
+              badges.push({ text: '跌停', color: 'bg-emerald-600/15 text-emerald-500 border border-emerald-500/40 font-black' });
+            }
+
+            // ② 價量組合（爆量、量縮、攻擊、出貨）
+            const isVolumeSurge = avgVol10 > 0 && (volume >= avgVol10 * 2.0) && (volume >= 500); // 至少500張才算爆量，避免幾張的小股雜訊
+            const isVolumeDrying = avgVol10 >= 300 && (volume <= avgVol10 * 0.4); // 窒息量
+
+            if (pctNum >= 4.0 && isVolumeSurge) {
+              badges.push({ text: '帶量長紅', color: 'bg-rose-500/15 text-rose-500 border border-rose-500/40' });
+            } else if (pctNum <= -4.0 && isVolumeSurge) {
+              badges.push({ text: '爆量下殺', color: 'bg-purple-900/30 text-purple-400 border border-purple-500/40' });
+            } else if (isVolumeSurge) {
+              badges.push({ text: '爆量', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
+            } else if (isVolumeDrying) {
+              badges.push({ text: '窒息量', color: 'bg-slate-500/15 text-slate-400 border border-slate-500/30' });
+            }
+
+            // ③ 連續動能與強弱
+            if (is3DaysUp && sum3Pct >= 12.0) {
+              badges.push({ text: '連三紅噴', color: 'bg-fuchsia-500/15 text-fuchsia-400 border border-fuchsia-500/30' });
+            } else if (is3DaysDown && sum3Pct <= -10.0) {
+              badges.push({ text: '連黑探底', color: 'bg-emerald-950/40 text-emerald-400 border border-emerald-700/40' });
+            } else if (!isLimitUp && pctNum >= 3.0 && pctNum < 9.5) {
+              badges.push({ text: '強勢', color: 'bg-rose-500/10 text-rose-400 border border-rose-500/20' });
+            } else if (!isLimitDown && pctNum <= -3.0 && pctNum > -9.5) {
+              badges.push({ text: '弱勢', color: 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' });
+            }
 
             const stock = {
               group: mainGroup,
               subGroup, rawGroup, id, name, price, change, pctStr, pctNum,
               cap, weight, contribution, groupChange: sharedGroupChange,
               note1, note2, volume, badges,
+              avgVol10: Math.round(avgVol10),
               turnover: volume * price,
               isLimitUp, isLimitDown,
               tenDayHistory,
@@ -1876,25 +1918,16 @@
       const listGrid = document.getElementById('trendListGrid_pct');
       const cumBadge = document.getElementById('trendCumPctBadge');
 
-      let cumSum = 0;
-      let validCount = 0;
-      history.forEach(h => {
-        if (h.hasData) {
-          cumSum += h.numVal;
-          validCount++;
-        }
-      });
-
-      if (validCount > 0) {
-        const isCumUp = cumSum > 0;
-        const isCumDown = cumSum < 0;
-        const cumColor = isCumUp ? 'bg-red-500/15 text-stockRed border-red-500/30' : (isCumDown ? 'bg-green-500/15 text-stockGreen border-green-500/30' : 'bg-slate-200 text-slate-500 border-slate-300');
-        cumBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${cumColor}`;
-        cumBadge.textContent = `十日累積：${isCumUp ? '+' : ''}${cumSum.toFixed(2)}%`;
-      } else {
+      const validPoints = history.filter(h => h.hasData);
+      if (validPoints.length === 0) {
+        svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無十日趨勢數據</span>';
+        legendWrapper.innerHTML = '';
         cumBadge.textContent = '';
+        listGrid.innerHTML = '';
+        return;
       }
 
+      // 1. 列表顯示
       listGrid.innerHTML = history.map(item => {
         const isUp = item.numVal > 0;
         const isDown = item.numVal < 0;
@@ -1910,12 +1943,50 @@
         `;
       }).join('');
 
-      const validPoints = history.filter(h => h.hasData);
-      if (validPoints.length === 0) {
-        svgWrapper.innerHTML = '<span class="text-xs text-slate-400">暫無十日趨勢數據</span>';
-        legendWrapper.innerHTML = '';
-        return;
+      // 2. 利用現有最新股價與歷史漲跌幅，反向推導每日收盤價
+      const currentPrice = stock.price || 100;
+      let prices = new Array(history.length);
+      
+      // 找出最後一個有數據的索引
+      let lastValidIdx = -1;
+      for (let i = history.length - 1; i >= 0; i--) {
+        if (history[i].hasData) {
+          lastValidIdx = i;
+          break;
+        }
       }
+
+      if (lastValidIdx !== -1) {
+        prices[lastValidIdx] = currentPrice;
+        // 向前推算每日股價: P[i-1] = P[i] / (1 + r[i])
+        for (let i = lastValidIdx; i > 0; i--) {
+          if (history[i].hasData) {
+            const r = history[i].numVal / 100;
+            prices[i - 1] = prices[i] / (1 + r);
+          } else {
+            prices[i - 1] = prices[i];
+          }
+        }
+      }
+
+      // 計算各點相對於起始日（D-10 前收盤）的真實複合累積報酬率
+      const basePrice = (lastValidIdx !== -1 && history[0].hasData) 
+        ? (prices[0] / (1 + history[0].numVal / 100)) 
+        : (prices[0] || currentPrice);
+
+      const cumPoints = history.map((h, i) => {
+        if (!h.hasData || !prices[i]) return { ...h, cumVal: 0 };
+        const compoundCumPct = ((prices[i] - basePrice) / basePrice) * 100;
+        return { ...h, cumVal: compoundCumPct, calculatedPrice: prices[i] };
+      });
+
+      // 總複合累積漲跌幅徽章
+      const totalCumPct = cumPoints[lastValidIdx] ? cumPoints[lastValidIdx].cumVal : 0;
+      const isCumUp = totalCumPct > 0;
+      const isCumDown = totalCumPct < 0;
+      const cumColor = isCumUp ? 'bg-red-500/15 text-stockRed border-red-500/30' : (isCumDown ? 'bg-green-500/15 text-stockGreen border-green-500/30' : 'bg-slate-200 text-slate-500 border-slate-300');
+      cumBadge.className = `text-[10px] font-mono px-2 py-0.5 rounded-full font-bold border ${cumColor}`;
+      cumBadge.textContent = `十日真實累積：${isCumUp ? '+' : ''}${totalCumPct.toFixed(2)}%`;
 
       const svgWidth = 440;
       const svgHeight = 120;
@@ -1953,12 +2024,6 @@
           </svg>
         `;
       } else if (currentPctTrendMode === 'cum') {
-        let runningTotal = 0;
-        const cumPoints = history.map(h => {
-          if (h.hasData) runningTotal += h.numVal;
-          return { ...h, cumVal: runningTotal };
-        });
-
         const cumVals = cumPoints.filter(p => p.hasData).map(p => p.cumVal);
         let minVal = Math.min(...cumVals, 0);
         let maxVal = Math.max(...cumVals, 0);
