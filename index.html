@@ -93,69 +93,101 @@
         </button>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
+      <div class="space-y-2.5 text-xs">
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitUp text-white">漲停</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 9.5% 且 漲跌 > 0</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 9.5% 且 點數 > 0</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">多頭鎖死漲停板，最強買盤動能展現。</p>
+          <p class="text-slate-600 dark:text-slate-300">多頭鎖死漲停板，最強買盤動能。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-limitDown text-white">跌停</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -9.5% 且 漲跌 < 0</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -9.5% 且 點數 < 0</span>
           </div>
           <p class="text-slate-600 dark:text-slate-300">空頭摜壓至跌停板，賣壓極度宣洩。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/40">爆量</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">量 ≥ 2倍十日均量 且 ≥ 500張</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">成交張數放大至平常 2 倍以上，籌碼激烈換手。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30">量價齊揚</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3% 且 當日量 ≥ 1.3倍均量</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3% 且 量 ≥ 1.3倍十日均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">價漲量增，主力資金實質進駐攻擊特徵。</p>
+          <p class="text-slate-600 dark:text-slate-300">價漲量增，主力買盤實質介入拉抬。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-600/25 text-fuchsia-300 border border-purple-500/50">爆量長黑</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.5% 且 當日量 ≥ 2倍均量</span>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-purple-700 text-white border border-purple-400">爆量長黑</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.5% 且 量 ≥ 2倍十日均量</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">高檔爆量大跌或破線，通常為主力調節或恐慌殺盤信號。</p>
+          <p class="text-slate-600 dark:text-slate-300">帶大量長黑摜壓，通常為主幹調節或破線賣壓。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-600/15 text-rose-500 border border-rose-500/30">多頭延續</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">連 3 日天天量增且股價連 3 漲</span>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30">強勢</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅介於 3.0% 至 9.5%</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">量價梯隊攀升，常出現於飆股主升段波段行情中。</p>
+          <p class="text-slate-600 dark:text-slate-300">多頭動能充沛，領先大盤之強勢個股。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-500/15 text-amber-500 border border-amber-500/30">爆量換手</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≥ 2倍均量 且 ≥ 500張</span>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">弱勢</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅介於 -3.0% 至 -9.5%</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">籌碼出現激烈多空分歧與大量換手交易。</p>
+          <p class="text-slate-600 dark:text-slate-300">當日賣壓沉重，落後大盤之弱勢個股。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30">持續量增</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近 3 日成交量天天放大</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">資金連續流入，交投熱度逐日加溫。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30">持續量縮</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近 3 日成交量天天萎縮</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">市場觀望氣氛轉濃，籌碼逐漸進入沉澱期。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-teal-500/15 text-teal-400 border border-teal-500/30">震盪整理</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近 3 日各日漲跌幅皆在 ±1.5% 內</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">股價在窄幅箱型內整理，靜待新方向出爐。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-slate-600/30 text-slate-400 border border-slate-500/30">窒息量</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≤ 0.35倍均量 且 均量≥300張</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">量 ≤ 0.35倍十日均量 且 均量≥300張</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">成交量極度急凍萎縮，籌碼沉澱，常為重大方向突破前兆。</p>
+          <p class="text-slate-600 dark:text-slate-300">量能極限萎縮，惜售或無人問津，多為突破前夕。</p>
         </div>
 
-        <div class="p-3 bg-slate-100 dark:bg-slate-950 rounded-2xl space-y-1.5 border border-slate-200 dark:border-slate-800">
-          <div class="flex items-center justify-between">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30">量縮價跌</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -1.5% 但 量 ≤ 0.65倍均量</span>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-600/15 text-rose-500 border border-rose-500/30">多頭延續</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">連 3 日天天放量且天天收漲</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">壓回並未帶出恐慌賣壓，多為健康回檔洗盤。</p>
+          <p class="text-slate-600 dark:text-slate-300">標準攻堅排列，強者恆強趨勢進行中。</p>
         </div>
       </div>
     </div>
@@ -175,7 +207,6 @@
       </div>
 
       <div class="space-y-4 text-xs">
-        <!-- 當前核心狀態卡片 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
             <span class="font-bold text-slate-700 dark:text-slate-300 block">當前核心狀態：</span>
@@ -187,7 +218,6 @@
           </span>
         </div>
 
-        <!-- 📢 控制台布告欄廣播寫入功能 -->
         <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-3 border border-slate-200 dark:border-slate-800">
           <label class="font-bold text-slate-700 dark:text-slate-300 flex items-center justify-between">
             <span class="flex items-center space-x-1.5">
@@ -301,7 +331,6 @@
   <!-- ================= 個股詳細資訊彈窗 Modal ================= -->
   <div id="stockDetailModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4">
-      
       <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div class="flex items-center space-x-3">
@@ -337,10 +366,8 @@
         </div>
       </div>
 
-      <!-- 族群歸屬卡片 -->
       <div id="modalDoubleGroupContainer" class="space-y-3"></div>
 
-      <!-- 近十日漲跌趨勢 -->
       <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
         <div class="flex items-center justify-between flex-wrap gap-2">
           <div class="flex items-center space-x-2">
@@ -367,7 +394,6 @@
         </div>
       </div>
 
-      <!-- 近十日成交量能趨勢 -->
       <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
         <div class="flex items-center justify-between">
           <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
@@ -390,7 +416,6 @@
         </div>
       </div>
 
-      <!-- 交易金額與市值 -->
       <div class="space-y-2 text-xs">
         <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800">
           <span class="text-slate-500 dark:text-slate-400 font-medium">預估交易總額</span>
@@ -402,7 +427,6 @@
         </div>
       </div>
 
-      <!-- 核心業務與題材 -->
       <div class="bg-slate-100 dark:bg-slate-950 p-4 rounded-2xl space-y-2 text-xs">
         <h4 class="font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
           <i class="fa-solid fa-lightbulb text-amber-500"></i>
@@ -412,7 +436,6 @@
         <div class="text-slate-600 dark:text-slate-400 leading-relaxed" id="modalStockNote2"></div>
       </div>
 
-      <!-- 同族群其他成分股 -->
       <div class="space-y-3">
         <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">
           <i class="fa-solid fa-users text-brand-500"></i>
@@ -427,7 +450,6 @@
   <!-- ================= 登入 / 註冊 彈窗視窗 ================= -->
   <div id="authModal" class="fixed inset-0 z-40 bg-slate-950/95 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl">
-      
       <div class="flex items-center space-x-3 mb-6">
         <div class="w-10 h-10 rounded-2xl bg-brand-600 flex items-center justify-center shadow-lg shadow-brand-500/30 shrink-0">
           <i class="fa-solid fa-chart-pie text-white text-lg"></i>
@@ -670,9 +692,7 @@
 
       <!-- ③ 大盤指數儀表板 (滾動監聽目標) -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
-        
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
-          
           <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
             <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
               <div id="marketStatusDot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
@@ -707,10 +727,8 @@
               </div>
             </div>
           </div>
-
         </div>
 
-        <!-- 多空結構分佈數線 -->
         <div class="space-y-2">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] sm:text-xs gap-y-2">
             <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
@@ -732,7 +750,6 @@
             <div id="barLimitDown" class="h-full bg-limitDown rounded-r-full transition-all duration-500" style="width: 0%" title="跌停"></div>
           </div>
         </div>
-
       </section>
 
       <!-- ④ 今日熱門 Top 10 方塊 -->
@@ -775,14 +792,18 @@
           </div>
         </div>
 
-        <!-- 🏷️ 標籤快速過濾膠囊列 -->
+        <!-- 🏷️ 標籤快速過濾膠囊列 (全指標補齊) -->
         <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-[11px] font-medium" id="tagFilterBar">
-          <button onclick="setTagFilter('ALL')" id="btnTag_ALL" class="px-2.5 py-1 rounded-lg bg-brand-500 text-white font-bold whitespace-nowrap transition">全部標的</button>
+          <button onclick="setTagFilter('ALL')" id="btnTag_ALL" class="px-2.5 py-1 rounded-lg bg-brand-500 text-white font-bold whitespace-nowrap transition shadow-sm">全部標的</button>
           <button onclick="setTagFilter('量價齊揚')" id="btnTag_量價齊揚" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">量價齊揚</button>
           <button onclick="setTagFilter('爆量長黑')" id="btnTag_爆量長黑" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-fuchsia-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量長黑</button>
-          <button onclick="setTagFilter('多頭延續')" id="btnTag_多頭延續" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">多頭延續</button>
-          <button onclick="setTagFilter('爆量換手')" id="btnTag_爆量換手" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量換手</button>
           <button onclick="setTagFilter('強勢')" id="btnTag_強勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">強勢</button>
+          <button onclick="setTagFilter('弱勢')" id="btnTag_弱勢" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-emerald-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">弱勢</button>
+          <button onclick="setTagFilter('爆量')" id="btnTag_爆量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">爆量</button>
+          <button onclick="setTagFilter('持續量增')" id="btnTag_持續量增" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量增</button>
+          <button onclick="setTagFilter('持續量縮')" id="btnTag_持續量縮" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量縮</button>
+          <button onclick="setTagFilter('震盪整理')" id="btnTag_震盪整理" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-teal-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">震盪整理</button>
+          <button onclick="setTagFilter('多頭延續')" id="btnTag_多頭延續" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">多頭延續</button>
           <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
           <button onclick="setTagFilter('漲停')" id="btnTag_漲停" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-red-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">漲停</button>
         </div>
@@ -812,7 +833,6 @@
           <span class="hidden sm:inline">提示：點擊任一檔股票即可查看完整雙層加權與備註</span>
         </div>
       </section>
-
     </main>
 
     <!-- ⑥ Footer 版本與版權宣告 -->
@@ -1083,7 +1103,6 @@
       }
     }
 
-    // 📢 管理員廣播發布寫入
     async function postAdminAnnouncement() {
       const input = document.getElementById('adminAnnouncementInput');
       const msg = input.value.trim();
@@ -1117,7 +1136,6 @@
           msgBox.textContent = "發布失敗：" + (result.message || '未知錯誤');
         }
       } catch(e) {
-        // 前端備份即時推播
         originalAnnouncements.unshift(msg);
         document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
         msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
@@ -1487,7 +1505,7 @@
 
       rawCsvGrid = lines.map(line => parseCsvRow(line));
 
-      // 🔍 第五點修復：前端直接從試算表解析 AS11 儲存格（row 10，col 44）的真實維護字串
+      // 🔍 試算表解析 AS11 儲存格（row 10, col 44/45）
       let as11Cell = "";
       if (rawCsvGrid[10] && rawCsvGrid[10][44]) as11Cell = rawCsvGrid[10][44].trim();
       else if (rawCsvGrid[10] && rawCsvGrid[10][45]) as11Cell = rawCsvGrid[10][45].trim();
@@ -1513,7 +1531,7 @@
         }
       }
 
-      // 漲跌表頭（46~55 欄）：若未含標準日期或為簡稱，自動對齊完整的成交量日期
+      // 漲跌表頭（46~55 欄）對齊
       tenDayDatesHeaders = [];
       if (rawCsvGrid[0]) {
         for (let c = 46; c <= 55; c++) {
@@ -1840,7 +1858,7 @@
             const sumVol = validVols.reduce((acc, cur) => acc + cur.numVal, 0);
             const avgVol10 = validVols.length > 0 ? (sumVol / validVols.length) : (volume || 1);
 
-            // 2. 取近 3 日歷史量價以判斷連續型籌碼走勢
+            // 2. 取近 3 日歷史量價
             const validPcts = tenDayHistory.filter(h => h.hasData);
             const last3Pcts = validPcts.slice(-3);
             const last3Vols = validVols.slice(-3);
@@ -1848,6 +1866,8 @@
             const is3DaysUp = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal > 0);
             const is3DaysDown = last3Pcts.length === 3 && last3Pcts.every(d => d.numVal < 0);
             const is3DaysVolUp = last3Vols.length === 3 && (last3Vols[2].numVal > last3Vols[1].numVal) && (last3Vols[1].numVal > last3Vols[0].numVal);
+            const is3DaysVolDown = last3Vols.length === 3 && (last3Vols[2].numVal < last3Vols[1].numVal) && (last3Vols[1].numVal < last3Vols[0].numVal);
+            const isConsolidation = last3Pcts.length === 3 && last3Pcts.every(d => Math.abs(d.numVal) <= 1.5);
 
             // 3. 量能倍數定義
             const volRatio = volume / (avgVol10 || 1);
@@ -1856,7 +1876,7 @@
             const isDry = volRatio <= 0.35 && avgVol10 >= 300;
             const isShrink = volRatio <= 0.65;
 
-            // ================= 價量與籌碼標籤判定（去除灰色除窒息量外、優化清晰度） =================
+            // ================= 完整指標標籤判定 =================
             // ① 漲跌停極限態
             if (isLimitUp) {
               badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
@@ -1864,38 +1884,43 @@
               badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
             }
 
-            // ② 連續型量價籌碼
-            if (is3DaysUp && is3DaysVolUp) {
-              badges.push({ text: '多頭延續', color: 'bg-rose-600/15 text-rose-500 border border-rose-500/30' });
-            } else if (is3DaysDown && isShrink) {
-              badges.push({ text: '空方衰竭', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30' });
-            }
-
-            // ③ 價量配合型（強化爆量長黑對比、替換量縮顏色避免灰沉）
+            // ② 價量組合核心特徵
             if (pctNum >= 3.0 && isHeavy) {
               badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
-            } else if (pctNum <= -3.5 && isSurge) {
-              badges.push({ text: '爆量長黑', color: 'bg-purple-600/25 text-fuchsia-300 border border-purple-500/50 font-black shadow-sm' });
-            } else if (pctNum >= 2.5 && isShrink) {
-              badges.push({ text: '量價背離', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
-            } else if (pctNum <= -1.5 && isShrink) {
-              badges.push({ text: '量縮價跌', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30 font-medium' });
-            } else if (Math.abs(pctNum) <= 1.0 && isShrink) {
-              badges.push({ text: '量縮價穩', color: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 font-medium' });
+            } 
+            if (pctNum <= -3.5 && isSurge) {
+              badges.push({ text: '爆量長黑', color: 'bg-purple-700 text-white border border-purple-400 font-black shadow-sm' });
             }
 
-            // ④ 純量能特徵
-            if (isSurge && !badges.some(b => b.text === '量價齊揚' || b.text === '爆量長黑')) {
-              badges.push({ text: '爆量換手', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
+            // ③ 純量能指標：保留原本「爆量」
+            if (isSurge) {
+              badges.push({ text: '爆量', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/40 font-bold' });
             } else if (isDry) {
               badges.push({ text: '窒息量', color: 'bg-slate-600/30 text-slate-400 border border-slate-500/30' });
             }
 
-            // ⑤ 動能特徵輔助
-            if (!isLimitUp && pctNum >= 3.5 && !badges.some(b => b.text.includes('揚') || b.text.includes('延續'))) {
-              badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30' });
-            } else if (!isLimitDown && pctNum <= -3.5 && !badges.some(b => b.text.includes('黑') || b.text.includes('衰竭'))) {
-              badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' });
+            // ④ 動能趨勢：保留原本「強勢」與「弱勢」
+            if (!isLimitUp && pctNum >= 3.0 && pctNum < 9.5) {
+              badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30 font-semibold' });
+            } else if (!isLimitDown && pctNum <= -3.0 && pctNum > -9.5) {
+              badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 font-semibold' });
+            }
+
+            // ⑤ 連續型量能指標：「持續量增」與「持續量縮」
+            if (is3DaysVolUp) {
+              badges.push({ text: '持續量增', color: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30' });
+            } else if (is3DaysVolDown) {
+              badges.push({ text: '持續量縮', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30' });
+            }
+
+            // ⑥ 整理形態：「震盪整理」
+            if (isConsolidation) {
+              badges.push({ text: '震盪整理', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30' });
+            }
+
+            // ⑦ 多頭延續
+            if (is3DaysUp && is3DaysVolUp && !badges.some(b => b.text === '多頭延續')) {
+              badges.push({ text: '多頭延續', color: 'bg-rose-600/15 text-rose-500 border border-rose-500/30' });
             }
 
             const stock = {
@@ -2007,7 +2032,6 @@
       document.getElementById('tableCountInfo').textContent = `共收錄 ${filteredStocks.length} 檔個股`;
     }
 
-    // 🔍 結合搜尋關鍵字與標籤膠囊的統一過濾器
     function applyFilters() {
       const q = document.getElementById('stockFilterInput').value.trim().toLowerCase();
       filteredStocks = parsedStocks.filter(s => {
