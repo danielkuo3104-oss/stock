@@ -80,7 +80,7 @@
     </div>
   </div>
 
-  <!-- 標籤規則詳細說明 Modal (修復第一點：加上完整的圖標與說明結構) -->
+  <!-- 標籤規則詳細說明 Modal (已補齊所有完整指標說明) -->
   <div id="badgeGuideModal" onclick="handleModalBgClick(event, 'badgeGuideModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
       <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -117,6 +117,62 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-rose-500/15 text-rose-400 border border-rose-500/30"><i class="fa-solid fa-bolt mr-1"></i>強勢</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.0% 或 漲停</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">短線表現強勁，買方力道明顯大於賣方。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30"><i class="fa-solid fa-shield-halved mr-1"></i>弱勢</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -3.0% 或 跌停</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">短線修正壓力重，賣方佔據主導地位。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30"><i class="fa-solid fa-chart-line mr-1"></i>量價齊揚</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.0% 且 當日量 ≥ 1.3倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">價漲量增，主力資金實質進駐推升。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-sky-500/15 text-sky-400 border border-sky-500/30"><i class="fa-solid fa-cloud-rain mr-1"></i>量縮價跌</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -1.5% 且 量 ≤ 0.65倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">下跌但成交量萎縮，追殺意願不高，多屬浮額自然回檔。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-amber-500/15 text-amber-500 border border-amber-500/30"><i class="fa-solid fa-sun mr-1"></i>量縮價漲</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 2.0% 且 量 ≤ 0.65倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">量小價漲、籌碼安定，顯示上檔賣壓輕或具窒息鎖碼特性。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-700/20 text-rose-500 border border-rose-600/30"><i class="fa-solid fa-arrow-trend-down mr-1"></i>帶量下殺</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">跌幅 ≤ -2.0% 且 當日量 ≥ 1.3倍均量</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">伴隨顯著成交量往下貫壓，短線賣壓沈重。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-500 border border-amber-500/40"><i class="fa-solid fa-bolt-lightning mr-1"></i>爆量</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">當日量 ≥ 2倍均量 且 量 ≥ 500張</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">成交量顯著放大兩倍以上，多空交極度化激昂。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
             <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-red-600 text-white border border-red-400"><i class="fa-solid fa-fire mr-1"></i>爆量長紅</span>
             <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.5% 且 當日量 ≥ 2倍均量</span>
           </div>
@@ -133,10 +189,18 @@
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div class="flex items-center justify-between mb-1">
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-500/15 text-stockRed border border-red-500/30"><i class="fa-solid fa-chart-line mr-1"></i>量價齊揚</span>
-            <span class="text-slate-500 dark:text-slate-400 font-mono">漲幅 ≥ 3.0% 且 當日量 ≥ 1.3倍均量</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-cyan-500/15 text-cyan-400 border border-cyan-500/30"><i class="fa-solid fa-chart-line-up mr-1"></i>持續量增</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近三日成交量連續遞增</span>
           </div>
-          <p class="text-slate-600 dark:text-slate-300">價漲量增，主力資金實質進駐推升。</p>
+          <p class="text-slate-600 dark:text-slate-300">市場關注度與資金熱度連續三天逐步增溫。</p>
+        </div>
+
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-sky-500/15 text-sky-400 border border-sky-500/30"><i class="fa-solid fa-chart-line-down mr-1"></i>持續量縮</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">近三日成交量連續遞減</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">交投熱度連三日降溫，短線追價力道放緩。</p>
         </div>
 
         <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -932,7 +996,7 @@
       document.getElementById('modalStockChange').textContent = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
       document.getElementById('modalStockPct').textContent = stock.pctStr;
       document.getElementById('modalStockVolume').textContent = stock.volume.toLocaleString();
-      document.getElementById('modalStockTurnover').textContent = Math.round(stock.turnover / 10000).toLocaleString() + ' 萬';
+      document.getElementById('modalStockTurnover').textContent = Math.round(stock.turnover / 10000).toLocaleString()document.getElementById(' 千萬';
       document.getElementById('modalStockCap').textContent = stock.cap.toFixed(2);
       document.getElementById('modalStockNote1').textContent = stock.note1 || '暫無核心業務摘要';
       document.getElementById('modalStockNote2').textContent = stock.note2 || '暫無產業題材說明';
