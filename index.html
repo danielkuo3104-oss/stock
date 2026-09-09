@@ -1517,6 +1517,7 @@
     async function launchApp() {
       const mainApp = document.getElementById('mainApp');
       if (mainApp) mainApp.classList.remove('hidden');
+      
       const badgeEl = document.getElementById('userBadge');
       const tierName = currentUser.tier || '初級韭菜';
       
@@ -1550,6 +1551,9 @@
       }
     
       showDisclaimerToast();
+      
+      // 💡 強制確保這裡有確實執行資料下載與解析
+      console.log("正在觸發下載 CSV 資料...");
       await fetchAndParseCsv();
       pollAdminMaintenanceStatus();
     }
