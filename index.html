@@ -2333,6 +2333,77 @@ function getDynamicColorTier(rawPct) {
       }).join('');
     }
 
+    function renderStockTable() {
+      const tbody = document.getElementById('stockTableBody');
+      if (!tbody) return;
+
+      if (!filteredStocks || filteredStocks.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-8 text-center text-slate-400 text-xs font-sans">
+              查無相符的股票標的
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filteredStocks.map(stock => {
+        const isStarred = userWatchlist.has(stock.id);
+        const starColor = isStarred ? 'text-amber-400' : 'text-slate-300 dark:text-slate-600 hover:text-amber-400';
+        const starIcon = isStarred ? 'fa-solid fa-star' : 'fa-regular fa-star';
+
+        const isUp = stock.change > 0 || (stock.pctNum && stock.pctNum > 0);
+        const isDown = stock.change < 0 || (stock.pctNum && stock.pctNum < 0);
+        const priceColor = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-600 dark:text-slate-400');
+        const formattedChange = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
+        const formattedPct = (stock.change > 0 && !stock.pctStr.startsWith('+')) ? `+${stock.pctStr}` : stock.pctStr;
+
+        const badgesHtml = (stock.badges || []).map(b => 
+          `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`
+        ).join(' ');
+
+        return `
+          <tr onclick="openStockModal('${stock.id}')" class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 transition duration-150">
+            <td class="py-2.5 px-3 text-center" onclick="event.stopPropagation(); handleStarClick('${stock.id}')">
+              <button class="${starColor} text-xs transition-colors">
+                <i class="${starIcon}"></i>
+              </button>
+            </td>
+            <td class="py-2.5 px-3 text-slate-500 dark:text-slate-400 text-xs hidden sm:table-cell font-sans truncate max-w-[120px]">
+              ${stock.group || stock.rawGroup}
+            </td>
+            <td class="py-2.5 px-3">
+              <div class="flex items-center space-x-1.5 font-sans">
+                <span class="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">${stock.name}</span>
+                <span class="text-[10px] text-slate-400 font-mono">${stock.id}</span>
+              </div>
+            </td>
+            <td class="py-2.5 px-3 text-right font-black ${priceColor} text-xs sm:text-sm">
+              ${stock.price.toFixed(stock.price >= 100 ? 1 : 2)}
+            </td>
+            <td class="py-2.5 px-3 text-right font-bold ${priceColor} text-xs">
+              ${formattedChange}
+            </td>
+            <td class="py-2.5 px-3 text-right font-black ${priceColor} text-xs">
+              ${formattedPct}
+            </td>
+            <td class="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300 text-xs hidden sm:table-cell">
+              ${stock.volume.toLocaleString()}
+            </td>
+            <td class="py-2.5 px-3 text-right text-slate-500 dark:text-slate-400 text-xs hidden md:table-cell">
+              ${stock.cap.toFixed(1)}
+            </td>
+            <td class="py-2.5 px-3 text-center hidden sm:table-cell font-sans">
+              <div class="flex flex-wrap gap-1 justify-center items-center">
+                ${badgesHtml || '<span class="text-slate-300 dark:text-slate-600 text-[10px]">-</span>'}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
     function applyFilters() {
       const q = (document.getElementById('stockFilterInput')?.value || '').trim().toLowerCase();
       filteredStocks = parsedStocks.filter(s => {
