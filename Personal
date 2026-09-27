@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <link rel="icon" href="/icon.png" type="image/png">
+  <link rel="apple-touch-icon" href="/icon.png">
+  <meta name="apple-mobile-web-app-title" content="股市助手">
+  <meta name="application-name" content="股市助手">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>個人化關注 - 股市助手 SectorPulse</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 500: '#3b82f6', 600: '#2563eb' },
+            stockRed: '#ef4444',
+            stockGreen: '#22c55e',
+            limitUp: '#dc2626',
+            limitDown: '#16a34a'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    .dark ::-webkit-scrollbar-track { background: #0f172a; }
+    .dark ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+    .large-font { font-size: 1.15rem !important; }
+    .large-font .stock-price { font-size: 1.35rem !important; }
+    .large-font .stock-name { font-size: 1.25rem !important; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
+
+  <!-- 系統維護中 霧面遮罩 -->
+  <div id="maintenanceOverlay" class="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-lg flex flex-col items-center justify-center hidden">
+    <div class="bg-white dark:bg-slate-900 border border-amber-500/50 p-6 sm:p-8 rounded-2xl max-w-md text-center shadow-2xl mx-4 space-y-4">
+      <i class="fa-solid fa-screwdriver-wrench text-amber-500 text-5xl mb-2 animate-bounce"></i>
+      <h2 class="text-2xl font-bold text-slate-900 dark:text-slate-100">系統維護中</h2>
+      <p class="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">試算表資料正進行同步或核心排程維護，暫時停止前台存取。請稍後再試。</p>
+      <a href="index.html" class="inline-block px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-white rounded-xl text-sm transition">返回首頁</a>
+    </div>
+  </div>
+
+  <div class="sticky top-0 z-40 w-full shadow-sm">
+    <header class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
+      <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
+        <a href="index.html" class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+          <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20 shrink-0">
+            <i class="fa-solid fa-chart-line text-white text-base sm:text-lg"></i>
+          </div>
+          <div class="min-w-0">
+            <h1 class="font-bold text-sm sm:text-base lg:text-lg text-slate-900 dark:text-slate-100 truncate flex items-center">
+              <span class="hidden sm:inline mr-1">股市助手</span>
+              <span class="text-[10px] sm:text-xs font-normal text-brand-500 border border-brand-500/30 px-1.5 py-0.5 rounded whitespace-nowrap">個人化</span>
+            </h1>
+            <p class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 truncate">更新: <span id="dataTimestamp" class="font-mono font-semibold">載入中...</span></p>
+          </div>
+        </a>
+
+        <nav class="hidden md:flex items-center space-x-6 text-sm">
+          <a href="index.html" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-house text-xs"></i><span>首頁</span></a>
+          <a href="index.html#sector" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
+          <a href="personal.html" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>個人化</span></a>
+        </nav>
+
+        <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+          <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="手動刷新資料">
+            <i id="refreshIcon" class="fa-solid fa-rotate-right"></i>
+          </button>
+          <button onclick="toggleTheme()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="切換深/淺色模式">
+            <i id="themeIcon" class="fa-solid fa-sun"></i>
+          </button>
+          <button onclick="toggleLargeFont()" id="btnLargeFont" class="px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-transparent">
+            <i class="fa-solid fa-text-height"></i>
+            <span id="largeFontText" class="hidden sm:inline">大字</span>
+          </button>
+          <span id="userBadge" class="text-[10px] sm:text-xs px-2 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium whitespace-nowrap"></span>
+          <button onclick="logout()" class="text-[10px] sm:text-xs bg-slate-100 dark:bg-slate-800 hover:bg-red-500/20 hover:text-red-500 text-slate-500 px-2 py-1.5 sm:px-3 sm:py-1.5 rounded-lg transition border border-slate-200 dark:border-slate-700" title="登出系統">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
+        <a href="index.html" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
+        <a href="index.html#sector" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
+        <a href="personal.html" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>個人化</span></a>
+      </div>
+    </header>
+  </div>
+
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
+
+    <!-- 訪客 / 未登入 鎖定畫面 -->
+    <section id="lockedView" class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-8 shadow-xl text-center space-y-4">
+      <i class="fa-solid fa-lock text-4xl text-slate-400"></i>
+      <h2 class="text-lg font-black text-slate-900 dark:text-slate-100">個人化功能僅限會員使用</h2>
+      <p class="text-xs text-slate-500 dark:text-slate-400">訪客模式無法建立關注清單，登入或開通會員後即可使用。</p>
+      <button onclick="logout()" class="px-5 py-2.5 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition shadow-lg shadow-brand-600/30">前往登入 / 開通</button>
+    </section>
+
+    <div id="memberView" class="space-y-4 sm:space-y-6 hidden">
+      <!-- 關注清單摘要 -->
+      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+              <i class="fa-solid fa-star text-amber-400"></i>
+              <span>我的關注清單</span>
+            </h2>
+            <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">從首頁或個股詳情點擊 ⭐ 即可加入；點卡片可開啟完整個股詳情</p>
+          </div>
+          <div id="quotaBox" class="w-full sm:w-56"></div>
+        </div>
+        <div id="summaryTiles" class="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3"></div>
+      </section>
+
+      <!-- 關注個股 -->
+      <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <input type="text" id="watchFilterInput" oninput="renderWatchCards()" placeholder="搜尋關注的代號 / 名稱 / 族群..." class="w-full sm:w-64 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
+          <div class="flex items-center gap-2 text-xs">
+            <span class="text-slate-500 dark:text-slate-400 whitespace-nowrap">排序</span>
+            <select id="watchSortSelect" onchange="renderWatchCards()" class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-1.5 text-xs text-slate-900 dark:text-white">
+              <option value="custom">加入順序</option>
+              <option value="pctDesc">漲跌幅 高→低</option>
+              <option value="pctAsc">漲跌幅 低→高</option>
+              <option value="cumDesc">十日累積 高→低</option>
+              <option value="volRatio">量比 高→低</option>
+              <option value="turnover">成交金額 高→低</option>
+            </select>
+          </div>
+        </div>
+        <div id="watchCardsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div class="col-span-full py-10 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>關注清單載入中...</div>
+        </div>
+        <div class="flex justify-between items-center text-[10px] sm:text-xs text-slate-500 dark:text-slate-400">
+          <span id="watchCountInfo"></span>
+          <span class="hidden sm:inline">標籤規則與首頁一致，僅供參考，不構成投資建議</span>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <footer class="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-6 px-4 text-center text-xs text-slate-500 space-y-1 mt-auto">
+    <p>© 2026 股市助手 SectorPulse. 版權所有.</p>
+    <p class="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-600">雙層加權族群觀測系統 | 維護通報：danielkuo3104@gmail.com</p>
+  </footer>
+
+  <script>
+    const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
+    const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
+    const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
+    const TIER_LIMITS = { '初級韭菜': 20, '資深韭菜': 50, '萬年韭皇': Infinity };
+
+    let currentUser = null;
+    let userWatchlist = [];          // 保留加入順序
+    let stockMap = new Map();        // id -> stock
+    let dataLoaded = false;
+
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      initUser();
+    });
+
+    // ---------- 登入狀態（與首頁共用 localStorage / sessionStorage）----------
+    function initUser() {
+      const stored = sessionStorage.getItem('sectorpulse_user') || localStorage.getItem('sectorpulse_user');
+      if (!stored) { window.location.replace('index.html'); return; }
+      try {
+        currentUser = JSON.parse(stored);
+      } catch (e) { window.location.replace('index.html'); return; }
+      if (!currentUser.tier) currentUser.tier = '初級韭菜';
+      renderUserBadge();
+
+      if (currentUser.role === 'guest') {
+        document.getElementById('lockedView').classList.remove('hidden');
+        document.getElementById('dataTimestamp').textContent = '訪客模式';
+        return;
+      }
+
+      let list = [];
+      if (Array.isArray(currentUser.watchlist)) list = currentUser.watchlist;
+      else {
+        try { list = JSON.parse(localStorage.getItem('sectorpulse_watchlist') || '[]'); } catch (e) {}
+      }
+      userWatchlist = [...new Set(list.map(String))];
+
+      document.getElementById('memberView').classList.remove('hidden');
+      renderSummary();
+      fetchStocks();
+    }
+
+    function renderUserBadge() {
+      const el = document.getElementById('userBadge');
+      const tier = currentUser.tier || '初級韭菜';
+      if (currentUser.role === 'admin') {
+        el.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${escHtml(currentUser.name)} (管理員)</span>`;
+        el.className = 'text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 whitespace-nowrap inline-flex items-center';
+      } else if (currentUser.role === 'guest') {
+        el.innerHTML = `<i class="fa-solid fa-user-secret mr-1"></i><span>訪客</span>`;
+        el.className = 'text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 whitespace-nowrap inline-flex items-center';
+      } else {
+        const icon = tier === '萬年韭皇' ? 'fa-crown text-purple-500' : (tier === '資深韭菜' ? 'fa-gem text-amber-500' : 'fa-seedling text-emerald-500');
+        el.innerHTML = `<i class="fa-solid ${icon} mr-1.5"></i><span class="hidden sm:inline">${escHtml(currentUser.name)} </span><span>(${escHtml(tier)})</span>`;
+        el.className = 'text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-slate-700 whitespace-nowrap inline-flex items-center';
+      }
+    }
+
+    function logout() {
+      localStorage.removeItem('sectorpulse_user');
+      sessionStorage.removeItem('sectorpulse_user');
+      localStorage.removeItem('sectorpulse_watchlist');
+      window.location.href = 'index.html';
+    }
+
+    // ---------- 主題 / 字級（與首頁共用設定）----------
+    function initTheme() {
+      const isDark = localStorage.getItem('theme') !== 'light';
+      document.documentElement.classList.toggle('dark', isDark);
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      applyLargeFontState(localStorage.getItem('largeFont') === 'true');
+    }
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      document.getElementById('themeIcon').className = isDark ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+    }
+    function toggleLargeFont() {
+      const isLarge = !document.documentElement.classList.contains('large-font');
+      localStorage.setItem('largeFont', isLarge ? 'true' : 'false');
+      applyLargeFontState(isLarge);
+    }
+    function applyLargeFontState(isLarge) {
+      document.documentElement.classList.toggle('large-font', isLarge);
+      const btn = document.getElementById('btnLargeFont');
+      const text = document.getElementById('largeFontText');
+      btn.className = isLarge
+        ? 'px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-brand-500 text-white shadow-md shadow-brand-500/30 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-brand-400'
+        : 'px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs font-bold flex items-center space-x-1 border border-transparent';
+      if (text) text.textContent = isLarge ? '標準' : '大字';
+    }
+
+    // ---------- 工具 ----------
+    function escHtml(str) {
+      return String(str ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+    }
+    function parseCsvRow(text) {
+      let p = '', c = false, r = [];
+      for (let i = 0; i < text.length; i++) {
+        const ch = text[i];
+        if (ch === '"') {
+          if (c && text[i + 1] === '"') { p += '"'; i++; } else { c = !c; }
+        } else if (ch === ',' && !c) { r.push(p); p = ''; }
+        else p += ch;
+      }
+      r.push(p);
+      return r;
+    }
+    function roundToTick(price) {
+      if (price <= 0 || isNaN(price)) return 0;
+      let tick = 0.01;
+      if (price < 10) tick = 0.01;
+      else if (price < 50) tick = 0.05;
+      else if (price < 100) tick = 0.1;
+      else if (price < 500) tick = 0.5;
+      else if (price < 1000) tick = 1.0;
+      else tick = 5.0;
+      return Math.round(price / tick) * tick;
+    }
+
+    async function handleRefresh() {
+      const icon = document.getElementById('refreshIcon');
+      icon.classList.add('fa-spin');
+      try { await fetchStocks(); } finally { setTimeout(() => icon.classList.remove('fa-spin'), 600); }
+    }
+
+    // ---------- 讀取個股資料（與首頁同一張工作表、同樣欄位定義）----------
+    async function fetchStocks() {
+      if (!currentUser || currentUser.role === 'guest') return;
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 15000);
+        let text = '';
+        try {
+          const res = await fetch(CSV_STOCKS_URL + '&_t=' + Date.now(), { signal: ctl.signal });
+          if (!res.ok) throw new Error('HTTP ' + res.status);
+          text = await res.text();
+        } finally { clearTimeout(timer); }
+        if (!text || /^\s*<(!doctype|html)/i.test(text)) throw new Error('非 CSV 內容');
+        parseStocks(text);
+        if (stockMap.size === 0) throw new Error('無個股資料');
+        dataLoaded = true;
+      } catch (e) {
+        if (dataLoaded) return;   // 已有舊資料則保留畫面
+        document.getElementById('dataTimestamp').textContent = '資料讀取失敗';
+        document.getElementById('watchCardsGrid').innerHTML = '<div class="col-span-full py-10 text-center text-xs text-amber-600 dark:text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>個股資料暫時無法取得，請稍後按右上角刷新</div>';
+        return;
+      }
+      renderSummary();
+      renderWatchCards();
+    }
+
+    function parseStocks(csvText) {
+      const grid = csvText.split(/\r\n|\n/).filter(l => l.trim() !== '').map(parseCsvRow);
+      if (grid.length < 2) return;
+
+      // 維護狀態 (AS11)
+      let as11 = '';
+      if (grid[10] && grid[10][44]) as11 = grid[10][44].trim();
+      else if (grid[10] && grid[10][45]) as11 = grid[10][45].trim();
+      const isMaint = as11.includes('維護') || as11.toLowerCase().includes('maint');
+      document.getElementById('maintenanceOverlay').classList.toggle('hidden', !(isMaint && currentUser.role !== 'admin'));
+
+      const at2 = (grid[1] && grid[1][45]) ? grid[1][45].trim() : '';
+      const now = new Date();
+      const t = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
+      document.getElementById('dataTimestamp').textContent = at2 ? `${at2} ${t}` : `即時資料 (${t})`;
+
+      const volHeaders = [], pctHeaders = [];
+      for (let c = 34; c <= 43; c++) volHeaders.push(grid[0][c] ? grid[0][c].trim() : '');
+      for (let c = 46; c <= 55; c++) {
+        let d = grid[0][c] ? grid[0][c].trim() : '';
+        if (!d || d.startsWith('D-') || !d.includes('/')) d = volHeaders[c - 46] || d;
+        pctHeaders.push(d);
+      }
+
+      stockMap = new Map();
+      for (let r = 1; r < grid.length; r++) {
+        const row = grid[r];
+        const id = row[1] ? row[1].trim() : '';
+        if (!id || id === '-' || id === '--') continue;
+        const rawGroup = row[0] ? row[0].trim() : '';
+        const mainGroup = rawGroup.split(/[：:]/)[0].trim();
+
+        if (stockMap.has(id)) {
+          const s = stockMap.get(id);
+          if (mainGroup && !s.groups.includes(mainGroup)) s.groups.push(mainGroup);
+          continue;
+        }
+
+        const price = parseFloat(row[3]) || 0;
+        const change = parseFloat(row[4]) || 0;
+        const pctStr = row[5] ? row[5].trim() : '0.00%';
+        const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
+        const volume = parseFloat(row[43]) || 0;
+
+        const tenDayHistory = [];
+        for (let c = 46; c <= 55; c++) {
+          const v = row[c] ? row[c].trim() : '';
+          tenDayHistory.push({ date: pctHeaders[c - 46], numVal: parseFloat(v.replace('%', '')) || 0, hasData: v !== '' && v !== '-' && v !== 'nan' });
+        }
+        const tenDayVol = [];
+        for (let c = 34; c <= 43; c++) {
+          const v = row[c] ? row[c].trim() : '';
+          tenDayVol.push({ numVal: parseFloat(v) || 0, hasData: v !== '' && v !== '-' && v !== 'nan' });
+        }
+
+        const stock = {
+          id, name: row[2] ? row[2].trim() : id, groups: mainGroup ? [mainGroup] : [],
+          price, change, pctStr, pctNum, volume,
+          cap: parseFloat(row[6]) || 0,
+          note1: row[12] ? row[12].trim() : '',
+          turnover: volume * 1000 * price,
+          isLimitUp: pctNum >= 9.5 && change > 0,
+          isLimitDown: pctNum <= -9.5 && change < 0,
+          tenDayHistory, tenDayVol
+        };
+        computeDerived(stock);
+        stockMap.set(id, stock);
+      }
+    }
+
+    // 十日價格回推、累積漲幅、量比與動態標籤（規則與首頁相同）
+    function computeDerived(s) {
+      const h = s.tenDayHistory;
+      const prices = new Array(h.length);
+      let lastIdx = -1;
+      for (let i = h.length - 1; i >= 0; i--) { if (h[i].hasData) { lastIdx = i; break; } }
+      if (lastIdx !== -1) {
+        prices[lastIdx] = s.price;
+        for (let i = lastIdx; i > 0; i--) {
+          prices[i - 1] = h[i].hasData ? roundToTick(prices[i] / (1 + h[i].numVal / 100)) : prices[i];
+        }
+      }
+      s.prices = prices;
+      const base = (lastIdx !== -1 && h[0].hasData) ? prices[0] / (1 + h[0].numVal / 100) : (prices[0] || s.price);
+      s.cumPct = base > 0 ? ((s.price - base) / base) * 100 : 0;
+
+      const validVols = s.tenDayVol.filter(v => v.hasData && v.numVal > 0);
+      const avgVol10 = validVols.length ? validVols.reduce((a, v) => a + v.numVal, 0) / validVols.length : (s.volume || 1);
+      s.avgVol10 = avgVol10;
+      s.volRatio = s.volume / (avgVol10 || 1);
+
+      const pct = s.pctNum, badges = [];
+      const isSurge = s.volRatio >= 2.0 && s.volume >= 500;
+      const isHeavy = s.volRatio >= 1.3 && s.volume >= 300;
+      const isDry = s.volRatio <= 0.35 && avgVol10 >= 300;
+      const isShrink = s.volRatio <= 0.65;
+      const last3 = validVols.slice(-3);
+      const validPcts = h.filter(x => x.hasData);
+      let run = 0;
+      const cum = validPcts.map(p => (run += p.numVal));
+      const cumRange = cum.length === 10 ? Math.max(...cum) - Math.min(...cum) : 999;
+
+      if (s.isLimitUp) badges.push({ text: '漲停', color: 'bg-limitUp text-white font-black' });
+      else if (s.isLimitDown) badges.push({ text: '跌停', color: 'bg-limitDown text-white font-black' });
+      if (pct >= 3.5 && isSurge) badges.push({ text: '爆量長紅', color: 'bg-red-600 text-white border border-red-400 font-black' });
+      if (pct <= -3.5 && isSurge) badges.push({ text: '爆量長黑', color: 'bg-purple-700 text-white border border-purple-400 font-black' });
+      if (pct >= 3.0 && isHeavy && !badges.some(b => b.text === '爆量長紅')) badges.push({ text: '量價齊揚', color: 'bg-red-500/15 text-stockRed border border-red-500/30 font-bold' });
+      else if (pct <= -1.5 && isShrink) badges.push({ text: '量縮價跌', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30' });
+      else if (pct >= 2.0 && isShrink) badges.push({ text: '量縮價漲', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/30' });
+      else if (pct <= -2.0 && isHeavy && !badges.some(b => b.text === '爆量長黑')) badges.push({ text: '帶量下殺', color: 'bg-rose-700/20 text-rose-500 border border-rose-600/30 font-bold' });
+      if (isSurge && !badges.some(b => b.text.includes('長'))) badges.push({ text: '爆量', color: 'bg-amber-500/15 text-amber-500 border border-amber-500/40 font-bold' });
+      else if (isDry) badges.push({ text: '窒息量', color: 'bg-slate-700 text-slate-100 border border-slate-500 font-bold' });
+      if (pct >= 3.0 || s.isLimitUp) badges.push({ text: '強勢', color: 'bg-rose-500/15 text-rose-400 border border-rose-500/30' });
+      if (pct <= -3.0 || s.isLimitDown) badges.push({ text: '弱勢', color: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30' });
+      if (last3.length === 3 && last3[2].numVal > last3[1].numVal && last3[1].numVal > last3[0].numVal) badges.push({ text: '持續量增', color: 'bg-cyan-500/15 text-cyan-400 border border-cyan-500/30' });
+      else if (last3.length === 3 && last3[2].numVal < last3[1].numVal && last3[1].numVal < last3[0].numVal) badges.push({ text: '持續量縮', color: 'bg-sky-500/15 text-sky-400 border border-sky-500/30' });
+      if (validPcts.length === 10 && cumRange <= 4.0 && validPcts.every(d => Math.abs(d.numVal) <= 2.0)) badges.push({ text: '十日震盪整理', color: 'bg-teal-500/15 text-teal-400 border border-teal-500/30' });
+      s.badges = badges;
+    }
+
+    // ---------- 摘要 ----------
+    function renderSummary() {
+      const tier = currentUser.tier || '初級韭菜';
+      const limit = TIER_LIMITS[tier] ?? 20;
+      const n = userWatchlist.length;
+      const pctUsed = limit === Infinity ? 0 : Math.min((n / limit) * 100, 100);
+      document.getElementById('quotaBox').innerHTML = `
+        <div class="flex justify-between text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mb-1">
+          <span>關注容量（${escHtml(tier)}）</span>
+          <span class="font-mono font-bold text-slate-700 dark:text-slate-200">${n} / ${limit === Infinity ? '∞' : limit}</span>
+        </div>
+        <div class="h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+          <div class="h-full rounded-full ${pctUsed >= 90 ? 'bg-amber-500' : 'bg-brand-500'}" style="width:${limit === Infinity ? 100 : pctUsed}%"></div>
+        </div>`;
+
+      const stocks = userWatchlist.map(id => stockMap.get(id)).filter(Boolean);
+      const up = stocks.filter(s => s.change > 0).length;
+      const down = stocks.filter(s => s.change < 0).length;
+      const flat = stocks.length - up - down;
+      const avg = stocks.length ? stocks.reduce((a, s) => a + s.pctNum, 0) / stocks.length : null;
+      const best = [...stocks].sort((a, b) => b.pctNum - a.pctNum)[0];
+      const worst = [...stocks].sort((a, b) => a.pctNum - b.pctNum)[0];
+      const col = v => v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-500');
+      const fmt = v => (v > 0 ? '+' : '') + v.toFixed(2) + '%';
+
+      const tile = (label, value, sub) => `
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 min-w-0">
+          <span class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 block mb-1">${label}</span>
+          <div class="text-base sm:text-lg font-black font-mono truncate">${value}</div>
+          <div class="text-[10px] text-slate-400 truncate">${sub}</div>
+        </div>`;
+
+      document.getElementById('summaryTiles').innerHTML = !dataLoaded ? '' : [
+        tile('今日漲跌家數', `<span class="text-stockRed">${up}</span><span class="text-slate-400 text-sm"> / </span><span class="text-stockGreen">${down}</span>`, `平盤 ${flat} 檔`),
+        tile('平均漲跌幅', avg === null ? '--' : `<span class="${col(avg)}">${fmt(avg)}</span>`, '關注個股等權平均'),
+        tile('今日最強', best ? `<span class="${col(best.pctNum)}">${fmt(best.pctNum)}</span>` : '--', best ? `${escHtml(best.name)} ${best.id}` : ''),
+        tile('今日最弱', worst ? `<span class="${col(worst.pctNum)}">${fmt(worst.pctNum)}</span>` : '--', worst ? `${escHtml(worst.name)} ${worst.id}` : '')
+      ].join('');
+    }
+
+    // ---------- 關注卡片 ----------
+    function sparkline(s) {
+      const pts = s.prices.map((p, i) => (s.tenDayHistory[i].hasData && p) ? { i, p } : null).filter(Boolean);
+      if (pts.length < 2) return '<div class="h-10 flex items-center text-[10px] text-slate-400">暫無十日走勢</div>';
+      const W = 120, H = 36, pad = 3;
+      const min = Math.min(...pts.map(x => x.p)), max = Math.max(...pts.map(x => x.p));
+      const range = (max - min) || 1;
+      const xs = i => pad + (i / 9) * (W - pad * 2);
+      const ys = p => H - pad - ((p - min) / range) * (H - pad * 2);
+      const color = s.cumPct > 0 ? '#ef4444' : (s.cumPct < 0 ? '#22c55e' : '#94a3b8');
+      const line = pts.map(x => `${xs(x.i).toFixed(1)},${ys(x.p).toFixed(1)}`).join(' ');
+      const last = pts[pts.length - 1];
+      return `
+        <svg viewBox="0 0 ${W} ${H}" class="w-full h-10" preserveAspectRatio="none">
+          <polyline points="${line}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" vector-effect="non-scaling-stroke"/>
+          <circle cx="${xs(last.i)}" cy="${ys(last.p)}" r="2.5" fill="${color}"/>
+        </svg>`;
+    }
+
+    function renderWatchCards() {
+      const grid = document.getElementById('watchCardsGrid');
+      const info = document.getElementById('watchCountInfo');
+      if (!dataLoaded) return;
+
+      if (userWatchlist.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-12 text-center space-y-3">
+            <i class="fa-regular fa-star text-4xl text-slate-300 dark:text-slate-700"></i>
+            <p class="text-sm font-bold text-slate-600 dark:text-slate-300">尚未關注任何個股</p>
+            <p class="text-xs text-slate-400">到首頁清單點擊左側 ⭐，或在個股詳情中加入關注</p>
+            <a href="index.html" class="inline-block mt-2 px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-semibold transition">前往首頁挑選</a>
+          </div>`;
+        info.textContent = '';
+        return;
+      }
+
+      const q = document.getElementById('watchFilterInput').value.trim().toLowerCase();
+      const sortKey = document.getElementById('watchSortSelect').value;
+
+      let items = userWatchlist.map((id, order) => ({ id, order, s: stockMap.get(id) }));
+      if (q) items = items.filter(({ id, s }) => id.toLowerCase().includes(q) || (s && (s.name.toLowerCase().includes(q) || s.groups.join(' ').toLowerCase().includes(q))));
+
+      const val = (it, k) => it.s ? it.s[k] : -Infinity;
+      if (sortKey === 'pctDesc') items.sort((a, b) => val(b, 'pctNum') - val(a, 'pctNum'));
+      else if (sortKey === 'pctAsc') items.sort((a, b) => (a.s ? a.s.pctNum : Infinity) - (b.s ? b.s.pctNum : Infinity));
+      else if (sortKey === 'cumDesc') items.sort((a, b) => val(b, 'cumPct') - val(a, 'cumPct'));
+      else if (sortKey === 'volRatio') items.sort((a, b) => val(b, 'volRatio') - val(a, 'volRatio'));
+      else if (sortKey === 'turnover') items.sort((a, b) => val(b, 'turnover') - val(a, 'turnover'));
+
+      if (items.length === 0) {
+        grid.innerHTML = '<div class="col-span-full py-8 text-center text-xs text-slate-400">查無相符的關注標的</div>';
+        info.textContent = `共關注 ${userWatchlist.length} 檔`;
+        return;
+      }
+
+      grid.innerHTML = items.map(({ id, s }) => {
+        const removeBtn = `<button onclick="event.stopPropagation(); removeFromWatchlist('${escHtml(id)}')" class="text-amber-400 hover:text-slate-400 transition text-sm shrink-0" title="取消關注"><i class="fa-solid fa-star"></i></button>`;
+        if (!s) {
+          return `
+            <div class="p-4 rounded-2xl border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-between gap-2">
+              <div>
+                <div class="font-bold text-sm text-slate-700 dark:text-slate-200 font-mono">${escHtml(id)}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">目前資料表中查無此代號（可能已移出觀察名單）</div>
+              </div>
+              ${removeBtn}
+            </div>`;
+        }
+        const col = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
+        const cardTone = s.change > 0 ? 'border-red-500/25 bg-red-500/5' : (s.change < 0 ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950');
+        const pctTxt = (s.change > 0 && !s.pctStr.startsWith('+')) ? '+' + s.pctStr : s.pctStr;
+        const cumCol = s.cumPct > 0 ? 'text-stockRed' : (s.cumPct < 0 ? 'text-stockGreen' : 'text-slate-400');
+        const priceBox = s.isLimitUp ? 'bg-limitUp text-white px-1.5 rounded' : (s.isLimitDown ? 'bg-limitDown text-white px-1.5 rounded' : col);
+        const badges = s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
+        return `
+          <div onclick="openInHome('${escHtml(id)}')" class="cursor-pointer p-4 rounded-2xl border ${cardTone} hover:shadow-lg hover:border-brand-500/60 transition space-y-2.5 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                  <span class="stock-name font-black text-base text-slate-900 dark:text-slate-100 truncate">${escHtml(s.name)}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">${escHtml(s.id)}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${escHtml(s.groups.join('、') || '—')}</div>
+              </div>
+              ${removeBtn}
+            </div>
+
+            <div class="flex items-end justify-between gap-3">
+              <div class="shrink-0">
+                <div class="stock-price text-xl font-black font-mono ${priceBox} inline-block">${s.price.toFixed(s.price >= 100 ? 1 : 2)}</div>
+                <div class="text-xs font-bold font-mono ${col}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)} (${escHtml(pctTxt)})</div>
+              </div>
+              <div class="flex-1 min-w-0 max-w-[140px]">${sparkline(s)}</div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-1.5 text-[10px] font-mono text-center">
+              <div class="bg-white/60 dark:bg-slate-900/60 rounded-lg py-1">
+                <div class="text-slate-400 font-sans">十日累積</div>
+                <div class="font-bold ${cumCol}">${s.cumPct > 0 ? '+' : ''}${s.cumPct.toFixed(2)}%</div>
+              </div>
+              <div class="bg-white/60 dark:bg-slate-900/60 rounded-lg py-1">
+                <div class="text-slate-400 font-sans">成交量(張)</div>
+                <div class="font-bold text-slate-700 dark:text-slate-200">${Math.round(s.volume).toLocaleString()}</div>
+              </div>
+              <div class="bg-white/60 dark:bg-slate-900/60 rounded-lg py-1">
+                <div class="text-slate-400 font-sans">量比(10日)</div>
+                <div class="font-bold ${s.volRatio >= 1.3 ? 'text-amber-500' : (s.volRatio <= 0.65 ? 'text-sky-500' : 'text-slate-700 dark:text-slate-200')}">${s.volRatio.toFixed(2)}x</div>
+              </div>
+            </div>
+
+            ${badges ? `<div class="flex flex-wrap gap-1">${badges}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      const missing = userWatchlist.filter(id => !stockMap.has(id)).length;
+      info.textContent = `共關注 ${userWatchlist.length} 檔` + (q ? `，符合搜尋 ${items.length} 檔` : '') + (missing ? `（${missing} 檔查無資料）` : '');
+    }
+
+    function openInHome(id) {
+      window.location.href = 'index.html#stock=' + encodeURIComponent(id);
+    }
+
+    // ---------- 取消關注並同步（與首頁 saveWatchlist 相同流程）----------
+    function removeFromWatchlist(id) {
+      userWatchlist = userWatchlist.filter(x => x !== id);
+      saveWatchlist();
+      renderSummary();
+      renderWatchCards();
+    }
+
+    function saveWatchlist() {
+      localStorage.setItem('sectorpulse_watchlist', JSON.stringify(userWatchlist));
+      currentUser.watchlist = userWatchlist;
+      if (localStorage.getItem('sectorpulse_user')) localStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+      else if (sessionStorage.getItem('sectorpulse_user')) sessionStorage.setItem('sectorpulse_user', JSON.stringify(currentUser));
+
+      const info = document.getElementById('watchCountInfo');
+      info.innerHTML = '<span class="text-brand-500 font-bold"><i class="fa-solid fa-cloud-arrow-up"></i> 同步關注清單中...</span>';
+      fetch(BACKEND_API_URL, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'updateWatchlist', email: currentUser.email, watchlist: userWatchlist })
+      })
+        .then(res => res.json())
+        .then(() => { info.innerHTML = '<span class="text-emerald-500 font-bold"><i class="fa-solid fa-check-circle"></i> 已同步關注清單</span>'; })
+        .catch(() => { info.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation"></i> 同步失敗（已保留於本機）</span>'; })
+        .finally(() => setTimeout(renderWatchCards, 1500));
+    }
+  </script>
+</body>
+</html>
