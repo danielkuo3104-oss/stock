@@ -825,19 +825,14 @@
             </div>
           </div>
           <div id="volStatsRow" class="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[11px] font-mono pl-5"></div>
-          <div id="collapseBody_kline" class="space-y-1.5">
-            <div id="volChartBox" class="relative w-full h-[230px] sm:h-[290px] overflow-hidden select-none">
+          <div id="collapseBody_kline" class="space-y-2">
+            <div id="klineControls" class="flex flex-wrap items-center justify-between gap-2"></div>
+            <div id="klineLegend" class="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] min-h-[16px]"></div>
+            <div id="volChartBox" class="relative w-full h-[260px] sm:h-[320px] overflow-hidden select-none">
               <div id="volChartSvg" class="absolute inset-0"></div>
               <div id="volTooltip" class="hidden absolute z-10 top-1 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>
             </div>
-            <div class="flex flex-wrap items-center justify-between gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-              <span class="text-slate-400">單位：指數點 / 億元　已排除休市重複值</span>
-              <span class="flex items-center gap-3">
-                <span class="flex items-center gap-1"><span class="inline-block w-1.5 h-3 rounded-sm bg-stockRed"></span><span class="inline-block w-1.5 h-3 rounded-sm bg-stockGreen"></span>K棒</span>
-                <span class="flex items-center gap-1"><span class="w-3.5 h-0.5 rounded bg-brand-500"></span>MA5</span>
-                <span class="flex items-center gap-1"><span class="w-3.5 border-t-2 border-dashed border-amber-500"></span>MA20</span>
-              </span>
-            </div>
+            <div class="text-[10px] text-slate-400">單位：指數點 / 億元　已排除休市重複值　技術指標：MA 為收盤簡單均線、布林 (20,2)、KD (9,3,3)、MACD (12,26,9)、RSI (14)，僅供參考</div>
           </div>
         </div>
       </section>
@@ -3779,34 +3774,73 @@ function getDynamicColorTier(rawPct) {
       const isExcluded = t => /自營商買賣超排行|投信買賣超排行|主力買賣超排行/.test(t);
       const parts = [];
 
+      // 三大法人：以零為中心的橫條圖
+      let instHtml = '', capHtml = '';
       const instSec = findSec('三大法人')[0];
       if (instSec) {
         const list = instSec.rows.map(r => ({ name: r[0], val: parseLooseNum(r[1]) })).filter(x => x.name && x.val !== null);
         if (list.length) {
-          parts.push(groupBlock('三大法人買賣超 <span class="font-normal text-slate-400">（億元）</span>', `<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">${list.map(x => quoteTile({
-            label: x.name.includes('合計') ? '三大法人合計' : x.name.replace('及陸資', ''),
-            value: (x.val > 0 ? '+' : '') + x.val.toFixed(2),
-            changeText: x.val > 0 ? '買超' : (x.val < 0 ? '賣超' : '持平'), changeNum: x.val
-          })).join('')}</div>`));
+          const maxAbs = Math.max(...list.map(x => Math.abs(x.val)), 1);
+          const rowHtml = x => {
+            const isTotal = x.name.includes('合計');
+            const w = Math.max((Math.abs(x.val) / maxAbs) * 50, 0.8);
+            const left = x.val < 0 ? 50 - w : 50;
+            const col = x.val > 0 ? 'bg-stockRed' : (x.val < 0 ? 'bg-stockGreen' : 'bg-slate-400');
+            return `
+              <div class="grid grid-cols-[4.5rem_1fr_5.5rem] items-center gap-2 ${isTotal ? 'pt-2 mt-1 border-t border-slate-200 dark:border-slate-800' : ''}">
+                <span class="text-[11px] ${isTotal ? 'font-black text-slate-900 dark:text-slate-100' : 'font-semibold text-slate-600 dark:text-slate-300'} truncate">${escHtml(isTotal ? '合計' : x.name.replace('及陸資', ''))}</span>
+                <div class="relative ${isTotal ? 'h-4' : 'h-3.5'} rounded bg-slate-100 dark:bg-slate-800/70">
+                  <div class="absolute inset-y-0 left-1/2 w-px bg-slate-400/70 z-10"></div>
+                  <div class="absolute inset-y-0 rounded-sm ${col} ${isTotal ? '' : 'opacity-80'}" style="left:${left}%;width:${w}%"></div>
+                </div>
+                <span class="text-right font-mono text-[11px] font-bold ${signColorClass(x.val)}">${x.val > 0 ? '+' : ''}${x.val.toFixed(2)}<span class="text-[9px] font-normal text-slate-400 ml-1">${x.val > 0 ? '買超' : (x.val < 0 ? '賣超' : '')}</span></span>
+              </div>`;
+          };
+          const others = list.filter(x => !x.name.includes('合計'));
+          const total = list.find(x => x.name.includes('合計'));
+          instHtml = `
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 space-y-2 min-w-0">
+              <div class="flex items-center justify-between">
+                <h3 class="text-[11px] font-bold text-slate-500 dark:text-slate-400">三大法人買賣超 <span class="font-normal text-slate-400">（億元）</span></h3>
+                <span class="text-[9px] text-slate-400">◀ 賣超　買超 ▶</span>
+              </div>
+              <div class="space-y-2">${others.map(rowHtml).join('')}${total ? rowHtml(total) : ''}</div>
+            </div>`;
         }
       }
 
+      // 前五大權值股：精簡清單（可點擊）
       const capSec = findSec('權值股')[0];
       if (capSec) {
         const rows = capSec.rows.filter(r => r[1]);
         if (rows.length) {
-          parts.push(groupBlock('前五大權值股', `<div class="grid grid-cols-3 lg:grid-cols-5 gap-2">${rows.map(r => {
-            const m = r[1].match(/^(\S+)\s+(.+)$/);
-            const sid = m ? m[1] : '';
-            const v = parseLooseNum(r[4]) ?? parseLooseNum(r[3]);
-            const clickable = sid && parsedStocks.some(st => st.id === sid);
-            return quoteTile({
-              label: m ? m[2] : r[1], code: sid, value: r[2] || '--', changeText: withPlus(r[4], v), changeNum: v,
-              sub: `漲跌 ${withPlus(r[3], parseLooseNum(r[3]))}`, onclick: clickable ? `openStockModal('${escHtml(sid)}')` : ''
-            });
-          }).join('')}</div>`));
+          capHtml = `
+            <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 sm:p-4 space-y-1 min-w-0">
+              <h3 class="text-[11px] font-bold text-slate-500 dark:text-slate-400 mb-1">前五大權值股</h3>
+              <div class="divide-y divide-slate-200/70 dark:divide-slate-800">
+              ${rows.map(r => {
+                const m = r[1].match(/^(\S+)\s+(.+)$/);
+                const sid = m ? m[1] : '';
+                const v = parseLooseNum(r[4]) ?? parseLooseNum(r[3]);
+                const clickable = sid && parsedStocks.some(st => st.id === sid);
+                return `
+                  <div ${clickable ? `onclick="openStockModal('${escHtml(sid)}')"` : ''} class="flex items-center justify-between gap-2 py-1.5 text-[11px] ${clickable ? 'cursor-pointer hover:text-brand-500' : ''}">
+                    <div class="flex items-center gap-2 min-w-0">
+                      <span class="w-3 text-[10px] font-black text-slate-400 font-mono">${escHtml(r[0])}</span>
+                      <span class="font-bold text-slate-800 dark:text-slate-100 truncate">${escHtml(m ? m[2] : r[1])}</span>
+                      <span class="text-[9px] text-slate-400 font-mono">${escHtml(sid)}</span>
+                    </div>
+                    <div class="flex items-center gap-3 font-mono shrink-0 ${signColorClass(v)}">
+                      <span class="font-black">${escHtml(r[2] || '--')}</span>
+                      <span class="font-bold w-14 text-right">${escHtml(withPlus(r[4], v))}</span>
+                    </div>
+                  </div>`;
+              }).join('')}
+              </div>
+            </div>`;
         }
       }
+      if (instHtml || capHtml) parts.push(`<div class="grid grid-cols-1 lg:grid-cols-2 gap-2 sm:gap-3">${instHtml}${capHtml}</div>`);
 
       // 次要資訊（收合）：國際市場參考、外資排行（若試算表提供）
       let moreInner = '', summary = [], moreCount = 0;
@@ -3844,8 +3878,24 @@ function getDynamicColorTier(rawPct) {
       if (intelCurrentMode === 'post' && hasPostData()) { try { renderPostMarket(lastPostMarketData); } catch (e) {} }
     }
 
-    // ---------- 量能紀錄 + K線 ----------
+    // ---------- 量能紀錄 + K線（含技術指標）----------
     // A:日期 B:成交金額 C:開 D:高 E:低 F:收；與前一交易日成交金額相同者視為休市沿用值而排除
+    const KLINE_MAS = [
+      { k: 'ma5',  n: 5,  label: 'MA5',  color: '#3b82f6' },
+      { k: 'ma10', n: 10, label: 'MA10', color: '#f59e0b' },
+      { k: 'ma20', n: 20, label: 'MA20', color: '#c026d3' },
+      { k: 'ma60', n: 60, label: 'MA60', color: '#0d9488', dash: true }
+    ];
+    const KLINE_SUBS = [
+      { k: 'vol', label: '成交量' },
+      { k: 'kd', label: 'KD' },
+      { k: 'macd', label: 'MACD' },
+      { k: 'rsi', label: 'RSI' }
+    ];
+    let klineCfg = { ma5: true, ma10: false, ma20: true, ma60: false, boll: false, sub: 'vol' };
+    try { Object.assign(klineCfg, JSON.parse(localStorage.getItem('sp_kline_cfg') || '{}')); } catch (e) {}
+    function saveKlineCfg() { try { localStorage.setItem('sp_kline_cfg', JSON.stringify(klineCfg)); } catch (e) {} }
+
     function parseVolumeSeries(text) {
       const map = new Map();
       text.split(/\r\n|\n/).forEach(line => {
@@ -3856,8 +3906,12 @@ function getDynamicColorTier(rawPct) {
         const v = parseLooseNum(r[1]);
         if (v === null || v <= 0) return;
         let o = parseLooseNum(r[2]), h = parseLooseNum(r[3]), l = parseLooseNum(r[4]), c = parseLooseNum(r[5]);
-        const ok = [o, h, l, c].every(x => x !== null && x > 0);
-        if (ok) { h = Math.max(h, o, c, l); l = Math.min(l, o, c, h); }
+        // 開高低收需四欄皆為合理數值（避免把舊資料的成交金額欄誤判為價格）
+        let ok = [o, h, l, c].every(x => x !== null && x > 1000);
+        if (ok) {
+          h = Math.max(h, o, c, l); l = Math.min(l, o, c);
+          if (h / l > 1.2) ok = false;
+        }
         map.set(key, { val: v, o: ok ? o : null, h: ok ? h : null, l: ok ? l : null, c: ok ? c : null });
       });
       const sorted = [...map.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1);
@@ -3867,23 +3921,70 @@ function getDynamicColorTier(rawPct) {
         if (prev && Math.abs(prev.val - p.val) < 0.005) return;
         arr.push({ date, ...p });
       });
-      const avg = (list, k) => { const xs = list.map(x => x[k]).filter(x => x !== null); return xs.length === list.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null; };
+      computeKlineIndicators(arr);
+      return arr;
+    }
+
+    function computeKlineIndicators(arr) {
+      const sma = (i, n, key) => {
+        if (i < n - 1) return null;
+        let s = 0;
+        for (let j = i - n + 1; j <= i; j++) { if (arr[j][key] === null) return null; s += arr[j][key]; }
+        return s / n;
+      };
+      let k = 50, d = 50, ema12 = null, ema26 = null, dea = null, avgGain = null, avgLoss = null;
       arr.forEach((p, i) => {
-        const w5 = i >= 4 ? arr.slice(i - 4, i + 1) : null;
-        const w20 = i >= 19 ? arr.slice(i - 19, i + 1) : null;
-        p.vma5 = w5 ? avg(w5, 'val') : null;
-        p.vma20 = w20 ? avg(w20, 'val') : null;
-        p.ma5 = w5 ? avg(w5, 'c') : null;
-        p.ma20 = w20 ? avg(w20, 'c') : null;
         const prev = arr[i - 1];
+        p.vma5 = sma(i, 5, 'val');
+        p.vma20 = sma(i, 20, 'val');
+        KLINE_MAS.forEach(m => { p[m.k] = sma(i, m.n, 'c'); });
         p.dod = prev ? ((p.val - prev.val) / prev.val) * 100 : null;
         p.chg = (prev && prev.c !== null && p.c !== null) ? p.c - prev.c : null;
         p.chgPct = (p.chg !== null && prev.c) ? (p.chg / prev.c) * 100 : null;
+
+        // 布林通道 (20, 2)
+        if (p.ma20 !== null) {
+          let v = 0;
+          for (let j = i - 19; j <= i; j++) v += Math.pow(arr[j].c - p.ma20, 2);
+          const sd = Math.sqrt(v / 20);
+          p.bbUp = p.ma20 + 2 * sd; p.bbDn = p.ma20 - 2 * sd;
+        } else { p.bbUp = p.bbDn = null; }
+
+        if (p.c === null) { p.k = p.d = p.dif = p.dea = p.osc = p.rsi = null; return; }
+
+        // KD (9, 3, 3)
+        if (i >= 8 && arr.slice(i - 8, i + 1).every(x => x.c !== null)) {
+          const win = arr.slice(i - 8, i + 1);
+          const hh = Math.max(...win.map(x => x.h)), ll = Math.min(...win.map(x => x.l));
+          const rsv = hh === ll ? 50 : ((p.c - ll) / (hh - ll)) * 100;
+          k = (2 / 3) * k + (1 / 3) * rsv;
+          d = (2 / 3) * d + (1 / 3) * k;
+          p.k = k; p.d = d;
+        } else { p.k = p.d = null; }
+
+        // MACD (12, 26, 9)
+        ema12 = ema12 === null ? p.c : ema12 + (2 / 13) * (p.c - ema12);
+        ema26 = ema26 === null ? p.c : ema26 + (2 / 27) * (p.c - ema26);
+        const dif = ema12 - ema26;
+        dea = dea === null ? dif : dea + (2 / 10) * (dif - dea);
+        const warm = i >= 25;
+        p.dif = warm ? dif : null; p.dea = warm ? dea : null; p.osc = warm ? dif - dea : null;
+
+        // RSI (14, Wilder)
+        if (prev && prev.c !== null) {
+          const ch = p.c - prev.c, gain = Math.max(ch, 0), loss = Math.max(-ch, 0);
+          if (i < 14) { avgGain = (avgGain || 0) + gain / 14; avgLoss = (avgLoss || 0) + loss / 14; p.rsi = null; }
+          else {
+            avgGain = (avgGain * 13 + gain) / 14; avgLoss = (avgLoss * 13 + loss) / 14;
+            p.rsi = avgLoss === 0 ? 100 : 100 - 100 / (1 + avgGain / avgLoss);
+          }
+        } else p.rsi = null;
       });
-      return arr;
     }
+
     function fmtYi(v) { return (v === null || v === undefined || isNaN(v)) ? '--' : Math.round(v).toLocaleString('en-US'); }
     function fmtPt(v) { return (v === null || v === undefined || isNaN(v)) ? '--' : v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function klineHasOHLC() { return marketVolumeSeries.some(d => d.c !== null); }
 
     function renderVolumeModule() {
       const statsRow = document.getElementById('volStatsRow');
@@ -3899,7 +4000,8 @@ function getDynamicColorTier(rawPct) {
         statsRow.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-sans"><i class="fa-solid fa-triangle-exclamation mr-1"></i>量能紀錄暫時無法取得</span>';
         if (badge) badge.innerHTML = '';
         wrap.innerHTML = '';
-        // 無資料時收起圖表區，避免留下大片空白
+        safeSetHtml('klineControls', '');
+        safeSetHtml('klineLegend', '');
         document.getElementById('collapseBody_kline')?.classList.add('hidden');
         document.getElementById('collapseAux_kline')?.classList.add('hidden');
         return;
@@ -3919,9 +4021,10 @@ function getDynamicColorTier(rawPct) {
         item('5日均量', fmtYi(last.vma5), '', 'hidden sm:inline-flex'),
         item('20日均量', fmtYi(last.vma20), '', 'hidden sm:inline-flex'),
         item('量比', ratio === null ? '--' : ratio.toFixed(2) + 'x', ratioLabel),
-        last.ma20 !== null && last.c !== null ? item('收盤 vs MA20', last.c >= last.ma20 ? '站上' : '跌破', fmtPt(last.ma20), 'hidden sm:inline-flex', last.c >= last.ma20 ? 'text-stockRed' : 'text-stockGreen') : ''
+        (last.ma20 !== null && last.c !== null) ? item('收盤 vs MA20', last.c >= last.ma20 ? '站上' : '跌破', fmtPt(last.ma20), 'hidden sm:inline-flex', last.c >= last.ma20 ? 'text-stockRed' : 'text-stockGreen') : ''
       ].join('');
 
+      renderKlineControls();
       renderVolumeChart();
       if (!volResizeObserver && typeof ResizeObserver !== 'undefined') {
         let t = null;
@@ -3931,6 +4034,49 @@ function getDynamicColorTier(rawPct) {
         });
         volResizeObserver.observe(document.getElementById('volChartBox'));
       }
+    }
+
+    function renderKlineControls() {
+      const box = document.getElementById('klineControls');
+      if (!box) return;
+      const hasK = klineHasOHLC();
+      if (!hasK) {
+        box.innerHTML = `
+          <div class="w-full text-[10px] sm:text-[11px] leading-relaxed text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/20 rounded-xl px-3 py-2">
+            <i class="fa-solid fa-circle-info mr-1"></i>量能紀錄的「開、高、低、收」欄（C～F）目前沒有可讀數值，K 線與技術指標暫停，僅顯示成交量。
+            <span class="text-slate-500 dark:text-slate-400">若 C～F 使用 GOOGLEFINANCE 公式，其歷史資料無法經由「發布到網路」CSV 輸出，需改存為靜態數值。</span>
+          </div>`;
+        return;
+      }
+      const chip = (key, label, color, on) => `
+        <button onclick="toggleKlineOverlay('${key}')" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md border transition ${on ? 'font-bold bg-white dark:bg-slate-900' : 'text-slate-400 border-slate-200 dark:border-slate-800 hover:text-slate-600 dark:hover:text-slate-200'}"
+          style="${on ? `color:${color};border-color:${color}66` : ''}">
+          <span class="w-2 h-2 rounded-full" style="background:${on ? color : '#94a3b8'}"></span>${label}
+        </button>`;
+      box.innerHTML = `
+        <div class="flex flex-wrap items-center gap-1.5 text-[10px]">
+          <span class="text-slate-400 mr-0.5">主圖</span>
+          ${KLINE_MAS.map(m => chip(m.k, m.label, m.color, klineCfg[m.k])).join('')}
+          ${chip('boll', '布林', '#64748b', klineCfg.boll)}
+        </div>
+        <div class="flex items-center gap-1.5 text-[10px]">
+          <span class="text-slate-400">副圖</span>
+          <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex">
+            ${KLINE_SUBS.map(s => `<button onclick="setKlineSub('${s.k}')" class="px-2 py-0.5 rounded-md transition ${klineCfg.sub === s.k ? 'font-bold bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}">${s.label}</button>`).join('')}
+          </div>
+        </div>`;
+    }
+    function toggleKlineOverlay(key) {
+      klineCfg[key] = !klineCfg[key];
+      saveKlineCfg();
+      renderKlineControls();
+      try { renderVolumeChart(); } catch (e) {}
+    }
+    function setKlineSub(key) {
+      klineCfg.sub = key;
+      saveKlineCfg();
+      renderKlineControls();
+      try { renderVolumeChart(); } catch (e) {}
     }
 
     function setVolRangeButtons() {
@@ -3948,8 +4094,7 @@ function getDynamicColorTier(rawPct) {
       try { renderVolumeChart(); } catch (e) {}
     }
 
-    let klineLayout = null;   // 最近一次繪圖的座標資訊，供 tooltip 使用
-
+    let klineLayout = null;
     function niceStep(range, count) {
       const rough = range / count;
       const mag = Math.pow(10, Math.floor(Math.log10(rough || 1)));
@@ -3964,11 +4109,12 @@ function getDynamicColorTier(rawPct) {
 
       const W = Math.max(wrap.clientWidth, 200), H = Math.max(wrap.clientHeight, 140);
       const hasK = data.some(d => d.c !== null);
-      const padL = 46, padR = 4, padT = 6, axisH = 14, gap = 10;
+      const sub = hasK ? klineCfg.sub : 'vol';
+      const padL = 46, padR = 4, padT = 6, axisH = 14, gap = 12;
       const plotH = H - padT - axisH;
-      const volH = hasK ? Math.round(plotH * 0.28) : plotH;
-      const priceTop = padT, priceBot = hasK ? padT + plotH - volH - gap : padT;
-      const volTop = H - axisH - volH, volBot = H - axisH;
+      const subH = hasK ? Math.round(plotH * 0.3) : plotH;
+      const priceTop = padT, priceBot = hasK ? padT + plotH - subH - gap : padT;
+      const subTop = H - axisH - subH, subBot = H - axisH;
 
       const n = data.length;
       const slot = (W - padL - padR) / n;
@@ -3976,21 +4122,39 @@ function getDynamicColorTier(rawPct) {
       const bodyW = Math.max(Math.min(slot * 0.68, 12), 1);
       const UP = '#ef4444', DN = '#22c55e', FLAT = '#94a3b8';
       const dirColor = d => (d.c === null || d.o === null) ? FLAT : (d.c > d.o ? UP : (d.c < d.o ? DN : FLAT));
+      const axisText = (x, y, txt, anchor = 'end', op = 0.75) => `<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="${op}">${txt}</text>`;
+      const hLine = (y, op = 0.1, dash = '') => `<line x1="${padL}" x2="${W - padR}" y1="${y.toFixed(1)}" y2="${y.toFixed(1)}" stroke="currentColor" stroke-opacity="${op}" ${dash ? `stroke-dasharray="${dash}"` : ''}/>`;
+      const poly = (key, yFn, color, width = 1.5, dash = false) => {
+        const pts = data.map((d, i) => (d[key] !== null && d[key] !== undefined) ? `${xc(i).toFixed(1)},${yFn(d[key]).toFixed(1)}` : null).filter(Boolean);
+        return pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="${width}" stroke-linejoin="round" ${dash ? 'stroke-dasharray="4 3"' : ''}/>` : '';
+      };
 
       let svg = '';
-      // 價格區
-      let yP = null;
+      // ===== 主圖：K 線 + 均線 / 布林 =====
       if (hasK) {
-        const lows = data.flatMap(d => [d.l, d.ma5, d.ma20]).filter(v => v !== null);
-        const highs = data.flatMap(d => [d.h, d.ma5, d.ma20]).filter(v => v !== null);
-        let lo = Math.min(...lows), hi = Math.max(...highs);
+        const activeMAs = KLINE_MAS.filter(m => klineCfg[m.k]);
+        const vals = [];
+        data.forEach(d => {
+          if (d.c === null) return;
+          vals.push(d.h, d.l);
+          activeMAs.forEach(m => { if (d[m.k] !== null) vals.push(d[m.k]); });
+          if (klineCfg.boll && d.bbUp !== null) vals.push(d.bbUp, d.bbDn);
+        });
+        let lo = Math.min(...vals), hi = Math.max(...vals);
         const padV = (hi - lo) * 0.06 || hi * 0.01;
         lo -= padV; hi += padV;
         const step = niceStep(hi - lo, 4);
-        yP = v => priceTop + (1 - (v - lo) / (hi - lo)) * (priceBot - priceTop);
+        const yP = v => priceTop + (1 - (v - lo) / (hi - lo)) * (priceBot - priceTop);
         for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) {
-          svg += `<line x1="${padL}" x2="${W - padR}" y1="${yP(v).toFixed(1)}" y2="${yP(v).toFixed(1)}" stroke="currentColor" stroke-opacity="0.1"/>
-                  <text x="${padL - 5}" y="${(yP(v) + 3).toFixed(1)}" text-anchor="end" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.75">${Math.round(v).toLocaleString('en-US')}</text>`;
+          svg += hLine(yP(v)) + axisText(padL - 5, (yP(v) + 3).toFixed(1), Math.round(v).toLocaleString('en-US'));
+        }
+        if (klineCfg.boll) {
+          const upPts = [], dnPts = [];
+          data.forEach((d, i) => { if (d.bbUp !== null) { upPts.push(`${xc(i).toFixed(1)},${yP(d.bbUp).toFixed(1)}`); dnPts.unshift(`${xc(i).toFixed(1)},${yP(d.bbDn).toFixed(1)}`); } });
+          if (upPts.length > 1) {
+            svg += `<polygon points="${upPts.concat(dnPts).join(' ')}" fill="#64748b" fill-opacity="0.08"/>`;
+            svg += poly('bbUp', yP, '#64748b', 1, true) + poly('bbDn', yP, '#64748b', 1, true);
+          }
         }
         data.forEach((d, i) => {
           if (d.c === null) return;
@@ -3999,58 +4163,103 @@ function getDynamicColorTier(rawPct) {
           svg += `<line x1="${x.toFixed(1)}" x2="${x.toFixed(1)}" y1="${yP(d.h).toFixed(1)}" y2="${yP(d.l).toFixed(1)}" stroke="${col}" stroke-width="1"/>
                   <rect x="${(x - bodyW / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${Math.max(yBot - yTop, 1).toFixed(1)}" fill="${col}" rx="${bodyW > 4 ? 1 : 0}"/>`;
         });
-        const line = (k, color, dash) => {
-          const pts = data.map((d, i) => d[k] !== null ? `${xc(i).toFixed(1)},${yP(d[k]).toFixed(1)}` : null).filter(Boolean);
-          return pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" ${dash ? 'stroke-dasharray="4 3"' : ''}/>` : '';
-        };
-        svg += line('ma20', '#f59e0b', true) + line('ma5', '#3b82f6', false);
-        // 區間最高 / 最低標註
-        let hiI = 0, loI = 0;
-        data.forEach((d, i) => { if (d.h !== null && d.h > data[hiI].h) hiI = i; if (d.l !== null && d.l < data[loI].l) loI = i; });
+        activeMAs.forEach(m => { svg += poly(m.k, yP, m.color, 1.5, m.dash); });
+        let hiI = -1, loI = -1;
+        data.forEach((d, i) => {
+          if (d.h === null) return;
+          if (hiI < 0 || d.h > data[hiI].h) hiI = i;
+          if (loI < 0 || d.l < data[loI].l) loI = i;
+        });
         const mark = (i, v, above) => {
           const x = xc(i), anchor = x < W * 0.2 ? 'start' : (x > W * 0.8 ? 'end' : 'middle');
           return `<text x="${x.toFixed(1)}" y="${(yP(v) + (above ? -4 : 11)).toFixed(1)}" text-anchor="${anchor}" font-size="9" font-weight="700" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.9">${fmtPt(v)}</text>`;
         };
-        if (data[hiI].h !== null) svg += mark(hiI, data[hiI].h, true);
-        if (data[loI].l !== null) svg += mark(loI, data[loI].l, false);
+        if (hiI >= 0) svg += mark(hiI, data[hiI].h, true) + mark(loI, data[loI].l, false);
+        svg += `<line x1="${padL}" x2="${W - padR}" y1="${(subTop - gap / 2).toFixed(1)}" y2="${(subTop - gap / 2).toFixed(1)}" stroke="currentColor" stroke-opacity="0.15"/>`;
       }
 
-      // 成交量區
-      const vMax = Math.max(...data.map(d => d.val), 1);
-      const vStep = niceStep(vMax, 2);
-      const vTop = Math.ceil(vMax / vStep) * vStep;
-      const yV = v => volBot - (v / vTop) * (volBot - volTop);
-      const fmtV = v => v >= 10000 ? (v / 10000).toFixed(v % 10000 === 0 ? 0 : 1) + '萬' : v.toLocaleString('en-US');
-      svg += `<line x1="${padL}" x2="${W - padR}" y1="${volBot}" y2="${volBot}" stroke="currentColor" stroke-opacity="0.3"/>
-              <text x="${padL - 5}" y="${volTop + 8}" text-anchor="end" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.75">${fmtV(vTop)}</text>
-              <text x="${padL - 5}" y="${volBot}" text-anchor="end" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.5">億</text>`;
-      if (hasK) svg += `<line x1="${padL}" x2="${W - padR}" y1="${volTop - gap / 2}" y2="${volTop - gap / 2}" stroke="currentColor" stroke-opacity="0.12"/>`;
+      // ===== 副圖 =====
       const barW = Math.max(slot - (slot > 5 ? 2 : (slot > 2.5 ? 1 : 0)), 1);
-      data.forEach((d, i) => {
-        const top = yV(d.val);
-        const col = hasK ? dirColor(d) : '#94a3b8';
-        svg += `<rect x="${(xc(i) - barW / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(volBot - top, 1).toFixed(1)}" fill="${col}" fill-opacity="${i === n - 1 ? 0.9 : 0.4}"/>`;
-      });
-      const vline = (k, color, dash) => {
-        const pts = data.map((d, i) => d[k] !== null ? `${xc(i).toFixed(1)},${yV(d[k]).toFixed(1)}` : null).filter(Boolean);
-        return pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.25" stroke-linejoin="round" ${dash ? 'stroke-dasharray="4 3"' : ''}/>` : '';
-      };
-      svg += vline('vma20', '#f59e0b', true) + vline('vma5', '#3b82f6', false);
+      const subLabel = (txt) => `<text x="${padL + 3}" y="${subTop + 9}" font-size="9" font-weight="700" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.6">${txt}</text>`;
+      if (sub === 'vol') {
+        const vMax = Math.max(...data.map(d => d.val), 1);
+        const vStep = niceStep(vMax, 2);
+        const vTop = Math.ceil(vMax / vStep) * vStep;
+        const yV = v => subBot - (v / vTop) * (subBot - subTop);
+        const fmtV = v => v >= 10000 ? (v / 10000).toFixed(v % 10000 === 0 ? 0 : 1) + '萬' : v.toLocaleString('en-US');
+        svg += hLine(subBot, 0.3) + axisText(padL - 5, subTop + 8, fmtV(vTop)) + axisText(padL - 5, subBot, '億', 'end', 0.5);
+        data.forEach((d, i) => {
+          const top = yV(d.val);
+          const col = hasK ? dirColor(d) : '#94a3b8';
+          svg += `<rect x="${(xc(i) - barW / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(subBot - top, 1).toFixed(1)}" fill="${col}" fill-opacity="${i === n - 1 ? 0.9 : 0.4}"/>`;
+        });
+        svg += poly('vma20', yV, '#c026d3', 1.25) + poly('vma5', yV, '#3b82f6', 1.25);
+      } else if (sub === 'kd' || sub === 'rsi') {
+        const yS = v => subBot - (v / 100) * (subBot - subTop);
+        const [lo, hi] = sub === 'kd' ? [20, 80] : [30, 70];
+        svg += hLine(yS(hi), 0.35, '3 3') + hLine(yS(lo), 0.35, '3 3') + hLine(subBot, 0.2) +
+               axisText(padL - 5, yS(hi) + 3, hi) + axisText(padL - 5, yS(lo) + 3, lo);
+        if (sub === 'kd') svg += poly('k', yS, '#3b82f6', 1.5) + poly('d', yS, '#f59e0b', 1.5) + subLabel('KD(9)');
+        else svg += poly('rsi', yS, '#c026d3', 1.5) + subLabel('RSI(14)');
+      } else if (sub === 'macd') {
+        const vals = data.flatMap(d => [d.dif, d.dea, d.osc]).filter(v => v !== null);
+        const m = Math.max(...vals.map(Math.abs), 1);
+        const mid = (subTop + subBot) / 2;
+        const yM = v => mid - (v / m) * ((subBot - subTop) / 2 - 2);
+        svg += hLine(mid, 0.3) + axisText(padL - 5, mid + 3, '0');
+        data.forEach((d, i) => {
+          if (d.osc === null) return;
+          const y0 = yM(0), y1 = yM(d.osc);
+          svg += `<rect x="${(xc(i) - barW / 2).toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${barW.toFixed(1)}" height="${Math.max(Math.abs(y1 - y0), 0.5).toFixed(1)}" fill="${d.osc >= 0 ? UP : DN}" fill-opacity="0.55"/>`;
+        });
+        svg += poly('dif', yM, '#3b82f6', 1.5) + poly('dea', yM, '#f59e0b', 1.5) + subLabel('MACD(12,26,9)');
+      }
 
       // X 軸日期
       const idxs = [0, Math.floor((n - 1) / 3), Math.floor((n - 1) * 2 / 3), n - 1].filter((v, i, a) => a.indexOf(v) === i);
       svg += idxs.map((i, k) => {
         const anchor = k === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle');
         const x = anchor === 'start' ? padL : (anchor === 'end' ? W - padR : xc(i));
-        return `<text x="${x.toFixed(1)}" y="${H - 3}" text-anchor="${anchor}" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.75">${shortDate(data[i].date)}</text>`;
+        return axisText(x.toFixed(1), H - 3, shortDate(data[i].date), anchor);
       }).join('');
 
-      // 十字線與感應區
-      svg += `<line id="klineCross" x1="0" x2="0" y1="${padT}" y2="${volBot}" stroke="currentColor" stroke-opacity="0.45" stroke-dasharray="2 2" visibility="hidden"/>`;
-      svg += data.map((d, i) => `<rect class="vol-hit" x="${(padL + i * slot).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(volBot - padT).toFixed(1)}" onmouseenter="showVolTip(${i})" ontouchstart="showVolTip(${i})"/>`).join('');
+      svg += `<line id="klineCross" x1="0" x2="0" y1="${padT}" y2="${subBot}" stroke="currentColor" stroke-opacity="0.45" stroke-dasharray="2 2" visibility="hidden"/>`;
+      svg += data.map((d, i) => `<rect class="vol-hit" x="${(padL + i * slot).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(subBot - padT).toFixed(1)}" onmouseenter="showVolTip(${i})" ontouchstart="showVolTip(${i})"/>`).join('');
 
       wrap.innerHTML = `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="block text-slate-500 dark:text-slate-400" onmouseleave="hideVolTip()">${svg}</svg>`;
       klineLayout = { W, padL, padR, slot, n };
+      renderKlineLegend(data.length - 1);
+    }
+
+    // 圖例同時顯示數值（滑過時顯示該日，平時顯示最新）
+    function renderKlineLegend(i) {
+      const box = document.getElementById('klineLegend');
+      if (!box) return;
+      const data = marketVolumeSeries.slice(-currentVolRange);
+      const d = data[i];
+      if (!d) { box.innerHTML = ''; return; }
+      const hasK = data.some(x => x.c !== null);
+      const sub = hasK ? klineCfg.sub : 'vol';
+      const it = (label, val, color, dash) => `<span class="inline-flex items-center gap-1 whitespace-nowrap"><span class="inline-block w-3 ${dash ? 'border-t-2 border-dashed' : 'h-0.5 rounded'}" style="${dash ? `border-color:${color}` : `background:${color}`}"></span><span class="text-slate-500 dark:text-slate-400">${label}</span><span class="font-mono font-bold text-slate-700 dark:text-slate-200">${val}</span></span>`;
+      const parts = [];
+      if (hasK) {
+        KLINE_MAS.filter(m => klineCfg[m.k]).forEach(m => parts.push(it(m.label, fmtPt(d[m.k]), m.color, m.dash)));
+        if (klineCfg.boll) parts.push(it('布林上/下', `${fmtPt(d.bbUp)} / ${fmtPt(d.bbDn)}`, '#64748b', true));
+      }
+      const sep = parts.length ? '<span class="text-slate-300 dark:text-slate-700">|</span>' : '';
+      const subParts = [];
+      if (sub === 'vol') {
+        subParts.push(it('量', fmtYi(d.val) + '億', '#94a3b8'), it('均5', fmtYi(d.vma5), '#3b82f6'), it('均20', fmtYi(d.vma20), '#c026d3'));
+      } else if (sub === 'kd') {
+        const f = v => v === null ? '--' : v.toFixed(1);
+        subParts.push(it('K', f(d.k), '#3b82f6'), it('D', f(d.d), '#f59e0b'));
+      } else if (sub === 'rsi') {
+        subParts.push(it('RSI14', d.rsi === null ? '--' : d.rsi.toFixed(1), '#c026d3'));
+      } else if (sub === 'macd') {
+        const f = v => v === null ? '--' : v.toFixed(2);
+        subParts.push(it('DIF', f(d.dif), '#3b82f6'), it('MACD', f(d.dea), '#f59e0b'), it('OSC', `<span class="${signColorClass(d.osc)}">${f(d.osc)}</span>`, '#94a3b8'));
+      }
+      box.innerHTML = `<span class="font-mono text-slate-400">${shortDate(d.date)}</span>${parts.join('')}${sep}${subParts.join('')}`;
     }
 
     function showVolTip(i) {
@@ -4070,17 +4279,18 @@ function getDynamicColorTier(rawPct) {
           <span>低 ${fmtPt(d.l)}</span><span>收 <strong class="text-white">${fmtPt(d.c)}</strong></span>
         </div>
         <div class="${chgCls}">漲跌 ${d.chg === null ? '--' : `${d.chg > 0 ? '+' : ''}${d.chg.toFixed(2)} (${d.chgPct > 0 ? '+' : ''}${d.chgPct.toFixed(2)}%)`}</div>` : ''}
-        <div class="mt-0.5">成交 <strong class="text-white">${fmtYi(d.val)}</strong> 億${d.dod !== null ? ` <span class="text-slate-400">(${d.dod >= 0 ? '+' : ''}${d.dod.toFixed(1)}%)</span>` : ''}</div>
-        ${d.c !== null ? `<div class="text-slate-400"><span class="text-blue-300">MA5 ${fmtPt(d.ma5)}</span>　<span class="text-amber-300">MA20 ${fmtPt(d.ma20)}</span></div>` : ''}`;
+        <div class="mt-0.5">成交 <strong class="text-white">${fmtYi(d.val)}</strong> 億${d.dod !== null ? ` <span class="text-slate-400">(${d.dod >= 0 ? '+' : ''}${d.dod.toFixed(1)}%)</span>` : ''}</div>`;
       tip.classList.remove('hidden');
       const tw = tip.offsetWidth, W = klineLayout.W;
       let left = cx + 10;
       if (left + tw > W) left = cx - tw - 10;
       tip.style.left = Math.max(0, left) + 'px';
+      renderKlineLegend(i);
     }
     function hideVolTip() {
       document.getElementById('volTooltip')?.classList.add('hidden');
       document.getElementById('klineCross')?.setAttribute('visibility', 'hidden');
+      renderKlineLegend(marketVolumeSeries.slice(-currentVolRange).length - 1);
     }
 
     // 3. 修正維護狀態切換（參數名稱改為 status）
