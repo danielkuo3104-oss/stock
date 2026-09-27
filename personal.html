@@ -164,6 +164,8 @@
 
   <script>
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
+    // 高點追蹤 CSV 網址（與 index.html 相同；留空則不顯示）
+    const CSV_HIGHS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1896125645&single=true&output=csv';
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
     const TIER_LIMITS = { '初級韭菜': 20, '資深韭菜': 50, '萬年韭皇': Infinity };
@@ -172,6 +174,7 @@
     let userWatchlist = [];          // 保留加入順序
     let stockMap = new Map();        // id -> stock
     let dataLoaded = false;
+    let highMap = {};
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
@@ -306,6 +309,7 @@
         parseStocks(text);
         if (stockMap.size === 0) throw new Error('無個股資料');
         dataLoaded = true;
+        await loadHighs();
       } catch (e) {
         if (dataLoaded) return;   // 已有舊資料則保留畫面
         document.getElementById('dataTimestamp').textContent = '資料讀取失敗';
@@ -314,6 +318,52 @@
       }
       renderSummary();
       renderWatchCards();
+    }
+
+    // 高點追蹤：讀不到時靜默略過，不影響關注清單
+    async function loadHighs() {
+      if (!CSV_HIGHS_URL) return;
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 12000);
+        let text = '';
+        try {
+          const res = await fetch(CSV_HIGHS_URL + '&_t=' + Date.now(), { signal: ctl.signal });
+          if (res.ok) text = await res.text();
+        } finally { clearTimeout(timer); }
+        if (!text || /^\s*<(!doctype|html)/i.test(text)) return;
+        const rows = text.split(/\r\n|\n/).filter(l => l.trim()).map(parseCsvRow);
+        const hdr = rows[0].map(h => h.trim().replace(/\s+/g, ''));
+        const ix = (...names) => { for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; } return -1; };
+        const map = {};
+        rows.slice(1).forEach(r => {
+          const code = (r[ix('代號', '股票代號', '證券代號')] || '').trim();
+          const prevHigh = parseFloat(String(r[ix('前高', '前高價')] || '').replace(/,/g, ''));
+          if (!code || !(prevHigh > 0)) return;
+          map[code] = {
+            prevHigh, prevDate: (r[ix('前高日期', '前高日')] || '').trim(), status: (r[ix('狀態', '註記')] || '').trim(),
+            gap: parseFloat(r[ix('距前高%', '距前高')]), streak: parseInt(r[ix('連續新高', '連續天數')], 10) || 0
+          };
+          // 今日若突破，前高即更新為今日最高；距前高以目前最高計算
+          const num = v => parseFloat(String(v || '').replace(/,/g, ''));
+          const h = num(r[ix('最高', '最高價')]), c = num(r[ix('收盤', '收盤價')]);
+          const recHigh = num(r[ix('區間最高')]), recDate = (r[ix('區間最高日')] || '').trim(), dataDate = (r[ix('資料日期')] || '').trim();
+          const m = map[code];
+          if (h > prevHigh) {
+            m.prevHigh = Math.max(h, recHigh || 0);
+            m.prevDate = (recHigh >= h && recDate) ? recDate : dataDate;
+            m.broke = true;
+          }
+          if (c > 0) m.gap = (c / m.prevHigh - 1) * 100;
+        });
+        highMap = map;
+      } catch (e) { console.warn('高點追蹤讀取失敗', e); }
+    }
+    function highBadgeHtml(h) {
+      if (!h || !h.status) return '';
+      const st = h.status.indexOf('達成新高') === 0 ? 'bg-amber-500 text-white font-black'
+        : (h.status === '本日曾破新高' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold' : 'bg-orange-500/10 text-orange-500 border border-orange-500/30 font-semibold');
+      return `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${st}">${escHtml(h.status)}</span>`;
     }
 
     function parseStocks(csvText) {
@@ -548,7 +598,8 @@
         const pctTxt = (s.change > 0 && !s.pctStr.startsWith('+')) ? '+' + s.pctStr : s.pctStr;
         const cumCol = s.cumPct > 0 ? 'text-stockRed' : (s.cumPct < 0 ? 'text-stockGreen' : 'text-slate-400');
         const priceBox = s.isLimitUp ? 'bg-limitUp text-white px-1.5 rounded' : (s.isLimitDown ? 'bg-limitDown text-white px-1.5 rounded' : col);
-        const badges = s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
+        const hi = highMap[s.id];
+        const badges = highBadgeHtml(hi) + s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
         return `
           <div onclick="openInHome('${escHtml(id)}')" class="cursor-pointer p-4 rounded-2xl border ${cardTone} hover:shadow-lg hover:border-brand-500/60 transition space-y-2.5 min-w-0">
             <div class="flex items-start justify-between gap-2">
@@ -585,6 +636,10 @@
               </div>
             </div>
 
+            ${hi ? `<div class="flex items-center justify-between text-[10px] font-mono bg-white/60 dark:bg-slate-900/60 rounded-lg px-2 py-1">
+              <span class="text-slate-400 font-sans">區間前高 <strong class="text-slate-700 dark:text-slate-200 font-mono">${hi.prevHigh.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong> <span class="text-slate-400">${escHtml(/^\d{4}-\d{2}-\d{2}$/.test(hi.prevDate) ? hi.prevDate.slice(5).replace('-', '/') : '日期補查中')}</span>${hi.broke ? ' <span class="text-amber-500">今日創高</span>' : ''}</span>
+              <span class="${isNaN(hi.gap) ? 'text-slate-400' : (hi.gap >= 0 ? 'text-stockRed' : 'text-stockGreen')} font-bold">距前高 ${isNaN(hi.gap) ? '--' : (hi.gap > 0 ? '+' : '') + hi.gap.toFixed(2) + '%'}</span>
+            </div>` : ''}
             ${badges ? `<div class="flex flex-wrap gap-1">${badges}</div>` : ''}
           </div>`;
       }).join('');
