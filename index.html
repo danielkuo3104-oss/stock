@@ -104,6 +104,54 @@
     </div>
   </div>
 
+  <!-- 💡 日K線・技術指標說明 Modal -->
+  <div id="klineHelpModal" onclick="handleModalBgClick(event, 'klineHelpModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+        <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
+          <i class="fa-solid fa-chart-column text-brand-500"></i>
+          <span>日K線與技術指標說明</span>
+        </h3>
+        <button onclick="document.getElementById('klineHelpModal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+      <div class="space-y-4 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+        <section class="space-y-2">
+          <h4 class="font-black text-slate-900 dark:text-slate-100 text-[13px]">上方摘要數據</h4>
+          <dl class="space-y-2">
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"><dt class="font-bold text-slate-800 dark:text-slate-200">成交（▲▼%）</dt><dd>最新交易日的大盤成交金額（億元），後面是與前一交易日相比的增減幅度。</dd></div>
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"><dt class="font-bold text-slate-800 dark:text-slate-200">5 日均量 / 20 日均量</dt><dd>最近 5 天、20 天成交金額的平均，分別代表短期（約一週）與中期（約一個月）的正常量能水準。</dd></div>
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"><dt class="font-bold text-slate-800 dark:text-slate-200">量比</dt><dd>今日成交 ÷ 20 日均量。<b>≥ 1.2x 量增</b>（交投明顯變熱）、<b>≤ 0.8x 量縮</b>（交投降溫）、介於兩者為<b>持平</b>。例：0.86x 代表今天成交約為月均量的 86%，屬正常偏淡。</dd></div>
+            <div class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800"><dt class="font-bold text-slate-800 dark:text-slate-200">收盤 vs MA20</dt><dd>加權指數收盤價與 20 日均線（月線）比較。<b class="text-stockRed">站上</b>＝收盤高於月線，中期趨勢偏多；<b class="text-stockGreen">跌破</b>＝收盤低於月線，中期趨勢轉弱。後面的數字是當天的 MA20 數值。</dd></div>
+          </dl>
+        </section>
+        <section class="space-y-2">
+          <h4 class="font-black text-slate-900 dark:text-slate-100 text-[13px]">主圖</h4>
+          <ul class="space-y-1.5 list-disc pl-4">
+            <li><b>K 棒</b>：實體上下緣為開盤與收盤，細線（影線）為當日最高與最低。<span class="text-stockRed font-bold">紅</span>＝收盤高於開盤，<span class="text-stockGreen font-bold">綠</span>＝收盤低於開盤。</li>
+            <li><b>MA 均線</b>：收盤價的簡單移動平均。MA5 ≈ 週線、MA10 ≈ 雙週線、MA20 ≈ 月線、MA60 ≈ 季線。短均線在長均線之上且同步向上，常視為多頭排列。</li>
+            <li><b>布林通道 (20, 2)</b>：以 MA20 為中線，上下各 2 個標準差。股價碰上軌代表相對偏強／過熱，碰下軌代表相對偏弱；通道收窄常出現在大波動之前。</li>
+            <li><b>前高虛線</b>：前高位置（有高點追蹤資料時取自追蹤表，否則以圖中期間的最高價推算）。圖上另標示區間最高與最低點。</li>
+          </ul>
+        </section>
+        <section class="space-y-2">
+          <h4 class="font-black text-slate-900 dark:text-slate-100 text-[13px]">副圖（可切換）</h4>
+          <ul class="space-y-1.5 list-disc pl-4">
+            <li><b>成交量</b>：柱狀顏色與當日 K 棒相同，線為 5 日與 20 日均量。</li>
+            <li><b>KD (9, 3, 3)</b>：以近 9 日高低區間衡量收盤位置。K &gt; 80 偏過熱、K &lt; 20 偏超賣；K 由下往上穿越 D 稱黃金交叉，反之為死亡交叉。</li>
+            <li><b>MACD (12, 26, 9)</b>：DIF＝12 日與 26 日指數均線差，MACD（訊號線）＝DIF 的 9 日平均，OSC 柱＝DIF − MACD。柱體由綠翻紅代表動能轉強。</li>
+            <li><b>RSI (14)</b>：14 日漲幅占總波動的比例。&gt; 70 偏過熱、&lt; 30 偏超賣，50 附近為多空均衡。</li>
+          </ul>
+        </section>
+        <section class="p-3 rounded-xl bg-amber-500/10 border border-amber-500/20 text-[11px] text-amber-700 dark:text-amber-400 space-y-1">
+          <p><i class="fa-solid fa-circle-info mr-1"></i>成交值與前一交易日完全相同的資料視為休市沿用值，已自動排除。</p>
+          <p>「非當日」表示圖中最新一筆不是今天的資料（休市或尚未更新）。所有指標為系統依公開資料計算，僅供參考，不構成投資建議。</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
   <!-- 標籤規則詳細說明 Modal -->
   <div id="badgeGuideModal" onclick="handleModalBgClick(event, 'badgeGuideModal')" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 hidden">
     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl space-y-4 max-h-[88vh] overflow-y-auto" onclick="event.stopPropagation()">
@@ -842,6 +890,9 @@
                 <span>日K線・成交量</span>
               </span>
               <span id="volFreshBadge"></span>
+            </button>
+            <button onclick="openKlineHelp()" class="w-5 h-5 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-brand-500 flex items-center justify-center text-[10px] shrink-0 mr-auto" title="指標說明">
+              <i class="fa-solid fa-info"></i>
             </button>
             <div id="collapseAux_kline" class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex text-[10px] shrink-0">
               <button id="btnVolRange_20" onclick="setVolRange(20)" class="px-2 py-0.5 rounded-md text-slate-500 transition">20日</button>
@@ -4490,34 +4541,100 @@ function getDynamicColorTier(rawPct) {
         </div>`;
     }
 
+    function openKlineHelp() {
+      document.getElementById('klineHelpModal')?.classList.remove('hidden');
+    }
+
+    // 由近十日漲跌幅回推每日收盤價（與個股走勢圖相同算法）
+    function getTenDayCloses(stock) {
+      const hist = stock.tenDayHistory || [];
+      const prices = new Array(hist.length);
+      let lastIdx = -1;
+      for (let i = hist.length - 1; i >= 0; i--) { if (hist[i].hasData) { lastIdx = i; break; } }
+      if (lastIdx < 0) return [];
+      prices[lastIdx] = stock.price;
+      for (let i = lastIdx; i > 0; i--) {
+        prices[i - 1] = hist[i].hasData ? roundToTick(prices[i] / (1 + hist[i].numVal / 100)) : prices[i];
+      }
+      return hist.map((h, i) => ({ date: h.dateHeader, price: prices[i], ok: h.hasData && prices[i] > 0 })).filter(x => x.ok);
+    }
+
     function renderModalHighInfo(stock) {
       const box = document.getElementById('modalHighInfo');
       if (!box) return;
       const h = highMap[stock.id];
-      if (!h) {
-        box.innerHTML = highsStatus === 'ok' ? '<div class="text-[11px] text-slate-400 px-1">此檔尚無高點追蹤資料</div>' : '';
-        return;
-      }
-      const diff = h.c ? h.c - h.prevHigh : null;
       const tile = (label, val, sub) => `
         <div class="bg-white dark:bg-slate-900 rounded-xl p-2 border border-slate-200 dark:border-slate-800 min-w-0">
           <span class="text-[10px] text-slate-500 dark:text-slate-400 block">${label}</span>
           <span class="text-sm font-black font-mono block truncate">${val}</span>
           ${sub ? `<span class="text-[9px] text-slate-400 font-mono block truncate">${sub}</span>` : ''}
         </div>`;
+
+      // A. 追蹤表前高（有設定高點追蹤時）
+      let trackerHtml = '';
+      if (h) {
+        const diff = h.c ? h.c - h.prevHigh : null;
+        trackerHtml = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2 flex-wrap">
+              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">前高追蹤</span>
+              <div class="flex items-center gap-1.5">${highStatusBadgeHtml(h)}${h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              ${tile('前高', fmtPt(h.prevHigh), escHtml(fmtHighDate(h.prevDate, true)))}
+              ${tile('距前高', `<span class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
+              ${tile('當日最高', h.h ? fmtPt(h.h) : '--', h.h && h.h > h.prevHigh ? '<span class="text-amber-500">盤中過前高</span>' : (h.date ? '資料日 ' + shortDate(h.date) : ''))}
+              ${tile('追蹤區間最高', h.recHigh ? fmtPt(h.recHigh) : '--', escHtml(fmtHighDate(h.recDate, true)))}
+            </div>
+          </div>`;
+      }
+
+      // B. 近十日高低（永遠顯示，以收盤價計）
+      let tenHtml = '';
+      const closes = getTenDayCloses(stock);
+      if (closes.length >= 2) {
+        let hiP = closes[0], loP = closes[0];
+        closes.forEach(x => { if (x.price >= hiP.price) hiP = x; if (x.price <= loP.price) loP = x; });
+        const cur = stock.price;
+        const gapHi = hiP.price ? (cur / hiP.price - 1) * 100 : 0;
+        const pos = hiP.price > loP.price ? ((cur - loP.price) / (hiP.price - loP.price)) * 100 : 100;
+        const isTenHigh = cur >= hiP.price - 1e-9;
+        const prevCloses = closes.slice(0, -1);
+        const prevHi = prevCloses.length ? Math.max(...prevCloses.map(x => x.price)) : null;
+        const breakout = prevHi !== null && cur > prevHi;
+        tenHtml = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">近十日高低（收盤價）</span>
+              ${breakout ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500 text-white font-black"><i class="fa-solid fa-crown mr-1"></i>十日新高</span>'
+                : (isTenHigh ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold">平十日高</span>'
+                : (gapHi >= -3 ? '<span class="px-1.5 py-0.5 rounded text-[10px] bg-orange-500/10 text-orange-500 border border-orange-500/30 font-semibold">接近十日高</span>' : ''))}
+            </div>
+            <div class="grid grid-cols-3 gap-2">
+              ${tile('十日最高', formatTickPrice(hiP.price), escHtml(hiP.date))}
+              ${tile('距十日高', `<span class="${signColorClass(gapHi)}">${gapHi > 0 ? '+' : ''}${gapHi.toFixed(2)}%</span>`, `${(cur - hiP.price) > 0 ? '+' : ''}${(cur - hiP.price).toFixed(2)} 元`)}
+              ${tile('十日最低', formatTickPrice(loP.price), escHtml(loP.date))}
+            </div>
+            <div>
+              <div class="flex justify-between text-[9px] text-slate-400 font-mono mb-1"><span>低 ${formatTickPrice(loP.price)}</span><span>目前位於十日區間 ${Math.round(pos)}%</span><span>高 ${formatTickPrice(hiP.price)}</span></div>
+              <div class="relative h-2 rounded-full bg-gradient-to-r from-emerald-500/30 via-slate-300/40 dark:via-slate-700/60 to-red-500/30">
+                <div class="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-brand-500 border-2 border-white dark:border-slate-900 shadow" style="left:calc(${Math.min(Math.max(pos, 0), 100)}% - 6px)"></div>
+              </div>
+            </div>
+          </div>`;
+      }
+
+      if (!trackerHtml && !tenHtml) { box.innerHTML = ''; return; }
+      const note = h
+        ? `前高＝今日以前的最高價（起始值為近 52 週高點，每日收盤後更新${h.updated ? '，' + escHtml(h.updated) : ''}）；十日高低以收盤價回推。`
+        : '十日高低以收盤價回推，不含盤中高低點。' + (highsStatus === 'unconfigured' ? '啟用「高點追蹤」後可顯示 52 週前高與新高狀態。' : '');
       box.innerHTML = `
-        <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2.5">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
-            <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i>高點追蹤</h4>
-            <div class="flex items-center gap-1.5">${highStatusBadgeHtml(h)}${h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
-          </div>
-          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-            ${tile('前高', fmtPt(h.prevHigh), escHtml(fmtHighDate(h.prevDate, true)))}
-            ${tile('距前高', `<span class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
-            ${tile('當日最高', h.h ? fmtPt(h.h) : '--', h.h && h.h > h.prevHigh ? '<span class="text-amber-500">盤中過前高</span>' : (h.date ? '資料日 ' + shortDate(h.date) : ''))}
-            ${tile('追蹤區間最高', h.recHigh ? fmtPt(h.recHigh) : '--', escHtml(fmtHighDate(h.recDate, true)))}
-          </div>
-          <p class="text-[9px] text-slate-400">前高＝今日以前的最高價（起始值為近 52 週高點，之後每日滾動更新）；即將破新高＝收盤距前高 3% 以內。資料由排程於收盤後更新${h.updated ? '（' + escHtml(h.updated) + '）' : ''}。</p>
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i>高點資訊</h4>
+          ${trackerHtml}
+          ${trackerHtml && tenHtml ? '<div class="border-t border-slate-200 dark:border-slate-800"></div>' : ''}
+          ${tenHtml}
+          <p class="text-[9px] text-slate-400 leading-relaxed">${note}</p>
         </div>`;
     }
 
