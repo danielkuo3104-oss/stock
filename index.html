@@ -1289,6 +1289,7 @@
       }
     }
 
+    // 1. 修正快取讀取
     async function preloadMembersFromSheet() {
       try {
         const res = await fetch(CSV_MEMBERS_URL);
@@ -1300,7 +1301,7 @@
             name: row[0] ? row[0].trim() : '',
             email: row[1] ? row[1].trim() : '',
             tier: row[5] ? row[5].trim() : '初級韭菜',
-            hasPass: !!(row[6] && row[6].trim())
+            hasPass: !!(row[5] && row[5].trim())
           };
         }).filter(m => m.name && m.email);
         populateAdminMemberSelect(memberListCache);
@@ -1422,6 +1423,7 @@
       } catch (e) {}
     }
 
+    // 2. 修正關注清單同步（直接傳 Array，避免二次 stringify）
     function saveWatchlist() {
       const watchlistArr = Array.from(userWatchlist);
       localStorage.setItem('sectorpulse_watchlist', JSON.stringify(watchlistArr));
@@ -1439,7 +1441,11 @@
 
         fetch(BACKEND_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'updateWatchlist', email: currentUser.email, watchlist: JSON.stringify(watchlistArr) })
+          body: JSON.stringify({ 
+            action: 'updateWatchlist', 
+            email: currentUser.email, 
+            watchlist: watchlistArr // 傳遞陣列
+          })
         })
         .then(res => res.json())
         .then(() => {
@@ -3001,6 +3007,7 @@ function getDynamicColorTier(rawPct) {
       `;
     }
 
+    // 3. 修正維護狀態切換（參數名稱改為 status）
     async function setMaintenanceStatus(isMaint) {
       const msgBox = document.getElementById('adminStatusMsg');
       if (!msgBox) return;
@@ -3013,7 +3020,7 @@ function getDynamicColorTier(rawPct) {
           method: 'POST',
           body: JSON.stringify({
             action: 'setMaintenance',
-            isMaintenance: isMaint,
+            status: isMaint ? "維護中" : "", // 傳入 status 供 GAS 寫入 AS11
             admin: ADMIN_EMAIL
           })
         });
