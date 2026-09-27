@@ -1101,7 +1101,7 @@
     const CSV_POSTMARKET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1676239342&single=true&output=csv';
 
     // 💡 高點追蹤：請將 Apps Script 產生的「高點追蹤」工作表發布為 CSV，並把網址貼在這裡（留空則不顯示高點功能）
-    const CSV_HIGHS_URL = '';
+    const CSV_HIGHS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1896125645&single=true&output=csv';
 
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
@@ -4444,12 +4444,16 @@ function getDynamicColorTier(rawPct) {
     function parseHighs(text) {
       const rows = text.split(/\r\n|\n/).filter(l => l.trim()).map(parseCsvRow);
       if (rows.length < 2) return {};
-      const hdr = rows[0].map(h => h.trim());
-      const col = name => hdr.indexOf(name);
+      const hdr = rows[0].map(h => h.trim().replace(/\s+/g, ''));
+      // 依欄名對應（容許常見別名，欄位順序可任意）
+      const col = (...names) => { for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; } return -1; };
       const idx = {
-        code: col('代號'), name: col('名稱'), prevHigh: col('前高'), prevDate: col('前高日期'), date: col('資料日期'),
-        h: col('最高'), c: col('收盤'), status: col('狀態'), streak: col('連續新高'), gap: col('距前高%'),
-        recHigh: col('區間最高'), recDate: col('區間最高日'), updated: col('更新時間')
+        code: col('代號', '股票代號', '證券代號'), name: col('名稱', '股票名稱'),
+        prevHigh: col('前高', '前高價', '前波高點'), prevDate: col('前高日期', '前高日'),
+        date: col('資料日期', '日期'), h: col('最高', '最高價', '當日最高'), c: col('收盤', '收盤價'),
+        status: col('狀態', '註記', '高點狀態'), streak: col('連續新高', '連續天數'),
+        gap: col('距前高%', '距前高', '距離前高%'), recHigh: col('區間最高', '最高點'),
+        recDate: col('區間最高日', '最高點日期'), updated: col('更新時間')
       };
       if (idx.code < 0 || idx.prevHigh < 0) return {};
       const get = (r, k) => idx[k] >= 0 ? (r[idx[k]] || '').trim() : '';
