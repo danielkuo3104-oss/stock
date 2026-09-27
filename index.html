@@ -798,62 +798,54 @@
             <div id="barLimitDown" class="h-full bg-limitDown rounded-r-full transition-all duration-500" style="width: 0%" title="跌停"></div>
           </div>
         </div>
+
+        <!-- 💡 大盤成交量能（內嵌於加權指數卡） -->
+        <div id="volModule" class="pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2 min-w-0 text-[11px] sm:text-xs">
+              <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5 shrink-0">
+                <i class="fa-solid fa-chart-simple text-brand-500"></i>
+                <span>成交量能</span>
+              </span>
+              <span class="text-[10px] text-slate-400 hidden sm:inline">單位：億元（已排除休市重複值）</span>
+              <span id="volFreshBadge"></span>
+            </div>
+            <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex text-[10px] shrink-0">
+              <button id="btnVolRange_20" onclick="setVolRange(20)" class="px-2 py-0.5 rounded-md text-slate-500 transition">20日</button>
+              <button id="btnVolRange_60" onclick="setVolRange(60)" class="px-2 py-0.5 rounded-md text-slate-500 transition">60日</button>
+              <button id="btnVolRange_120" onclick="setVolRange(120)" class="hidden sm:block px-2 py-0.5 rounded-md text-slate-500 transition">120日</button>
+            </div>
+          </div>
+          <div id="volStatsRow" class="flex flex-wrap items-baseline gap-x-4 gap-y-1 text-[11px] font-mono"></div>
+          <div id="volChartBox" class="relative w-full h-[120px] sm:h-[150px] overflow-hidden">
+            <div id="volChartSvg" class="absolute inset-0"></div>
+            <div id="volTooltip" class="hidden absolute z-10 top-0 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>
+          </div>
+          <div class="flex items-center justify-end gap-3 text-[10px] text-slate-500 dark:text-slate-400">
+            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-sm bg-slate-300 dark:bg-slate-600"></span>成交值</span>
+            <span class="flex items-center gap-1"><span class="w-3.5 h-0.5 rounded bg-brand-500"></span>5日均</span>
+            <span class="flex items-center gap-1"><span class="w-3.5 border-t-2 border-dashed border-amber-500"></span>20日均</span>
+          </div>
+        </div>
       </section>
 
-      <!-- 💡 市場情報：盤前快報 / 盤後總結 + 大盤量能 -->
-      <section id="marketIntelSection" class="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-6">
-        <!-- 盤前 / 盤後 分頁卡 -->
-        <div class="lg:col-span-3 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
-            <div class="min-w-0">
-              <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
-                <i class="fa-solid fa-earth-asia text-brand-500"></i>
-                <span>市場情報</span>
-              </h2>
-              <p id="intelTimestamp" class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5 font-mono">載入中...</p>
-            </div>
-            <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 flex text-xs shrink-0">
-              <button id="btnIntelPre" onclick="switchIntelTab('pre', true)" class="px-3 py-1 rounded-lg font-bold bg-brand-600 text-white transition">盤前快報</button>
-              <button id="btnIntelPost" onclick="switchIntelTab('post', true)" class="px-3 py-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">盤後總結</button>
-            </div>
-          </div>
-          <div id="intelPreView" class="space-y-4">
-            <div class="py-8 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>盤前資料載入中...</div>
-          </div>
-          <div id="intelPostView" class="space-y-4 hidden">
-            <div class="py-8 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>盤後資料載入中...</div>
-          </div>
-        </div>
-
-        <!-- 大盤量能卡 -->
-        <div class="lg:col-span-2 min-w-0 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-3 flex flex-col">
-          <div class="flex items-center justify-between gap-2 flex-wrap">
+      <!-- 💡 市場情報：盤前快報 / 盤後總結（單一卡片，統一報價磚樣式） -->
+      <section id="marketIntelSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
+        <div class="flex items-start justify-between gap-3">
+          <div class="min-w-0">
             <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
-              <i class="fa-solid fa-chart-column text-amber-500"></i>
-              <span>大盤成交量能</span>
-              <span class="text-[10px] font-normal text-slate-400">(億)</span>
+              <i class="fa-solid fa-earth-asia text-brand-500"></i>
+              <span>市場情報</span>
             </h2>
-            <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex text-[10px] shrink-0">
-              <button id="btnVolRange_20" onclick="setVolRange(20)" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">20日</button>
-              <button id="btnVolRange_60" onclick="setVolRange(60)" class="px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition">60日</button>
-              <button id="btnVolRange_120" onclick="setVolRange(120)" class="px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">120日</button>
-            </div>
+            <div id="intelMeta" class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">載入中...</div>
           </div>
-
-          <div id="volStatsRow" class="grid grid-cols-4 gap-1.5 sm:gap-2 text-center"></div>
-
-          <div class="relative flex-1 min-h-[180px] sm:min-h-[200px]" id="volChartBox">
-            <div id="volChartSvg" class="absolute inset-0"></div>
-            <div id="volTooltip" class="hidden absolute z-10 pointer-events-none bg-slate-900 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>
-          </div>
-          <div id="volDatesLegend" class="flex justify-between text-[9px] text-slate-400 font-mono px-1 -mt-1"></div>
-
-          <div class="flex items-center justify-center gap-4 text-[10px] text-slate-500 dark:text-slate-400 pt-1">
-            <span class="flex items-center space-x-1"><span class="w-2.5 h-2.5 rounded-sm bg-amber-500/70"></span><span>當日成交</span></span>
-            <span class="flex items-center space-x-1"><span class="w-4 h-0.5 bg-blue-500 rounded"></span><span>5日均量</span></span>
-            <span class="flex items-center space-x-1"><span class="w-4 border-t-2 border-dashed border-violet-500"></span><span>20日均量</span></span>
+          <div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-xl border border-slate-200 dark:border-slate-800 flex text-[11px] sm:text-xs shrink-0">
+            <button id="btnIntelPre" onclick="switchIntelTab('pre', true)" class="px-2.5 sm:px-3 py-1 rounded-lg font-bold bg-brand-600 text-white transition">盤前</button>
+            <button id="btnIntelPost" onclick="switchIntelTab('post', true)" class="px-2.5 sm:px-3 py-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition">盤後</button>
           </div>
         </div>
+        <div id="intelPreView" class="space-y-4"></div>
+        <div id="intelPostView" class="space-y-4 hidden"></div>
       </section>
 
       <!-- 今日熱門 Top 10 方塊 -->
@@ -1820,16 +1812,32 @@
 
     async function fetchAndParseCsv(isSilent = false) {
       try {
-        const cacheBuster = '&_t=' + new Date().getTime();
-        const res = await fetch(CSV_STOCKS_URL + cacheBuster);
-        const text = await res.text();
+        const text = await fetchCsvText(CSV_STOCKS_URL, 15000);
         parseCsvData(text, isSilent);
-      } catch (e) {}
+      } catch (e) {
+        console.warn('個股資料讀取失敗', e);
+        // 保留畫面上既有資料，只提示失敗，不中斷程式
+        const ts = document.getElementById('dataTimestamp');
+        if (ts && parsedStocks.length === 0) ts.textContent = '資料讀取失敗';
+        if (parsedStocks.length === 0) {
+          const badge = document.getElementById('marketStatusBadge');
+          const dot = document.getElementById('marketStatusDot');
+          if (badge) {
+            badge.textContent = '資料無法取得';
+            badge.className = 'text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold border border-slate-500/20 whitespace-nowrap inline-flex items-center shrink-0';
+          }
+          if (dot) dot.className = 'w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-400 shrink-0';
+        }
+        const countEl = document.getElementById('tableCountInfo');
+        if (countEl) countEl.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> 個股資料暫時無法取得，請稍後按右上角刷新</span>';
+        const hot = document.getElementById('hotCardsContainer');
+        if (hot && parsedStocks.length === 0) hot.innerHTML = '<div class="col-span-full py-6 text-center text-xs text-slate-400">暫無熱門資料</div>';
+      }
     }
 
     function parseCsvData(csvText, isSilent = false) {
       const lines = csvText.split(/\r\n|\n/).filter(l => l.trim() !== '');
-      if (lines.length < 2) return;
+      if (lines.length < 2) throw new Error('資料列不足');
       rawCsvGrid = lines.map(line => parseCsvRow(line));
 
       let as11Cell = "";
@@ -3109,7 +3117,13 @@ function getDynamicColorTier(rawPct) {
 
     // =====================================================================
     // 💡 市場情報模組：盤前快報 / 盤後總結 / 大盤成交量能
+    //    - 每個區塊獨立容錯：任一資料源失敗只顯示提示，不影響其他區塊
+    //    - 每個區塊標示資料日期與「當日 / 非當日」狀態
     // =====================================================================
+    let intelMoreOpen = false;
+    let volResizeObserver = null;
+    let volRangeInitialized = false;
+
     function escHtml(str) {
       return String(str ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
@@ -3120,8 +3134,8 @@ function getDynamicColorTier(rawPct) {
     }
 
     function signColorClass(v) {
-      if (v === null || v === undefined) return 'text-slate-400';
-      return v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-400');
+      if (v === null || v === undefined || isNaN(v)) return 'text-slate-500 dark:text-slate-400';
+      return v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
     }
 
     function withPlus(str, v) {
@@ -3130,63 +3144,128 @@ function getDynamicColorTier(rawPct) {
       return (v > 0 && !t.startsWith('+')) ? '+' + t : t;
     }
 
-    // 「台指期貨近月 (WTX)」→ { main: 台指期貨近月, code: WTX }
     function splitNameCode(name) {
       const m = String(name).match(/^(.*?)\s*[\(（](.+?)[\)）]\s*$/);
       return m ? { main: m[1].trim(), code: m[2].trim() } : { main: String(name).trim(), code: '' };
     }
 
-    async function fetchCsvText(url) {
-      const res = await fetch(url + '&_t=' + Date.now());
-      if (!res.ok) throw new Error('HTTP ' + res.status);
-      return await res.text();
+    // ---------- 日期 / 休市判斷 ----------
+    function normDate(str) {
+      const m = String(str ?? '').match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
+      return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+    }
+
+    function taipeiTodayStr() {
+      try {
+        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+      } catch (e) {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      }
+    }
+
+    function getTodayMarketState() {
+      const today = taipeiTodayStr();
+      let weekday = new Date(today + 'T12:00:00+08:00').getUTCDay();
+      const holiday = (holidaysList || []).find(h => normDate(h.date) === today);
+      if (holiday) return { today, closed: true, reason: holiday.name || '國定假日' };
+      if (weekday === 0 || weekday === 6) return { today, closed: true, reason: '週末' };
+      return { today, closed: false, reason: '' };
+    }
+
+    function shortDate(d) { return d ? d.slice(5).replace('-', '/') : '--'; }
+
+    function freshBadgeHtml(dataDate) {
+      const st = getTodayMarketState();
+      if (!dataDate) {
+        return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">日期未知</span>`;
+      }
+      if (dataDate === st.today) {
+        return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">當日</span>`;
+      }
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">非當日</span>`;
+    }
+
+    function freshNoteText(dataDate) {
+      const st = getTodayMarketState();
+      if (dataDate && dataDate === st.today) return '';
+      if (st.closed) return `今日休市（${st.reason}），顯示最近一次資料`;
+      return '今日資料尚未更新，顯示最近一次資料';
+    }
+
+    // ---------- 共用：安全抓取 CSV（逾時、非 CSV 內容都視為失敗）----------
+    async function fetchCsvText(url, timeoutMs = 12000) {
+      const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
+      const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
+      try {
+        const res = await fetch(url + '&_t=' + Date.now(), ctl ? { signal: ctl.signal } : {});
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const text = await res.text();
+        if (!text || /^\s*<(!doctype|html)/i.test(text)) throw new Error('非 CSV 內容');
+        return text;
+      } finally {
+        if (timer) clearTimeout(timer);
+      }
+    }
+
+    function emptyStateHtml(msg, isError) {
+      return `<div class="py-6 text-center text-[11px] sm:text-xs ${isError ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}">
+        <i class="fa-solid ${isError ? 'fa-triangle-exclamation' : 'fa-inbox'} mr-1"></i>${msg}
+      </div>`;
     }
 
     async function loadMarketIntel() {
-      const [pre, vol, post] = await Promise.allSettled([
-        fetchCsvText(CSV_PREMARKET_URL),
-        fetchCsvText(CSV_VOLUME_URL),
-        fetchCsvText(CSV_POSTMARKET_URL)
-      ]);
-
-      const failBox = (msg) => `<div class="py-8 text-center text-xs text-slate-400"><i class="fa-solid fa-circle-exclamation mr-1 text-amber-500"></i>${msg}</div>`;
+      let pre, vol, post;
+      try {
+        [pre, vol, post] = await Promise.allSettled([
+          fetchCsvText(CSV_PREMARKET_URL),
+          fetchCsvText(CSV_VOLUME_URL),
+          fetchCsvText(CSV_POSTMARKET_URL)
+        ]);
+      } catch (e) { return; }
 
       try {
         if (pre.status !== 'fulfilled') throw pre.reason;
         renderPreMarket(parsePreMarket(pre.value));
       } catch (e) {
-        document.getElementById('intelPreView').innerHTML = failBox('盤前快報暫時無法取得，請稍後刷新');
+        preMarketTime = '';
+        safeSetHtml('intelPreView', emptyStateHtml('盤前快報暫時無法取得，請稍後按右上角刷新', true));
       }
 
       try {
         if (post.status !== 'fulfilled') throw post.reason;
         renderPostMarket(parsePostMarket(post.value));
       } catch (e) {
-        document.getElementById('intelPostView').innerHTML = failBox('盤後總結暫時無法取得，請稍後刷新');
+        lastPostMarketData = null;
+        postMarketTime = '';
+        safeSetHtml('intelPostView', emptyStateHtml('盤後總結暫時無法取得，請稍後按右上角刷新', true));
       }
 
       try {
         if (vol.status !== 'fulfilled') throw vol.reason;
         marketVolumeSeries = parseVolumeSeries(vol.value);
-        renderVolumeModule();
       } catch (e) {
-        document.getElementById('volChartSvg').innerHTML = failBox('量能紀錄暫時無法取得');
+        marketVolumeSeries = [];
       }
+      try { renderVolumeModule(); } catch (e) { console.warn('量能模組繪製失敗', e); }
 
-      if (!intelTabManual) switchIntelTab(getAutoIntelTab(), false);
-      else switchIntelTab(currentIntelTab, false);
+      switchIntelTab(intelTabManual ? currentIntelTab : getAutoIntelTab(), false);
     }
 
-    // 交易日 13:30 前預設顯示盤前，其餘時間顯示盤後
+    function safeSetHtml(id, html) {
+      const el = document.getElementById(id);
+      if (el) el.innerHTML = html;
+    }
+
+    // 交易日 13:30 前預設盤前，其餘（含休市日）預設盤後
     function getAutoIntelTab() {
       try {
-        const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Taipei', hour12: false, weekday: 'short', hour: '2-digit', minute: '2-digit' }).formatToParts(new Date());
-        const get = t => (parts.find(p => p.type === t) || {}).value;
-        const wd = get('weekday');
-        const h = parseInt(get('hour'), 10) % 24;
-        const m = parseInt(get('minute'), 10);
-        const isWeekday = !['Sat', 'Sun'].includes(wd);
-        if (isWeekday && (h < 13 || (h === 13 && m < 30))) return 'pre';
+        const st = getTodayMarketState();
+        if (st.closed) return 'post';
+        const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Taipei', hour12: false, hour: '2-digit', minute: '2-digit' }).formatToParts(new Date());
+        const h = parseInt((parts.find(p => p.type === 'hour') || {}).value, 10) % 24;
+        const m = parseInt((parts.find(p => p.type === 'minute') || {}).value, 10);
+        if (h < 13 || (h === 13 && m < 30)) return 'pre';
       } catch (e) {}
       return 'post';
     }
@@ -3194,15 +3273,81 @@ function getDynamicColorTier(rawPct) {
     function switchIntelTab(tab, manual) {
       if (manual) intelTabManual = true;
       currentIntelTab = tab;
-      const on = 'px-3 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
-      const off = 'px-3 py-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition';
-      document.getElementById('btnIntelPre').className = tab === 'pre' ? on : off;
-      document.getElementById('btnIntelPost').className = tab === 'post' ? on : off;
-      document.getElementById('intelPreView').classList.toggle('hidden', tab !== 'pre');
-      document.getElementById('intelPostView').classList.toggle('hidden', tab !== 'post');
-      const ts = document.getElementById('intelTimestamp');
-      if (tab === 'pre') ts.textContent = preMarketTime ? `盤前資料時間：${preMarketTime}` : '盤前資料';
-      else ts.textContent = postMarketTime ? `盤後資料更新：${postMarketTime}` : '盤後資料';
+      const on = 'px-2.5 sm:px-3 py-1 rounded-lg font-bold bg-brand-600 text-white transition';
+      const off = 'px-2.5 sm:px-3 py-1 rounded-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition';
+      const bPre = document.getElementById('btnIntelPre');
+      const bPost = document.getElementById('btnIntelPost');
+      if (bPre) bPre.className = tab === 'pre' ? on : off;
+      if (bPost) bPost.className = tab === 'post' ? on : off;
+      document.getElementById('intelPreView')?.classList.toggle('hidden', tab !== 'pre');
+      document.getElementById('intelPostView')?.classList.toggle('hidden', tab !== 'post');
+      renderIntelMeta();
+    }
+
+    function renderIntelMeta() {
+      const box = document.getElementById('intelMeta');
+      if (!box) return;
+      let label, timeText, dataDate;
+      if (currentIntelTab === 'pre') {
+        label = '盤前快報';
+        timeText = preMarketTime;
+        dataDate = normDate(preMarketTime);
+      } else {
+        label = '盤後總結';
+        const d = lastPostMarketData;
+        dataDate = d ? (d.tradeDate || normDate(d.updated)) : '';
+        timeText = d ? `交易日 ${shortDate(dataDate)}${d.updated ? ' · 更新 ' + d.updated.replace(/^\d{4}-/, '').replace('-', '/') : ''}` : '';
+      }
+      if (!timeText) {
+        box.innerHTML = `<span>${label}：資料暫無</span>`;
+        return;
+      }
+      const note = freshNoteText(dataDate);
+      box.innerHTML = `
+        <span class="font-mono">${label}｜${escHtml(timeText)}</span>
+        ${freshBadgeHtml(dataDate)}
+        ${note ? `<span class="text-slate-400">${escHtml(note)}</span>` : ''}`;
+    }
+
+    function toggleIntelMore() {
+      intelMoreOpen = !intelMoreOpen;
+      document.querySelectorAll('.intel-more').forEach(el => el.classList.toggle('hidden', !intelMoreOpen));
+      document.querySelectorAll('.intel-more-btn').forEach(btn => {
+        btn.innerHTML = intelMoreOpen
+          ? '<i class="fa-solid fa-chevron-up mr-1"></i>收合'
+          : `<i class="fa-solid fa-chevron-down mr-1"></i>${btn.dataset.label}`;
+      });
+    }
+
+    // ---------- 統一報價磚（全站一致樣式） ----------
+    function quoteTile({ label, code = '', value = '--', changeText = '', changeNum = null, sub = '', chip = '', onclick = '' }) {
+      const color = signColorClass(changeNum);
+      return `
+        <div ${onclick ? `onclick="${onclick}"` : ''} class="${onclick ? 'cursor-pointer hover:border-brand-500 ' : ''}bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2 sm:p-2.5 min-w-0 transition">
+          <div class="flex items-center justify-between gap-1">
+            <span class="text-[11px] font-bold text-slate-700 dark:text-slate-200 truncate">${escHtml(label)}</span>
+            ${code ? `<span class="text-[9px] text-slate-400 font-mono shrink-0 hidden sm:inline">${escHtml(code)}</span>` : ''}
+          </div>
+          <div class="flex items-baseline justify-between gap-1 mt-0.5">
+            <span class="stock-price text-[13px] sm:text-sm font-black font-mono truncate ${color}">${escHtml(value)}</span>
+            <span class="text-[10px] font-bold font-mono shrink-0 ${color}">${escHtml(changeText)}</span>
+          </div>
+          ${(sub || chip) ? `<div class="hidden sm:flex items-center justify-between gap-1 mt-1 text-[9px] text-slate-400 min-w-0"><span class="truncate">${escHtml(sub)}</span>${chip}</div>` : ''}
+        </div>`;
+    }
+
+    function groupBlock(title, inner, extraClass = '') {
+      return `
+        <div class="space-y-2 ${extraClass}">
+          <h3 class="text-[11px] font-bold text-slate-500 dark:text-slate-400 tracking-wide">${title}</h3>
+          ${inner}
+        </div>`;
+    }
+
+    function moreButton(count, label) {
+      return `<button onclick="toggleIntelMore()" data-label="${escHtml(label)}（${count}）" class="intel-more-btn sm:hidden w-full py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-slate-50 dark:bg-slate-950">
+        ${intelMoreOpen ? '<i class="fa-solid fa-chevron-up mr-1"></i>收合' : `<i class="fa-solid fa-chevron-down mr-1"></i>${escHtml(label)}（${count}）`}
+      </button>`;
     }
 
     // ---------- 盤前快報 ----------
@@ -3216,84 +3361,54 @@ function getDynamicColorTier(rawPct) {
         pct: (r[4] || '').trim(),
         time: (r[5] || '').trim(),
         note: (r[6] || '').trim()
-      })).filter(it => it.name && it.name !== '項目');
+      })).filter(it => it.name && it.name !== '項目' && it.price);
+    }
+
+    function rangeChip(it) {
+      const rm = it.note.match(/(\d+(?:\.\d+)?)\s*[~～]\s*(\d+(?:\.\d+)?)/);
+      const price = parseLooseNum(it.price);
+      if (!rm || price === null) return '';
+      const lo = parseFloat(rm[1]), hi = parseFloat(rm[2]);
+      if (price > hi) return `<span class="shrink-0 px-1 rounded font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400" title="${escHtml(it.note)}">偏高</span>`;
+      if (price < lo) return `<span class="shrink-0 px-1 rounded font-bold bg-sky-500/10 text-sky-600 dark:text-sky-400" title="${escHtml(it.note)}">偏低</span>`;
+      return `<span class="shrink-0 px-1 rounded bg-slate-200/70 dark:bg-slate-800 text-slate-500" title="${escHtml(it.note)}">正常</span>`;
     }
 
     function renderPreMarket(items) {
       const box = document.getElementById('intelPreView');
-      if (!items.length) { box.innerHTML = '<div class="py-8 text-center text-xs text-slate-400">暫無盤前資料</div>'; return; }
+      if (!box) return;
+      if (!items.length) { preMarketTime = ''; box.innerHTML = emptyStateHtml('暫無盤前資料'); return; }
 
       preMarketTime = (items.find(it => it.time) || {}).time || '';
       const futures = items.filter(it => it.zone.includes('期貨') || it.zone.includes('ADR'));
       const intl = items.filter(it => it.zone.includes('國際'));
       const others = items.filter(it => !futures.includes(it) && !intl.includes(it));
 
-      const futureCard = it => {
+      const toTile = it => {
         const nc = splitNameCode(it.name);
         const pv = parseLooseNum(it.pct) ?? parseLooseNum(it.chg);
-        const color = signColorClass(pv);
-        return `
-          <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 min-w-0" title="${escHtml(it.note)}">
-            <div class="flex items-center justify-between gap-1">
-              <span class="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300 truncate">${escHtml(nc.main)}</span>
-              <span class="text-[9px] text-slate-400 font-mono shrink-0">${escHtml(nc.code)}</span>
-            </div>
-            <div class="stock-price text-base sm:text-lg font-black font-mono mt-1 ${color}">${escHtml(it.price)}</div>
-            <div class="text-[10px] sm:text-[11px] font-bold font-mono ${color}">${escHtml(withPlus(it.chg, parseLooseNum(it.chg)))} (${escHtml(withPlus(it.pct, pv))})</div>
-            <div class="text-[9px] text-slate-400 mt-1 truncate">${escHtml(it.note)}</div>
-          </div>`;
+        const hasRange = /[~～]/.test(it.note);
+        return quoteTile({
+          label: nc.main, code: nc.code, value: it.price,
+          changeText: withPlus(it.pct, pv), changeNum: pv,
+          sub: hasRange ? it.note.replace(/^正常值?\s*[:：]\s*/, '參考 ') : it.note,
+          chip: rangeChip(it)
+        });
       };
 
-      const compactRow = (it, showRange) => {
-        const nc = splitNameCode(it.name);
-        const pv = parseLooseNum(it.pct) ?? parseLooseNum(it.chg);
-        const color = signColorClass(pv);
-        let chip = '';
-        if (showRange) {
-          const rm = it.note.match(/(\d+(?:\.\d+)?)\s*[~～]\s*(\d+(?:\.\d+)?)/);
-          const price = parseLooseNum(it.price);
-          if (rm && price !== null) {
-            const lo = parseFloat(rm[1]), hi = parseFloat(rm[2]);
-            if (price > hi) chip = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="${escHtml(it.note)}"><i class="fa-solid fa-arrow-up mr-0.5"></i>偏高</span>`;
-            else if (price < lo) chip = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-sky-500/15 text-sky-600 dark:text-sky-400 border border-sky-500/30" title="${escHtml(it.note)}"><i class="fa-solid fa-arrow-down mr-0.5"></i>偏低</span>`;
-            else chip = `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-medium bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400" title="${escHtml(it.note)}"><i class="fa-solid fa-check mr-0.5"></i>正常</span>`;
-          } else if (it.note) {
-            chip = `<span class="text-[9px] text-slate-400 truncate">${escHtml(it.note)}</span>`;
-          }
-        }
-        return `
-          <div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 min-w-0" title="${escHtml(it.note)}">
-            <div class="min-w-0">
-              <div class="text-[11px] sm:text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escHtml(nc.main)}</div>
-              <div class="flex items-center gap-1 mt-0.5 min-w-0">
-                <span class="text-[9px] text-slate-400 font-mono shrink-0">${escHtml(nc.code)}</span>
-                ${chip}
-              </div>
-            </div>
-            <div class="text-right shrink-0">
-              <div class="text-xs font-black font-mono text-slate-800 dark:text-slate-100">${escHtml(it.price)}</div>
-              <div class="text-[10px] font-bold font-mono ${color}">${escHtml(withPlus(it.pct, pv))}</div>
-            </div>
-          </div>`;
-      };
-
-      const block = (icon, title, inner) => `
-        <div class="space-y-2">
-          <h3 class="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5">${icon}<span>${title}</span></h3>
-          ${inner}
-        </div>`;
-
+      const extraCount = intl.length + others.length;
       box.innerHTML = [
-        futures.length ? block('<i class="fa-solid fa-moon text-indigo-400"></i>', '台指夜盤與 ADR', `<div class="grid grid-cols-2 sm:grid-cols-4 gap-2">${futures.map(futureCard).join('')}</div>`) : '',
-        intl.length ? block('<i class="fa-solid fa-globe text-brand-500"></i>', '國際指數', `<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${intl.map(it => compactRow(it, false)).join('')}</div>`) : '',
-        others.length ? block('<i class="fa-solid fa-gauge-high text-amber-500"></i>', '其他參考指標', `<div class="grid grid-cols-2 sm:grid-cols-3 gap-2">${others.map(it => compactRow(it, true)).join('')}</div>`) : ''
+        futures.length ? groupBlock('台指夜盤・ADR', `<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">${futures.map(toTile).join('')}</div>`) : '',
+        extraCount ? moreButton(extraCount, '國際指數與參考指標') : '',
+        intl.length ? groupBlock('國際指數', `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">${intl.map(toTile).join('')}</div>`, `intel-more ${intelMoreOpen ? '' : 'hidden'} sm:block`) : '',
+        others.length ? groupBlock('其他參考指標', `<div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">${others.map(toTile).join('')}</div>`, `intel-more ${intelMoreOpen ? '' : 'hidden'} sm:block`) : ''
       ].join('');
     }
 
     // ---------- 盤後總結 ----------
     function parsePostMarket(text) {
       const rows = text.split(/\r\n|\n/).map(parseCsvRow);
-      const result = { title: '', updated: '', sections: [] };
+      const result = { title: '', updated: '', tradeDate: '', sections: [] };
       let cur = null;
       rows.forEach(r => {
         const cells = r.map(c => (c || '').trim());
@@ -3309,108 +3424,72 @@ function getDynamicColorTier(rawPct) {
         if (!cur.header) { cur.header = cells; return; }
         cur.rows.push(cells);
       });
+      // 資料交易日：取「大盤量能歷史紀錄」最新一筆
+      const volSec = result.sections.find(s => s.title.includes('量能'));
+      if (volSec && volSec.rows[0]) result.tradeDate = normDate(volSec.rows[0][0]);
       return result;
     }
 
     function renderPostMarket(data) {
       const box = document.getElementById('intelPostView');
+      if (!box) return;
       lastPostMarketData = data;
       postMarketTime = data.updated || '';
       const findSec = kw => data.sections.filter(s => s.title.includes(kw));
-
-      // 不顯示：自營商 / 投信 / 主力 買賣超排行
       const isExcluded = t => /自營商買賣超排行|投信買賣超排行|主力買賣超排行/.test(t);
-
       const parts = [];
-      const statusMatch = data.title.match(/[\(（](.+?)[\)）]/);
-      if (statusMatch) {
-        parts.push(`<div class="flex items-center gap-2 text-[11px]"><span class="px-2 py-0.5 rounded-full font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20"><i class="fa-solid fa-calendar-xmark mr-1"></i>${escHtml(statusMatch[1])}</span><span class="text-slate-400">盤面為最近一個交易日收盤資料</span></div>`);
-      }
 
-      // 三大法人
+      // 三大法人（統一報價磚）
       const instSec = findSec('三大法人')[0];
-      let instHtml = '';
       if (instSec) {
         const list = instSec.rows.map(r => ({ name: r[0], val: parseLooseNum(r[1]) })).filter(x => x.name && x.val !== null);
-        const total = list.find(x => x.name.includes('合計'));
-        const items = list.filter(x => !x.name.includes('合計'));
-        const maxAbs = Math.max(...items.map(x => Math.abs(x.val)), 1);
-        const shortName = n => n.replace('及陸資', '').replace('自營商', '自營商');
-        instHtml = `
-          <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 space-y-3 min-w-0">
-            <div class="flex items-center justify-between gap-2">
-              <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center space-x-1.5"><i class="fa-solid fa-building-columns text-brand-500"></i><span>三大法人買賣超</span><span class="text-[10px] font-normal text-slate-400">(億元)</span></h3>
-              ${total ? `<span class="text-xs font-black font-mono ${signColorClass(total.val)}">合計 ${total.val > 0 ? '+' : ''}${total.val.toFixed(2)}</span>` : ''}
-            </div>
-            <div class="space-y-2.5">
-              ${items.map(x => {
-                const w = Math.max((Math.abs(x.val) / maxAbs) * 50, 1.5);
-                const left = x.val < 0 ? 50 - w : 50;
-                const barColor = x.val > 0 ? 'bg-stockRed' : (x.val < 0 ? 'bg-stockGreen' : 'bg-slate-400');
-                return `
-                  <div class="grid grid-cols-[52px_1fr_62px] items-center gap-2 text-[11px]">
-                    <span class="font-semibold text-slate-600 dark:text-slate-300 truncate">${escHtml(shortName(x.name))}</span>
-                    <div class="relative h-3 bg-slate-200/70 dark:bg-slate-800 rounded-full overflow-hidden">
-                      <div class="absolute inset-y-0 left-1/2 w-px bg-slate-400/70"></div>
-                      <div class="absolute inset-y-0.5 rounded-full ${barColor}" style="left:${left}%; width:${w}%"></div>
-                    </div>
-                    <span class="text-right font-mono font-bold ${signColorClass(x.val)}">${x.val > 0 ? '+' : ''}${x.val.toFixed(2)}</span>
-                  </div>`;
-              }).join('')}
-            </div>
-            <div class="flex justify-between text-[9px] text-slate-400"><span>◀ 賣超</span><span>買超 ▶</span></div>
-          </div>`;
+        if (list.length) {
+          const tiles = list.map(x => {
+            const isTotal = x.name.includes('合計');
+            return quoteTile({
+              label: isTotal ? '三大法人合計' : x.name.replace('及陸資', ''),
+              value: (x.val > 0 ? '+' : '') + x.val.toFixed(2),
+              changeText: x.val > 0 ? '買超' : (x.val < 0 ? '賣超' : '持平'),
+              changeNum: x.val,
+              sub: '單位：億元'
+            });
+          }).join('');
+          parts.push(groupBlock('三大法人買賣超', `<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">${tiles}</div>`));
+        }
       }
 
       // 前五大權值股
       const capSec = findSec('權值股')[0];
-      let capHtml = '';
       if (capSec) {
         const rows = capSec.rows.filter(r => r[1]);
-        capHtml = `
-          <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 space-y-2 min-w-0">
-            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center space-x-1.5"><i class="fa-solid fa-crown text-amber-500"></i><span>前五大權值股</span></h3>
-            <div class="divide-y divide-slate-200/70 dark:divide-slate-800">
-              ${rows.map(r => {
-                const m = r[1].match(/^(\S+)\s+(.+)$/);
-                const sid = m ? m[1] : '';
-                const sname = m ? m[2] : r[1];
-                const v = parseLooseNum(r[4]) ?? parseLooseNum(r[3]);
-                const color = signColorClass(v);
-                const clickable = sid && parsedStocks.some(st => st.id === sid);
-                return `
-                  <div ${clickable ? `onclick="openStockModal('${escHtml(sid)}')"` : ''} class="flex items-center justify-between gap-2 py-1.5 text-[11px] ${clickable ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-900 rounded-lg px-1 -mx-1 transition' : ''}">
-                    <div class="flex items-center gap-2 min-w-0">
-                      <span class="w-4 text-center text-[10px] font-black text-slate-400 font-mono">${escHtml(r[0])}</span>
-                      <span class="font-bold text-slate-800 dark:text-slate-100 truncate">${escHtml(sname)}</span>
-                      <span class="text-[9px] text-slate-400 font-mono">${escHtml(sid)}</span>
-                    </div>
-                    <div class="flex items-center gap-2 font-mono shrink-0">
-                      <span class="font-black ${color}">${escHtml(r[2])}</span>
-                      <span class="font-bold w-14 text-right ${color}">${escHtml(withPlus(r[4], v))}</span>
-                    </div>
-                  </div>`;
-              }).join('')}
-            </div>
-          </div>`;
+        if (rows.length) {
+          const tiles = rows.map(r => {
+            const m = r[1].match(/^(\S+)\s+(.+)$/);
+            const sid = m ? m[1] : '';
+            const sname = m ? m[2] : r[1];
+            const v = parseLooseNum(r[4]) ?? parseLooseNum(r[3]);
+            const clickable = sid && parsedStocks.some(st => st.id === sid);
+            return quoteTile({
+              label: sname, code: sid, value: r[2] || '--',
+              changeText: withPlus(r[4], v), changeNum: v,
+              sub: `漲跌 ${withPlus(r[3], parseLooseNum(r[3]))}`,
+              onclick: clickable ? `openStockModal('${escHtml(sid)}')` : ''
+            });
+          }).join('');
+          parts.push(groupBlock('前五大權值股', `<div class="grid grid-cols-3 lg:grid-cols-5 gap-2">${tiles}</div>`));
+        }
       }
 
-      if (instHtml || capHtml) parts.push(`<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">${instHtml}${capHtml}</div>`);
-
-      // 外資買賣超排行（若試算表有獨立區塊才顯示）
+      // 外資買賣超排行：試算表有獨立區塊才顯示
       const foreignSec = data.sections.find(s => s.title.includes('外資') && s.title.includes('排行') && !isExcluded(s.title));
       if (foreignSec) {
         const rows = foreignSec.rows.filter(r => r[1] || r[5]);
-        const side = (idx, label, icon) => `
-          <div class="space-y-1 min-w-0">
-            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">${icon} ${label}</div>
-            ${rows.map(r => r[idx] ? `<div class="flex justify-between gap-2 text-[11px]"><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(r[idx])}</span><span class="font-mono shrink-0 ${signColorClass(parseLooseNum(r[idx + 2]))}">${escHtml(r[idx + 2])}</span></div>` : '').join('')}
+        const side = (idx, label) => `
+          <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 space-y-1 min-w-0">
+            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">${label}</div>
+            ${rows.map(r => r[idx] ? `<div class="flex justify-between gap-2 text-[11px]"><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(r[idx])}</span><span class="font-mono shrink-0 ${signColorClass(parseLooseNum(r[idx + 2]))}">${escHtml(r[idx + 2] || '')}</span></div>` : '').join('')}
           </div>`;
-        parts.push(`
-          <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 sm:p-4 space-y-2">
-            <h3 class="text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center space-x-1.5"><i class="fa-solid fa-plane-arrival text-sky-500"></i><span>${escHtml(foreignSec.title)}</span></h3>
-            <div class="grid grid-cols-2 gap-3">${side(1, '買超', '<i class="fa-solid fa-caret-up text-stockRed"></i>')}${side(5, '賣超', '<i class="fa-solid fa-caret-down text-stockGreen"></i>')}</div>
-          </div>`);
+        parts.push(groupBlock(escHtml(foreignSec.title), `<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${side(1, '買超')}${side(5, '賣超')}</div>`));
       }
 
       // 國際市場參考：取最後一個區塊，略過解析失敗與錯位列
@@ -3419,158 +3498,186 @@ function getDynamicColorTier(rawPct) {
       if (intlSec) {
         const rows = intlSec.rows.filter(r => r[0] && r[1] && !/^\d+$/.test(r[0]) && !r[1].includes('失敗'));
         if (rows.length) {
-          parts.push(`
-            <div class="space-y-2">
-              <h3 class="text-[11px] sm:text-xs font-bold text-slate-500 dark:text-slate-400 flex items-center space-x-1.5"><i class="fa-solid fa-globe text-brand-500"></i><span>國際市場參考</span></h3>
-              <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                ${rows.map(r => {
-                  const v = parseLooseNum(r[3]) ?? parseLooseNum(r[2]);
-                  return `
-                    <div class="p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 min-w-0">
-                      <div class="text-[10px] sm:text-[11px] font-bold text-slate-600 dark:text-slate-300 truncate">${escHtml(r[0])}</div>
-                      <div class="flex items-baseline justify-between gap-1 mt-0.5">
-                        <span class="text-xs font-black font-mono text-slate-800 dark:text-slate-100 truncate">${escHtml(r[1])}</span>
-                        <span class="text-[10px] font-bold font-mono shrink-0 ${signColorClass(v)}">${escHtml(withPlus(r[3], v))}</span>
-                      </div>
-                    </div>`;
-                }).join('')}
-              </div>
-            </div>`);
+          const tiles = rows.map(r => {
+            const v = parseLooseNum(r[3]) ?? parseLooseNum(r[2]);
+            return quoteTile({ label: r[0], value: r[1], changeText: withPlus(r[3], v), changeNum: v });
+          }).join('');
+          parts.push(moreButton(rows.length, '國際市場參考'));
+          parts.push(groupBlock('國際市場參考', `<div class="grid grid-cols-2 lg:grid-cols-4 gap-2">${tiles}</div>`, `intel-more ${intelMoreOpen ? '' : 'hidden'} sm:block`));
         }
       }
 
-      box.innerHTML = parts.length ? parts.join('') : '<div class="py-8 text-center text-xs text-slate-400">暫無盤後資料</div>';
+      box.innerHTML = parts.length ? parts.join('') : emptyStateHtml('暫無盤後資料');
+      if (currentIntelTab === 'post') renderIntelMeta();
     }
 
     // ---------- 大盤成交量能 ----------
+    // 依日期排序後，若與前一筆成交值完全相同，視為休市沿用前值 → 排除
     function parseVolumeSeries(text) {
       const map = new Map();
       text.split(/\r\n|\n/).forEach(line => {
         if (!line.trim()) return;
         const r = parseCsvRow(line);
-        const d = (r[0] || '').trim().replace(/\//g, '-');
-        const dm = d.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
-        if (!dm) return;
+        const key = normDate(r[0]);
+        if (!key) return;
         const v = parseLooseNum(r[1]);
         if (v === null || v <= 0) return;
-        const key = `${dm[1]}-${dm[2].padStart(2, '0')}-${dm[3].padStart(2, '0')}`;
         if (!map.has(key)) map.set(key, v);
       });
-      const arr = [...map.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1).map(([date, val]) => ({ date, val }));
+      const sorted = [...map.entries()].sort((a, b) => a[0] < b[0] ? -1 : 1);
+      const arr = [];
+      sorted.forEach(([date, val]) => {
+        const prev = arr[arr.length - 1];
+        if (prev && Math.abs(prev.val - val) < 0.005) return;
+        arr.push({ date, val });
+      });
       const avgOf = list => list.reduce((s, p) => s + p.val, 0) / list.length;
       arr.forEach((p, i) => {
         p.ma5 = i >= 4 ? avgOf(arr.slice(i - 4, i + 1)) : null;
         p.ma20 = i >= 19 ? avgOf(arr.slice(i - 19, i + 1)) : null;
+        p.dod = i >= 1 ? ((p.val - arr[i - 1].val) / arr[i - 1].val) * 100 : null;
       });
       return arr;
     }
 
     function fmtYi(v) {
       if (v === null || v === undefined || isNaN(v)) return '--';
-      return v.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      return Math.round(v).toLocaleString('en-US');
     }
 
     function renderVolumeModule() {
       const statsRow = document.getElementById('volStatsRow');
+      const badge = document.getElementById('volFreshBadge');
+      const wrap = document.getElementById('volChartSvg');
+      if (!statsRow || !wrap) return;
+
+      if (!volRangeInitialized) {
+        currentVolRange = window.innerWidth < 640 ? 20 : 60;   // 手機預設 20 日，較精簡
+        volRangeInitialized = true;
+      }
+      setVolRangeButtons();
+
       const data = marketVolumeSeries;
       if (!data.length) {
         statsRow.innerHTML = '';
-        document.getElementById('volChartSvg').innerHTML = '<div class="py-8 text-center text-xs text-slate-400">暫無量能紀錄</div>';
+        if (badge) badge.innerHTML = '';
+        wrap.innerHTML = emptyStateHtml('量能紀錄暫時無法取得', true);
         return;
       }
       const last = data[data.length - 1];
-      const prev = data[data.length - 2];
-      const dod = prev ? ((last.val - prev.val) / prev.val) * 100 : null;
       const ratio = last.ma20 ? last.val / last.ma20 : null;
-      let ratioLabel = '持平', ratioClass = 'bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400';
-      if (ratio !== null && ratio >= 1.2) { ratioLabel = '量增'; ratioClass = 'bg-amber-500/15 text-amber-600 dark:text-amber-400'; }
-      else if (ratio !== null && ratio <= 0.8) { ratioLabel = '量縮'; ratioClass = 'bg-sky-500/15 text-sky-600 dark:text-sky-400'; }
+      let ratioLabel = '持平';
+      if (ratio !== null && ratio >= 1.2) ratioLabel = '量增';
+      else if (ratio !== null && ratio <= 0.8) ratioLabel = '量縮';
 
-      const tile = (label, value, sub) => `
-        <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-1.5 sm:p-2 min-w-0">
-          <div class="text-[9px] sm:text-[10px] text-slate-500 dark:text-slate-400 truncate">${label}</div>
-          <div class="text-xs sm:text-sm font-black font-mono text-slate-800 dark:text-slate-100 truncate">${value}</div>
-          <div class="text-[9px] font-mono truncate">${sub}</div>
-        </div>`;
-
+      if (badge) badge.innerHTML = freshBadgeHtml(last.date);
+      const dodTxt = last.dod === null ? '' : `${last.dod >= 0 ? '▲' : '▼'}${Math.abs(last.dod).toFixed(1)}%`;
+      const item = (label, val, extra, cls = '') => `
+        <span class="inline-flex items-baseline gap-1 ${cls}">
+          <span class="text-slate-500 dark:text-slate-400 font-sans">${label}</span>
+          <strong class="text-slate-900 dark:text-slate-100 text-xs sm:text-sm">${val}</strong>
+          ${extra ? `<span class="text-slate-500 dark:text-slate-400 text-[10px]">${extra}</span>` : ''}
+        </span>`;
       statsRow.innerHTML = [
-        tile(`最新 ${last.date.slice(5).replace('-', '/')}`, fmtYi(last.val), dod === null ? '' : `<span class="${dod >= 0 ? 'text-amber-500' : 'text-sky-500'}">${dod >= 0 ? '+' : ''}${dod.toFixed(1)}% 較前日</span>`),
-        tile('5日均量', fmtYi(last.ma5), '<span class="text-blue-500">MA5</span>'),
-        tile('20日均量', fmtYi(last.ma20), '<span class="text-violet-500">MA20</span>'),
-        tile('量比 (對20日)', ratio === null ? '--' : ratio.toFixed(2) + 'x', `<span class="px-1 rounded ${ratioClass}">${ratioLabel}</span>`)
+        item(`最新 ${shortDate(last.date)}`, fmtYi(last.val), dodTxt),
+        item('5日均', fmtYi(last.ma5), '', 'hidden sm:inline-flex'),
+        item('20日均', fmtYi(last.ma20), '', 'hidden sm:inline-flex'),
+        item('量比', ratio === null ? '--' : ratio.toFixed(2) + 'x', ratioLabel)
       ].join('');
 
       renderVolumeChart();
+
+      if (!volResizeObserver && typeof ResizeObserver !== 'undefined') {
+        let t = null;
+        volResizeObserver = new ResizeObserver(() => {
+          clearTimeout(t);
+          t = setTimeout(() => { if (marketVolumeSeries.length) renderVolumeChart(); }, 120);
+        });
+        volResizeObserver.observe(document.getElementById('volChartBox'));
+      }
+    }
+
+    function setVolRangeButtons() {
+      [20, 60, 120].forEach(k => {
+        const b = document.getElementById('btnVolRange_' + k);
+        if (!b) return;
+        const base = k === 120 ? 'hidden sm:block ' : '';
+        b.className = base + (k === currentVolRange
+          ? 'px-2 py-0.5 rounded-md font-bold bg-brand-600 text-white transition'
+          : 'px-2 py-0.5 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition');
+      });
     }
 
     function setVolRange(n) {
       currentVolRange = n;
-      [20, 60, 120].forEach(k => {
-        const b = document.getElementById('btnVolRange_' + k);
-        if (b) b.className = k === n
-          ? 'px-2 py-1 rounded-md font-bold bg-amber-500 text-white transition'
-          : 'px-2 py-1 rounded-md text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition';
-      });
-      renderVolumeChart();
+      setVolRangeButtons();
+      try { renderVolumeChart(); } catch (e) {}
+    }
+
+    function getVolLayout() {
+      const wrap = document.getElementById('volChartSvg');
+      const W = Math.max(wrap ? wrap.clientWidth : 0, 200);
+      const H = Math.max(wrap ? wrap.clientHeight : 0, 100);
+      return { W, H, padL: 34, padR: 2, padT: 8, padB: 16 };
     }
 
     function renderVolumeChart() {
       const wrap = document.getElementById('volChartSvg');
-      const legend = document.getElementById('volDatesLegend');
+      if (!wrap || wrap.offsetParent === null) return;   // 區塊隱藏時略過，顯示後由 ResizeObserver 重繪
       const data = marketVolumeSeries.slice(-currentVolRange);
-      if (!wrap || !data.length) return;
+      if (!data.length) return;
 
-      const W = Math.max(wrap.clientWidth || 440, 240);
-      const H = Math.max(wrap.clientHeight || 180, 140);
-      const padL = 36, padR = 4, padT = 8, padB = 6;
-
-      const vals = data.flatMap(d => [d.val, d.ma5, d.ma20]).filter(v => v !== null && v !== undefined);
-      const rawMax = Math.max(...vals);
-      const rough = rawMax / 4;
+      const { W, H, padL, padR, padT, padB } = getVolLayout();
+      const vals = data.flatMap(d => [d.val, d.ma5, d.ma20]).filter(v => v !== null && v !== undefined && !isNaN(v));
+      const rawMax = Math.max(...vals, 1);
+      const rough = rawMax / 3;
       const mag = Math.pow(10, Math.floor(Math.log10(rough)));
       const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(s => s >= rough) || rough;
       const yMax = Math.ceil(rawMax / step) * step;
-      const y = v => padT + (1 - v / yMax) * (H - padT - padB);
+      const baseY = H - padB;
+      const y = v => padT + (1 - v / yMax) * (baseY - padT);
 
       const slot = (W - padL - padR) / data.length;
-      const gap = slot > 6 ? 2 : 1;
+      const gap = slot > 5 ? 2 : (slot > 2.5 ? 1 : 0);
       const barW = Math.max(slot - gap, 1);
       const xc = i => padL + i * slot + slot / 2;
-
-      const fmtAxis = v => v >= 10000 ? (v / 10000).toFixed(v % 10000 === 0 ? 0 : 1) + '萬' : v.toLocaleString();
+      const fmtAxis = v => v >= 10000 ? (v / 10000).toFixed(v % 10000 === 0 ? 0 : 1) + '萬' : v.toLocaleString('en-US');
 
       let grid = '';
       for (let v = 0; v <= yMax + 1e-6; v += step) {
-        grid += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="currentColor" stroke-opacity="${v === 0 ? 0.35 : 0.12}" stroke-width="1"/>
-                 <text x="${padL - 5}" y="${y(v) + 3}" text-anchor="end" font-size="9" font-family="monospace" fill="currentColor" fill-opacity="0.6">${fmtAxis(v)}</text>`;
+        grid += `<line x1="${padL}" x2="${W - padR}" y1="${y(v)}" y2="${y(v)}" stroke="currentColor" stroke-opacity="${v === 0 ? 0.3 : 0.1}"/>
+                 <text x="${padL - 5}" y="${y(v) + 3}" text-anchor="end" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.7">${fmtAxis(v)}</text>`;
       }
 
       const bars = data.map((d, i) => {
         const top = y(d.val);
-        const h = Math.max(y(0) - top, 1);
+        const h = Math.max(baseY - top, 1);
         const isLast = i === data.length - 1;
-        return `<rect id="volBar_${i}" x="${xc(i) - barW / 2}" y="${top}" width="${barW}" height="${h}" rx="${Math.min(2, barW / 2)}" fill="#f59e0b" opacity="${isLast ? 1 : 0.55}"/>`;
+        const cls = isLast ? 'fill-brand-500' : 'fill-slate-300 dark:fill-slate-700';
+        return `<rect id="volBar_${i}" class="${cls}" data-base="${cls}" x="${(xc(i) - barW / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" rx="${Math.min(2, barW / 2)}"/>`;
       }).join('');
 
       const line = (key, color, dash) => {
-        const pts = data.map((d, i) => d[key] !== null ? `${xc(i).toFixed(1)},${y(d[key]).toFixed(1)}` : null).filter(Boolean);
-        return pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" ${dash ? 'stroke-dasharray="5 3"' : ''}/>` : '';
+        const pts = data.map((d, i) => (d[key] !== null && d[key] !== undefined) ? `${xc(i).toFixed(1)},${y(d[key]).toFixed(1)}` : null).filter(Boolean);
+        return pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="1.75" stroke-linejoin="round" stroke-linecap="round" ${dash ? 'stroke-dasharray="4 3"' : ''}/>` : '';
       };
 
-      const hits = data.map((d, i) => `<rect class="vol-hit" x="${padL + i * slot}" y="${padT}" width="${slot}" height="${H - padT - padB}" onmouseenter="showVolTip(${i})" ontouchstart="showVolTip(${i})"/>`).join('');
+      const labelIdx = [0, Math.floor((data.length - 1) / 2), data.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+      const xLabels = labelIdx.map((i, k) => {
+        const anchor = k === 0 ? 'start' : (i === data.length - 1 ? 'end' : 'middle');
+        const x = anchor === 'start' ? padL : (anchor === 'end' ? W - padR : xc(i));
+        return `<text x="${x}" y="${H - 3}" text-anchor="${anchor}" font-size="9" font-family="ui-monospace,monospace" fill="currentColor" fill-opacity="0.7">${shortDate(data[i].date)}</text>`;
+      }).join('');
+
+      const hits = data.map((d, i) => `<rect class="vol-hit" x="${(padL + i * slot).toFixed(1)}" y="${padT}" width="${slot.toFixed(1)}" height="${(baseY - padT).toFixed(1)}" onmouseenter="showVolTip(${i})" ontouchstart="showVolTip(${i})"/>`).join('');
 
       wrap.innerHTML = `
-        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="text-slate-500 dark:text-slate-400 block" onmouseleave="hideVolTip()">
-          ${grid}
-          ${bars}
-          ${line('ma20', '#8b5cf6', true)}
+        <svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" class="block text-slate-400 dark:text-slate-500" onmouseleave="hideVolTip()">
+          ${grid}${bars}
+          ${line('ma20', '#f59e0b', true)}
           ${line('ma5', '#3b82f6', false)}
-          ${hits}
+          ${xLabels}${hits}
         </svg>`;
-
-      const md = s => s.slice(5).replace('-', '/');
-      legend.style.paddingLeft = padL + 'px';
-      legend.innerHTML = `<span>${md(data[0].date)}</span><span>${md(data[Math.floor(data.length / 2)].date)}</span><span class="text-amber-500 font-bold">${md(data[data.length - 1].date)}</span>`;
     }
 
     function showVolTip(i) {
@@ -3581,39 +3688,26 @@ function getDynamicColorTier(rawPct) {
       if (!d || !tip || !wrap) return;
       data.forEach((_, k) => {
         const b = document.getElementById('volBar_' + k);
-        if (b) b.setAttribute('opacity', k === i ? 1 : (k === data.length - 1 ? 0.8 : 0.4));
+        if (b) b.setAttribute('class', k === i ? 'fill-slate-500 dark:fill-slate-400' : b.dataset.base);
       });
       tip.innerHTML = `
-        <div class="font-bold text-amber-400 mb-0.5">${d.date}</div>
-        <div>成交 <strong>${fmtYi(d.val)}</strong> 億</div>
-        <div class="text-blue-300">MA5 ${fmtYi(d.ma5)}</div>
-        <div class="text-violet-300">MA20 ${fmtYi(d.ma20)}</div>`;
+        <div class="font-bold text-slate-300 mb-0.5">${d.date}</div>
+        <div>成交 <strong class="text-white">${fmtYi(d.val)}</strong> 億${d.dod !== null ? ` <span class="text-slate-400">(${d.dod >= 0 ? '+' : ''}${d.dod.toFixed(1)}%)</span>` : ''}</div>
+        <div class="text-blue-300">5日均 ${fmtYi(d.ma5)}</div>
+        <div class="text-amber-300">20日均 ${fmtYi(d.ma20)}</div>`;
       tip.classList.remove('hidden');
-      const W = wrap.clientWidth;
-      const slot = (W - 36 - 4) / data.length;
-      const cx = 36 + i * slot + slot / 2;
+      const { W, padL, padR } = getVolLayout();
+      const slot = (W - padL - padR) / data.length;
+      const cx = padL + i * slot + slot / 2;
       const tw = tip.offsetWidth;
-      let left = cx - tw / 2;
-      left = Math.max(0, Math.min(left, W - tw));
-      tip.style.left = left + 'px';
-      tip.style.top = '0px';
+      tip.style.left = Math.max(0, Math.min(cx - tw / 2, W - tw)) + 'px';
     }
 
     function hideVolTip() {
       const tip = document.getElementById('volTooltip');
       if (tip) tip.classList.add('hidden');
-      const data = marketVolumeSeries.slice(-currentVolRange);
-      data.forEach((_, k) => {
-        const b = document.getElementById('volBar_' + k);
-        if (b) b.setAttribute('opacity', k === data.length - 1 ? 1 : 0.55);
-      });
+      document.querySelectorAll('#volChartSvg rect[data-base]').forEach(b => b.setAttribute('class', b.dataset.base));
     }
-
-    let volResizeTimer = null;
-    window.addEventListener('resize', () => {
-      clearTimeout(volResizeTimer);
-      volResizeTimer = setTimeout(() => { if (marketVolumeSeries.length) renderVolumeChart(); }, 150);
-    });
 
     // 3. 修正維護狀態切換（參數名稱改為 status）
     async function setMaintenanceStatus(isMaint) {
