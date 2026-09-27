@@ -242,6 +242,27 @@
           </div>
           <p class="text-slate-600 dark:text-slate-300">成交量極限萎縮，浮額洗淨，常為重大突破前夕。</p>
         </div>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-500 text-white border border-amber-400"><i class="fa-solid fa-crown mr-1"></i>達成新高(N)</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">收盤 &gt; 前高；N＝連續創高天數</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">收盤站上追蹤期間前高，(2) 以上代表連續多日收盤創新高。</p>
+        </div>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40"><i class="fa-solid fa-bolt mr-1"></i>本日曾破新高</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">盤中最高 &gt; 前高，收盤未站上</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">盤中曾突破前高但收盤回落，留意上檔賣壓。</p>
+        </div>
+        <div class="p-2.5 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div class="flex items-center justify-between mb-1">
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-500/10 text-orange-500 border border-orange-500/30"><i class="fa-solid fa-arrow-trend-up mr-1"></i>即將破新高</span>
+            <span class="text-slate-500 dark:text-slate-400 font-mono">收盤距前高 ≤ 3%</span>
+          </div>
+          <p class="text-slate-600 dark:text-slate-300">股價逼近前高，觀察是否帶量突破。</p>
+        </div>
       </div>
     </div>
   </div>
@@ -444,6 +465,8 @@
           <span id="modalStockVolume" class="text-base sm:text-lg font-bold font-mono text-slate-800 dark:text-slate-200">--</span>
         </div>
       </div>
+
+      <div id="modalHighInfo"></div>
 
       <div id="modalDoubleGroupContainer" class="space-y-3"></div>
 
@@ -785,6 +808,8 @@
           </div>
         </div>
 
+        <div id="indexHighStrip" class="hidden"></div>
+
         <div class="space-y-2">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] sm:text-xs gap-y-2">
             <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
@@ -876,6 +901,19 @@
         <button id="hotMoreBtn" onclick="toggleHotMore()" class="sm:hidden hidden w-full mt-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] font-semibold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900"></button>
       </section>
 
+      <!-- 💡 高點雷達（可收合） -->
+      <section id="highRadarSection" class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
+        <button onclick="toggleCollapse('highRadar')" class="w-full flex flex-wrap items-center justify-between gap-2 text-left">
+          <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
+            <i id="collapseIcon_highRadar" class="fa-solid fa-chevron-right text-[10px] text-slate-400 transition-transform w-3"></i>
+            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i><span>高點雷達</span></h2>
+            <span id="highRadarBadge"></span>
+          </div>
+          <div id="highRadarCounts" class="flex flex-wrap items-center gap-1 text-[10px]"></div>
+        </button>
+        <div id="collapseBody_highRadar" class="space-y-3"></div>
+      </section>
+
       <!-- 內容切換核心區塊 (左右滑軌支援) -->
       <section id="groupSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -923,6 +961,10 @@
             <button onclick="setTagFilter('持續量縮')" id="btnTag_持續量縮" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量縮</button>
             <button onclick="setTagFilter('十日震盪整理')" id="btnTag_十日震盪整理" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-teal-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">十日震盪整理</button>
             <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
+            <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5"></span>
+            <button onclick="setTagFilter('達成新高')" id="btnTag_達成新高" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">達成新高</button>
+            <button onclick="setTagFilter('本日曾破新高')" id="btnTag_本日曾破新高" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">本日曾破新高</button>
+            <button onclick="setTagFilter('即將破新高')" id="btnTag_即將破新高" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-orange-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">即將破新高</button>
           </div>
         </div>
 
@@ -1006,6 +1048,9 @@
     const CSV_PREMARKET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1530515700&single=true&output=csv';
     const CSV_VOLUME_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1997758148&single=true&output=csv';
     const CSV_POSTMARKET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1676239342&single=true&output=csv';
+
+    // 💡 高點追蹤：請將 Apps Script 產生的「高點追蹤」工作表發布為 CSV，並把網址貼在這裡（留空則不顯示高點功能）
+    const CSV_HIGHS_URL = '';
 
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
@@ -1136,6 +1181,7 @@
       document.getElementById('modalStockNote2').textContent = stock.note2 || '暫無產業題材說明';
 
       updateModalStarUI(stockId);
+      try { renderModalHighInfo(stock); } catch (e) {}
 
       const groups = stockMultiGroupMap[stock.id] || [{ rawGroup: stock.rawGroup, mainGroup: stock.group, subGroup: stock.subGroup, weight: stock.weight, contribution: stock.contribution, mainGroupChange: stock.groupChange }];
       document.getElementById('modalDoubleGroupContainer').innerHTML = groups.map(g => `
@@ -1218,6 +1264,7 @@
         mainMarketSection.classList.remove('hidden');
         hotSection.classList.remove('hidden');
         if (intelSection) intelSection.classList.remove('hidden');
+        renderHighRadar();
         if (marketVolumeSeries.length) requestAnimationFrame(renderVolumeChart);
         tagFilterSec.classList.remove('hidden');
 
@@ -1236,6 +1283,7 @@
         mainMarketSection.classList.add('hidden');
         hotSection.classList.add('hidden');
         if (intelSection) intelSection.classList.add('hidden');
+        document.getElementById('highRadarSection')?.classList.add('hidden');
         miniBar.classList.remove('-translate-y-full', 'opacity-0', 'pointer-events-none');
         miniBar.classList.add('translate-y-0', 'opacity-100', 'pointer-events-auto');
 
@@ -1294,6 +1342,7 @@
       if (icon) icon.classList.add('fa-spin');
       try {
         await Promise.all([fetchAndParseCsv(), loadMarketIntel()]);
+        await loadHighs();
       } catch(e) {
         console.warn("手動刷新失敗", e);
       } finally {
@@ -1827,6 +1876,7 @@
       showDisclaimerToast();
       loadMarketIntel();
       await fetchAndParseCsv();
+      loadHighs();
       pollAdminMaintenanceStatus();
       handleInitialHash();
     }
@@ -2303,6 +2353,7 @@
         }
       });
 
+      attachHighBadges();
       renderHotCards(Array.from(stockMap.values()));
       applyFilters();
       // 個股資料就緒後重繪盤後權值股，讓其可點擊開啟個股詳情
@@ -2852,7 +2903,7 @@ function getDynamicColorTier(rawPct) {
       const q = (document.getElementById('stockFilterInput')?.value || '').trim().toLowerCase();
       filteredStocks = parsedStocks.filter(s => {
         const matchesQuery = s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.rawGroup.toLowerCase().includes(q);
-        const matchesTag = (currentTab === 'sector') ? true : ((currentTagFilter === 'ALL') || (s.badges && s.badges.some(b => b.text === currentTagFilter)));
+        const matchesTag = (currentTab === 'sector') ? true : ((currentTagFilter === 'ALL') || (s.badges && s.badges.some(b => b.text === currentTagFilter || (currentTagFilter === '達成新高' && b.text.indexOf('達成新高') === 0))));
         return matchesQuery && matchesTag;
       });
 
@@ -3505,7 +3556,8 @@ function getDynamicColorTier(rawPct) {
     const COLLAPSE_DEFAULTS = {
       kline: () => window.innerWidth >= 640,   // 桌機預設展開、手機預設收合
       intelPreMore: () => false,
-      intelPostMore: () => false
+      intelPostMore: () => false,
+      highRadar: () => window.innerWidth >= 640
     };
     function isSectionOpen(key) {
       try {
@@ -4164,6 +4216,13 @@ function getDynamicColorTier(rawPct) {
                   <rect x="${(x - bodyW / 2).toFixed(1)}" y="${yTop.toFixed(1)}" width="${bodyW.toFixed(1)}" height="${Math.max(yBot - yTop, 1).toFixed(1)}" fill="${col}" rx="${bodyW > 4 ? 1 : 0}"/>`;
         });
         activeMAs.forEach(m => { svg += poly(m.k, yP, m.color, 1.5, m.dash); });
+        // 前高水平線
+        const hiInfo = getIndexHighInfo();
+        if (hiInfo && hiInfo.prevHigh >= lo && hiInfo.prevHigh <= hi) {
+          const yy = yP(hiInfo.prevHigh).toFixed(1);
+          svg += `<line x1="${padL}" x2="${W - padR}" y1="${yy}" y2="${yy}" stroke="#f59e0b" stroke-width="1" stroke-dasharray="6 3" stroke-opacity="0.9"/>
+                  <text x="${padL + 4}" y="${yy - 3}" font-size="9" font-weight="700" font-family="ui-monospace,monospace" fill="#f59e0b">前高 ${fmtPt(hiInfo.prevHigh)}</text>`;
+        }
         let hiI = -1, loI = -1;
         data.forEach((d, i) => {
           if (d.h === null) return;
@@ -4291,6 +4350,236 @@ function getDynamicColorTier(rawPct) {
       document.getElementById('volTooltip')?.classList.add('hidden');
       document.getElementById('klineCross')?.setAttribute('visibility', 'hidden');
       renderKlineLegend(marketVolumeSeries.slice(-currentVolRange).length - 1);
+    }
+
+    // =====================================================================
+    // 💡 高點追蹤（資料來源：Apps Script 產生的「高點追蹤」工作表）
+    // =====================================================================
+    let highMap = {};
+    let highsStatus = 'none';      // none | ok | error | unconfigured
+    let highsDataDate = '';
+    const highRadarExpanded = new Set();
+    const HIGH_BADGE_STYLE = {
+      new: 'bg-amber-500 text-white font-black border border-amber-400',
+      touched: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold',
+      near: 'bg-orange-500/10 text-orange-500 border border-orange-500/30 font-semibold'
+    };
+    // 前高日期可能是 yyyy-mm-dd 或「近52週」等文字
+    function fmtHighDate(d, full) {
+      if (!d) return '--';
+      return /^\d{4}-\d{2}-\d{2}$/.test(d) ? (full ? d.replace(/-/g, '/') : shortDate(d)) : d;
+    }
+    function highKind(status) {
+      const s = String(status || '');
+      if (s.indexOf('達成新高') === 0) return 'new';
+      if (s === '本日曾破新高') return 'touched';
+      if (s === '即將破新高') return 'near';
+      return '';
+    }
+
+    async function loadHighs() {
+      if (!CSV_HIGHS_URL) { highsStatus = 'unconfigured'; highMap = {}; applyHighInfo(); return; }
+      try {
+        const text = await fetchCsvText(CSV_HIGHS_URL);
+        highMap = parseHighs(text);
+        highsStatus = Object.keys(highMap).length ? 'ok' : 'error';
+      } catch (e) {
+        console.warn('高點追蹤讀取失敗', e);
+        highsStatus = 'error';
+      }
+      applyHighInfo();
+    }
+
+    function parseHighs(text) {
+      const rows = text.split(/\r\n|\n/).filter(l => l.trim()).map(parseCsvRow);
+      if (rows.length < 2) return {};
+      const hdr = rows[0].map(h => h.trim());
+      const col = name => hdr.indexOf(name);
+      const idx = {
+        code: col('代號'), name: col('名稱'), prevHigh: col('前高'), prevDate: col('前高日期'), date: col('資料日期'),
+        h: col('最高'), c: col('收盤'), status: col('狀態'), streak: col('連續新高'), gap: col('距前高%'),
+        recHigh: col('區間最高'), recDate: col('區間最高日'), updated: col('更新時間')
+      };
+      if (idx.code < 0 || idx.prevHigh < 0) return {};
+      const get = (r, k) => idx[k] >= 0 ? (r[idx[k]] || '').trim() : '';
+      const map = {};
+      let maxDate = '';
+      rows.slice(1).forEach(r => {
+        const code = get(r, 'code');
+        const prevHigh = parseLooseNum(get(r, 'prevHigh'));
+        if (!code || !prevHigh) return;
+        const date = normDate(get(r, 'date'));
+        if (date > maxDate && code !== 'TAIEX') maxDate = date;
+        const c = parseLooseNum(get(r, 'c'));
+        let gap = parseLooseNum(get(r, 'gap'));
+        if (gap === null && c) gap = (c / prevHigh - 1) * 100;
+        map[code] = {
+          code, name: get(r, 'name'), prevHigh, prevDate: normDate(get(r, 'prevDate')) || get(r, 'prevDate'), date,
+          h: parseLooseNum(get(r, 'h')), c, status: get(r, 'status'), streak: parseInt(get(r, 'streak'), 10) || 0,
+          gap, recHigh: parseLooseNum(get(r, 'recHigh')), recDate: normDate(get(r, 'recDate')) || get(r, 'recDate'), updated: get(r, 'updated')
+        };
+      });
+      highsDataDate = maxDate;
+      return map;
+    }
+
+    // 將狀態標籤附加到個股（不重繪）
+    function attachHighBadges() {
+      parsedStocks.forEach(s => {
+        s.badges = (s.badges || []).filter(b => !b.hi);
+        const h = highMap[s.id];
+        s.high = h || null;
+        const kind = h ? highKind(h.status) : '';
+        if (kind) s.badges.unshift({ text: h.status, color: HIGH_BADGE_STYLE[kind], hi: true });
+      });
+    }
+
+    function applyHighInfo() {
+      try {
+        attachHighBadges();
+        if (parsedStocks.length) applyFilters();
+        renderHighRadar();
+        renderIndexHighStrip();
+        if (marketVolumeSeries.length) renderVolumeChart();
+        if (currentModalStockId) {
+          const s = parsedStocks.find(x => x.id === String(currentModalStockId));
+          if (s) renderModalHighInfo(s);
+        }
+      } catch (e) { console.warn('高點資訊套用失敗', e); }
+    }
+
+    // 加權指數前高：優先使用追蹤表；沒有時以 K 線資料推算
+    function getIndexHighInfo() {
+      const t = highMap.TAIEX;
+      if (t && t.prevHigh) return { ...t, source: 'tracker' };
+      const s = marketVolumeSeries.filter(d => d.h !== null && d.c !== null);
+      if (s.length < 2) return null;
+      const last = s[s.length - 1];
+      let best = s[0];
+      s.slice(0, -1).forEach(d => { if (d.h > best.h) best = d; });
+      let status = '';
+      if (last.h > best.h) status = last.c > best.h ? '達成新高' : '本日曾破新高';
+      else if ((best.h - last.c) / best.h * 100 <= 3) status = '即將破新高';
+      return { code: 'TAIEX', prevHigh: best.h, prevDate: best.date, date: last.date, h: last.h, c: last.c,
+               gap: (last.c / best.h - 1) * 100, status, streak: 0, recHigh: Math.max(best.h, last.h),
+               recDate: last.h > best.h ? last.date : best.date, source: 'kline', days: s.length - 1 };
+    }
+
+    function highStatusBadgeHtml(h, size = 'text-[10px]') {
+      const kind = h ? highKind(h.status) : '';
+      if (!kind) return `<span class="px-1.5 py-0.5 rounded ${size} bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">未突破</span>`;
+      return `<span class="px-1.5 py-0.5 rounded ${size} ${HIGH_BADGE_STYLE[kind]}"><i class="fa-solid ${kind === 'new' ? 'fa-crown' : (kind === 'touched' ? 'fa-bolt' : 'fa-arrow-trend-up')} mr-1"></i>${escHtml(h.status)}</span>`;
+    }
+
+    function renderIndexHighStrip() {
+      const box = document.getElementById('indexHighStrip');
+      if (!box) return;
+      const h = getIndexHighInfo();
+      if (!h) { box.classList.add('hidden'); return; }
+      box.classList.remove('hidden');
+      const diffPts = h.c !== null && h.c !== undefined ? h.c - h.prevHigh : null;
+      const srcNote = h.source === 'tracker' ? '追蹤期間最高' : `依近 ${h.days} 個交易日 K 線推算`;
+      box.innerHTML = `
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
+          <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i>高點</span>
+          ${highStatusBadgeHtml(h)}
+          <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">前高</span> <strong class="text-slate-900 dark:text-slate-100">${fmtPt(h.prevHigh)}</strong> <span class="text-slate-400">(${escHtml(fmtHighDate(h.prevDate))})</span></span>
+          <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">距前高</span> <strong class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</strong>${diffPts !== null ? ` <span class="text-slate-400">(${diffPts > 0 ? '+' : ''}${diffPts.toFixed(2)} 點)</span>` : ''}</span>
+          ${h.streak >= 2 ? `<span class="text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日創高</span>` : ''}
+          <span class="text-[10px] text-slate-400 ml-auto hidden sm:inline">${srcNote}${h.date ? ' · 資料日 ' + shortDate(h.date) : ''}</span>
+        </div>`;
+    }
+
+    function renderModalHighInfo(stock) {
+      const box = document.getElementById('modalHighInfo');
+      if (!box) return;
+      const h = highMap[stock.id];
+      if (!h) {
+        box.innerHTML = highsStatus === 'ok' ? '<div class="text-[11px] text-slate-400 px-1">此檔尚無高點追蹤資料</div>' : '';
+        return;
+      }
+      const diff = h.c ? h.c - h.prevHigh : null;
+      const tile = (label, val, sub) => `
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-2 border border-slate-200 dark:border-slate-800 min-w-0">
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 block">${label}</span>
+          <span class="text-sm font-black font-mono block truncate">${val}</span>
+          ${sub ? `<span class="text-[9px] text-slate-400 font-mono block truncate">${sub}</span>` : ''}
+        </div>`;
+      box.innerHTML = `
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2.5">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i>高點追蹤</h4>
+            <div class="flex items-center gap-1.5">${highStatusBadgeHtml(h)}${h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            ${tile('前高', fmtPt(h.prevHigh), escHtml(fmtHighDate(h.prevDate, true)))}
+            ${tile('距前高', `<span class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
+            ${tile('當日最高', h.h ? fmtPt(h.h) : '--', h.h && h.h > h.prevHigh ? '<span class="text-amber-500">盤中過前高</span>' : (h.date ? '資料日 ' + shortDate(h.date) : ''))}
+            ${tile('追蹤區間最高', h.recHigh ? fmtPt(h.recHigh) : '--', escHtml(fmtHighDate(h.recDate, true)))}
+          </div>
+          <p class="text-[9px] text-slate-400">前高＝今日以前的最高價（起始值為近 52 週高點，之後每日滾動更新）；即將破新高＝收盤距前高 3% 以內。資料由排程於收盤後更新${h.updated ? '（' + escHtml(h.updated) + '）' : ''}。</p>
+        </div>`;
+    }
+
+    function toggleHighRadarGroup(kind) {
+      if (highRadarExpanded.has(kind)) highRadarExpanded.delete(kind); else highRadarExpanded.add(kind);
+      renderHighRadar();
+    }
+
+    function renderHighRadar() {
+      const sec = document.getElementById('highRadarSection');
+      if (!sec) return;
+      if (highsStatus === 'unconfigured' || highsStatus === 'none') { sec.classList.add('hidden'); return; }
+      sec.classList.remove('hidden');
+      const body = document.getElementById('collapseBody_highRadar');
+      const counts = document.getElementById('highRadarCounts');
+      const badge = document.getElementById('highRadarBadge');
+      applyCollapse('highRadar');
+      if (highsStatus === 'error') {
+        if (counts) counts.innerHTML = '';
+        if (badge) badge.innerHTML = '';
+        if (body) body.innerHTML = emptyStateHtml('高點追蹤資料暫時無法取得', true);
+        return;
+      }
+      const list = Object.values(highMap).filter(h => h.code !== 'TAIEX' && highKind(h.status));
+      const groups = [
+        { kind: 'new', label: '達成新高', items: list.filter(h => highKind(h.status) === 'new').sort((a, b) => b.streak - a.streak || b.gap - a.gap) },
+        { kind: 'touched', label: '本日曾破新高', items: list.filter(h => highKind(h.status) === 'touched').sort((a, b) => b.gap - a.gap) },
+        { kind: 'near', label: '即將破新高', items: list.filter(h => highKind(h.status) === 'near').sort((a, b) => b.gap - a.gap) }
+      ];
+      if (badge) badge.innerHTML = freshBadgeHtml(highsDataDate);
+      if (counts) counts.innerHTML = groups.map(g => `<span class="px-1.5 py-0.5 rounded ${HIGH_BADGE_STYLE[g.kind]}">${g.label.replace('本日', '')} ${g.items.length}</span>`).join('');
+      if (!body) return;
+
+      const LIMIT = window.innerWidth < 640 ? 6 : 14;
+      const chip = h => {
+        const s = parsedStocks.find(x => x.id === h.code);
+        const pct = s ? s.pctNum : null;
+        const right = h.status.indexOf('達成新高') === 0
+          ? `<span class="font-mono text-[10px] ${signColorClass(pct)}">${pct === null ? '' : (pct > 0 ? '+' : '') + pct.toFixed(2) + '%'}</span>${h.streak >= 2 ? `<span class="text-[9px] font-black text-amber-500">×${h.streak}</span>` : ''}`
+          : `<span class="font-mono text-[10px] ${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</span>`;
+        return `<button ${s ? `onclick="openStockModal('${escHtml(h.code)}')"` : 'disabled'} class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 ${s ? 'hover:border-brand-500' : 'opacity-60'} transition text-[11px]">
+          <span class="font-bold text-slate-800 dark:text-slate-100">${escHtml(h.name || h.code)}</span><span class="text-[9px] text-slate-400 font-mono">${escHtml(h.code)}</span>${right}</button>`;
+      };
+      body.innerHTML = `
+        <div class="text-[10px] text-slate-400 flex flex-wrap gap-x-3 gap-y-1">
+          <span>資料日 ${shortDate(highsDataDate)}${freshNoteText(highsDataDate) ? '・' + escHtml(freshNoteText(highsDataDate)) : ''}</span>
+          <span>前高＝今日以前追蹤期間最高價；即將破新高＝收盤距前高 3% 內；達成新高(N)＝連續 N 日收盤創高</span>
+        </div>
+        ${groups.map(g => {
+          const expanded = highRadarExpanded.has(g.kind);
+          const shown = expanded ? g.items : g.items.slice(0, LIMIT);
+          return `
+            <div class="space-y-1.5">
+              <div class="flex items-center gap-2 text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                <span class="px-1.5 py-0.5 rounded text-[10px] ${HIGH_BADGE_STYLE[g.kind]}">${g.label}</span>
+                <span class="text-slate-400 font-normal">${g.items.length} 檔${g.kind === 'near' ? '（依距前高由近到遠）' : ''}</span>
+              </div>
+              ${g.items.length ? `<div class="flex flex-wrap gap-1.5">${shown.map(chip).join('')}
+                ${g.items.length > LIMIT ? `<button onclick="toggleHighRadarGroup('${g.kind}')" class="px-2 py-1 rounded-lg text-[11px] font-semibold text-brand-500 hover:bg-slate-100 dark:hover:bg-slate-800">${expanded ? '收合' : `+${g.items.length - LIMIT} 檔`}</button>` : ''}
+              </div>` : '<div class="text-[11px] text-slate-400">目前沒有</div>'}
+            </div>`;
+        }).join('')}`;
     }
 
     // 3. 修正維護狀態切換（參數名稱改為 status）
