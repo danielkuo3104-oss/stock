@@ -4527,20 +4527,35 @@ function getDynamicColorTier(rawPct) {
       return `<span class="px-1.5 py-0.5 rounded ${size} ${HIGH_BADGE_STYLE[kind]}"><i class="fa-solid ${kind === 'new' ? 'fa-crown' : (kind === 'touched' ? 'fa-bolt' : 'fa-arrow-trend-up')} mr-1"></i>${escHtml(h.status)}</span>`;
     }
 
+    // 顯示用：若今日已突破，前高即更新為今日最高；距前高改以「目前最高」計算
+    function highView(h) {
+      const oldHigh = h.prevHigh, oldDate = h.prevDate;
+      const todayHigh = h.h || 0;
+      const broke = todayHigh > oldHigh;
+      const curHigh = broke ? Math.max(todayHigh, h.recHigh || 0) : oldHigh;
+      const curDate = broke ? (h.recDate && h.recHigh >= todayHigh ? h.recDate : h.date) : oldDate;
+      const c = h.c;
+      const gapCur = (c && curHigh) ? (c / curHigh - 1) * 100 : (h.gap ?? 0);
+      const diffCur = (c && curHigh) ? c - curHigh : null;
+      const breakPct = (broke && c && oldHigh) ? (c / oldHigh - 1) * 100 : null;
+      return { broke, oldHigh, oldDate, curHigh, curDate, gapCur, diffCur, breakPct };
+    }
+
     function renderIndexHighStrip() {
       const box = document.getElementById('indexHighStrip');
       if (!box) return;
       const h = getIndexHighInfo();
       if (!h) { box.classList.add('hidden'); return; }
       box.classList.remove('hidden');
-      const diffPts = h.c !== null && h.c !== undefined ? h.c - h.prevHigh : null;
+      const v = highView(h);
       const srcNote = h.source === 'tracker' ? '追蹤期間最高' : `依近 ${h.days} 個交易日 K 線推算`;
       box.innerHTML = `
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
           <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i>高點</span>
           ${highStatusBadgeHtml(h)}
-          <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">前高</span> <strong class="text-slate-900 dark:text-slate-100">${fmtPt(h.prevHigh)}</strong> <span class="text-slate-400">(${escHtml(fmtHighDate(h.prevDate))})</span></span>
-          <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">距前高</span> <strong class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</strong>${diffPts !== null ? ` <span class="text-slate-400">(${diffPts > 0 ? '+' : ''}${diffPts.toFixed(2)} 點)</span>` : ''}</span>
+          <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">前高</span> <strong class="text-slate-900 dark:text-slate-100">${fmtPt(v.curHigh)}</strong> <span class="text-slate-400">(${escHtml(fmtHighDate(v.curDate))})</span></span>
+          <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">距前高</span> <strong class="${signColorClass(v.gapCur)}">${v.gapCur > 0 ? '+' : ''}${v.gapCur.toFixed(2)}%</strong>${v.diffCur !== null ? ` <span class="text-slate-400">(${v.diffCur > 0 ? '+' : ''}${v.diffCur.toFixed(2)} 點)</span>` : ''}</span>
+          ${v.broke ? `<span class="font-mono text-amber-600 dark:text-amber-400"><span class="font-sans">突破原前高</span> ${fmtPt(v.oldHigh)}${v.breakPct !== null ? `（收盤 ${v.breakPct > 0 ? '+' : ''}${v.breakPct.toFixed(2)}%）` : ''}</span>` : ''}
           ${h.streak >= 2 ? `<span class="text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日創高</span>` : ''}
           <span class="text-[10px] text-slate-400 ml-auto hidden sm:inline">${srcNote}${h.date ? ' · 資料日 ' + shortDate(h.date) : ''}</span>
         </div>`;
@@ -4578,7 +4593,7 @@ function getDynamicColorTier(rawPct) {
       // A. 追蹤表前高（有設定高點追蹤時）
       let trackerHtml = '';
       if (h) {
-        const diff = h.c ? h.c - h.prevHigh : null;
+        const v = highView(h);
         trackerHtml = `
           <div class="space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
@@ -4586,9 +4601,11 @@ function getDynamicColorTier(rawPct) {
               <div class="flex items-center gap-1.5">${highStatusBadgeHtml(h)}${h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
             </div>
             <div class="grid grid-cols-3 gap-2">
-              ${tile('追蹤區間前高', fmtPt(h.prevHigh), escHtml(fmtHighDate(h.prevDate, true)))}
-              ${tile('距前高', `<span class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
-              ${tile('當日最高', h.h ? fmtPt(h.h) : '--', h.h && h.h > h.prevHigh ? '<span class="text-amber-500">盤中過前高</span>' : (h.date ? '資料日 ' + shortDate(h.date) : ''))}
+              ${tile('追蹤區間前高', fmtPt(v.curHigh), escHtml(fmtHighDate(v.curDate, true)) + (v.broke ? ' <span class="text-amber-500">今日創高</span>' : ''))}
+              ${tile('距前高', `<span class="${signColorClass(v.gapCur)}">${v.gapCur > 0 ? '+' : ''}${v.gapCur.toFixed(2)}%</span>`, v.diffCur !== null ? `${v.diffCur > 0 ? '+' : ''}${v.diffCur.toFixed(2)} 元` : '')}
+              ${v.broke
+                ? tile('突破原前高', `<span class="${signColorClass(v.breakPct)}">${v.breakPct > 0 ? '+' : ''}${(v.breakPct ?? 0).toFixed(2)}%</span>`, `原前高 ${fmtPt(v.oldHigh)} · ${escHtml(fmtHighDate(v.oldDate))}`)
+                : tile('當日最高', h.h ? fmtPt(h.h) : '--', h.date ? '資料日 ' + shortDate(h.date) : '')}
             </div>
           </div>`;
       }
@@ -4630,7 +4647,7 @@ function getDynamicColorTier(rawPct) {
 
       if (!trackerHtml && !tenHtml) { box.innerHTML = ''; return; }
       const note = h
-        ? `追蹤區間前高＝今日以前的最高價（起始值為近 52 週高點並反查實際日期，每日收盤後更新${h.updated ? '，' + escHtml(h.updated) : ''}）；十日高低以收盤價回推。`
+        ? `追蹤區間前高＝近一年以來的最高價，今日突破時即更新為今日最高；新高狀態以「今日以前的前高」判斷（每日收盤後更新${h.updated ? '，' + escHtml(h.updated) : ''}）；十日高低以收盤價回推。`
         : '十日高低以收盤價回推，不含盤中高低點。' + (highsStatus === 'unconfigured' ? '啟用「高點追蹤」後可顯示 52 週前高與新高狀態。' : '');
       box.innerHTML = `
         <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
