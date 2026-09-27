@@ -4418,7 +4418,8 @@ function getDynamicColorTier(rawPct) {
     // 前高日期可能是 yyyy-mm-dd 或「近52週」等文字
     function fmtHighDate(d, full) {
       if (!d) return '--';
-      return /^\d{4}-\d{2}-\d{2}$/.test(d) ? (full ? d.replace(/-/g, '/') : shortDate(d)) : d;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(d)) return '日期補查中';   // 腳本尚未補上實際日期
+      return full ? d.replace(/-/g, '/') : shortDate(d);
     }
     function highKind(status) {
       const s = String(status || '');
@@ -4581,14 +4582,13 @@ function getDynamicColorTier(rawPct) {
         trackerHtml = `
           <div class="space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
-              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">前高追蹤</span>
+              <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">新高狀態</span>
               <div class="flex items-center gap-1.5">${highStatusBadgeHtml(h)}${h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
             </div>
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-              ${tile('前高', fmtPt(h.prevHigh), escHtml(fmtHighDate(h.prevDate, true)))}
+            <div class="grid grid-cols-3 gap-2">
+              ${tile('追蹤區間前高', fmtPt(h.prevHigh), escHtml(fmtHighDate(h.prevDate, true)))}
               ${tile('距前高', `<span class="${signColorClass(h.gap)}">${h.gap > 0 ? '+' : ''}${(h.gap ?? 0).toFixed(2)}%</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
               ${tile('當日最高', h.h ? fmtPt(h.h) : '--', h.h && h.h > h.prevHigh ? '<span class="text-amber-500">盤中過前高</span>' : (h.date ? '資料日 ' + shortDate(h.date) : ''))}
-              ${tile('追蹤區間最高', h.recHigh ? fmtPt(h.recHigh) : '--', escHtml(fmtHighDate(h.recDate, true)))}
             </div>
           </div>`;
       }
@@ -4630,7 +4630,7 @@ function getDynamicColorTier(rawPct) {
 
       if (!trackerHtml && !tenHtml) { box.innerHTML = ''; return; }
       const note = h
-        ? `前高＝今日以前的最高價（起始值為近 52 週高點，每日收盤後更新${h.updated ? '，' + escHtml(h.updated) : ''}）；十日高低以收盤價回推。`
+        ? `追蹤區間前高＝今日以前的最高價（起始值為近 52 週高點並反查實際日期，每日收盤後更新${h.updated ? '，' + escHtml(h.updated) : ''}）；十日高低以收盤價回推。`
         : '十日高低以收盤價回推，不含盤中高低點。' + (highsStatus === 'unconfigured' ? '啟用「高點追蹤」後可顯示 52 週前高與新高狀態。' : '');
       box.innerHTML = `
         <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
