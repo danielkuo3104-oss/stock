@@ -115,6 +115,16 @@
     </section>
 
     <div id="memberView" class="space-y-4 sm:space-y-6 hidden">
+      <!-- 分頁切換 -->
+      <div class="flex items-center justify-between gap-2">
+        <div class="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 flex text-xs sm:text-sm shadow-sm">
+          <button id="btnTab_watch" onclick="switchPersonalTab('watch')" class="px-3 sm:px-4 py-1.5 rounded-xl font-bold bg-brand-600 text-white transition"><i class="fa-solid fa-star mr-1"></i>關注清單</button>
+          <button id="btnTab_journal" onclick="switchPersonalTab('journal')" class="px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition"><i class="fa-solid fa-book mr-1"></i>投資日誌</button>
+        </div>
+        <span class="text-[10px] text-slate-400 hidden sm:inline"><i class="fa-solid fa-lock mr-1"></i>投資日誌僅本人可見</span>
+      </div>
+
+      <div id="tabWatch" class="space-y-4 sm:space-y-6">
       <!-- 關注清單摘要 -->
       <section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
@@ -154,6 +164,10 @@
           <span class="hidden sm:inline">標籤規則與首頁一致，僅供參考，不構成投資建議</span>
         </div>
       </section>
+      </div>
+
+      <!-- 💡 投資日誌（需信箱 + 登入 token 驗證，資料只存在記憶體） -->
+      <div id="tabJournal" class="hidden space-y-4 sm:space-y-6"></div>
     </div>
   </main>
 
@@ -210,6 +224,7 @@
       userWatchlist = [...new Set(list.map(String))];
 
       document.getElementById('memberView').classList.remove('hidden');
+      if (location.hash === '#journal') setTimeout(() => switchPersonalTab('journal'), 0);
       renderSummary();
       fetchStocks();
     }
@@ -231,6 +246,11 @@
     }
 
     function logout() {
+      try {
+        if (currentUser && currentUser.token) {
+          fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify({ action: 'logout', token: currentUser.token }) }).catch(() => {});
+        }
+      } catch (e) {}
       localStorage.removeItem('sectorpulse_user');
       sessionStorage.removeItem('sectorpulse_user');
       localStorage.removeItem('sectorpulse_watchlist');
@@ -836,6 +856,505 @@
         .catch(() => { info.innerHTML = '<span class="text-rose-500 font-bold"><i class="fa-solid fa-circle-exclamation"></i> 同步失敗（已保留於本機）</span>'; })
         .finally(() => setTimeout(renderWatchCards, 1500));
     }
+
+    // =====================================================================
+    // 💡 投資日誌（個人化分頁）
+    //    - 資料由後端 getJournal 取得，需 email + 登入 token；只存在記憶體，不寫入瀏覽器儲存
+    // =====================================================================
+    const ADMIN_SHARE_EMAIL = 'danielkuo3104@gmail.com';
+    const JN_COLORS = { a: '#3b82f6', b: '#f59e0b', c: '#c026d3', d: '#0d9488', muted: '#94a3b8' };
+    const DONUT_COLORS = ['#3b82f6', '#f59e0b', '#c026d3', '#0d9488', '#6366f1', '#84cc16', '#ec4899', '#0ea5e9', '#94a3b8'];
+    let journalState = { loaded: false, loading: false, data: null, error: null, range: 60, scope: 'total', tradeFilter: 'all', tradeQuery: '', tradeLimit: 30, openHolding: null };
+    let personalTab = 'watch';
+
+    function switchPersonalTab(tab) {
+      personalTab = tab;
+      const on = 'px-3 sm:px-4 py-1.5 rounded-xl font-bold bg-brand-600 text-white transition';
+      const off = 'px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition';
+      document.getElementById('btnTab_watch').className = tab === 'watch' ? on : off;
+      document.getElementById('btnTab_journal').className = tab === 'journal' ? on : off;
+      document.getElementById('tabWatch').classList.toggle('hidden', tab !== 'watch');
+      document.getElementById('tabJournal').classList.toggle('hidden', tab !== 'journal');
+      try { history.replaceState(null, '', tab === 'journal' ? '#journal' : location.pathname); } catch (e) {}
+      if (tab === 'journal') {
+        if (!journalState.loaded && !journalState.loading) loadJournal(false);
+        else renderJournal();
+      }
+    }
+
+    async function journalPost(body) {
+      const ctl = new AbortController();
+      const timer = setTimeout(() => ctl.abort(), 25000);
+      try {
+        const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify(body), signal: ctl.signal });
+        return await res.json();
+      } finally { clearTimeout(timer); }
+    }
+
+    async function loadJournal(refresh) {
+      const box = document.getElementById('tabJournal');
+      if (!currentUser || !currentUser.token) {
+        journalState = { ...journalState, loaded: true, error: { code: 'NOTOKEN' } };
+        renderJournal(); return;
+      }
+      journalState.loading = true;
+      if (!journalState.data) box.innerHTML = jnCard('<div class="py-12 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>正在讀取你的投資日誌...</div>');
+      try {
+        const r = await journalPost({ action: 'getJournal', email: currentUser.email, token: currentUser.token, refresh: !!refresh });
+        if (r && r.success && r.journal) { journalState.data = r.journal; journalState.error = null; }
+        else journalState.error = { code: (r && r.code) || 'ERR', message: (r && r.message) || '讀取失敗' };
+      } catch (e) {
+        journalState.error = { code: 'NET', message: '連線逾時或網路異常，請稍後再試。' };
+      }
+      journalState.loading = false; journalState.loaded = true;
+      renderJournal();
+    }
+
+    async function linkJournal() {
+      const input = document.getElementById('journalUrlInput');
+      const msg = document.getElementById('journalLinkMsg');
+      const url = (input && input.value || '').trim();
+      if (!url) { msg.textContent = '請先貼上試算表網址'; return; }
+      msg.className = 'text-[11px] text-slate-500'; msg.textContent = '驗證中...';
+      try {
+        const r = await journalPost({ action: 'linkJournal', email: currentUser.email, token: currentUser.token, url });
+        if (r && r.success) { msg.className = 'text-[11px] text-emerald-500 font-bold'; msg.textContent = '連結成功，讀取中...'; journalState.data = null; await loadJournal(true); }
+        else { msg.className = 'text-[11px] text-rose-500 font-bold'; msg.textContent = (r && r.message) || '連結失敗'; if (r && r.code === 'AUTH') { journalState.error = { code: 'AUTH' }; renderJournal(); } }
+      } catch (e) { msg.className = 'text-[11px] text-rose-500 font-bold'; msg.textContent = '連線失敗，請稍後再試'; }
+    }
+
+    async function unlinkJournal() {
+      if (!confirm('確定要解除投資日誌連結嗎？（不會刪除你的試算表）')) return;
+      try { await journalPost({ action: 'unlinkJournal', email: currentUser.email, token: currentUser.token }); } catch (e) {}
+      journalState = { ...journalState, data: null, loaded: true, error: { code: 'NOLINK' } };
+      renderJournal();
+    }
+
+    // ---------- 共用 ----------
+    function jnCard(inner, extra = '') {
+      return `<section class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl ${extra}">${inner}</section>`;
+    }
+    const jnFmt = (v, d = 0) => (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+    const jnSigned = (v, d = 0) => (v === null || v === undefined || isNaN(v)) ? '--' : (v > 0 ? '+' : '') + jnFmt(v, d);
+    const jnPct = (v, d = 2) => (v === null || v === undefined || isNaN(v)) ? '--' : (v > 0 ? '+' : '') + Number(v).toFixed(d) + '%';
+    const jnCol = v => v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
+
+    function renderJournal() {
+      const box = document.getElementById('tabJournal');
+      if (!box || personalTab !== 'journal') return;
+      const err = journalState.error;
+      if (err && !journalState.data) {
+        if (err.code === 'NOTOKEN' || err.code === 'AUTH') {
+          box.innerHTML = jnCard(`
+            <div class="py-8 text-center space-y-3">
+              <i class="fa-solid fa-shield-halved text-4xl text-brand-500"></i>
+              <h3 class="text-base font-black text-slate-900 dark:text-slate-100">需要重新登入以驗證身分</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">投資日誌屬於個人資料，系統需確認「登入信箱」與「日誌擁有者」相同。${err.code === 'AUTH' ? '你的登入驗證已過期。' : '你目前的登入是舊版，尚未取得驗證憑證。'}</p>
+              <button onclick="logout()" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition">重新登入</button>
+            </div>`);
+          return;
+        }
+        if (err.code === 'NOLINK' || err.code === 'NOACCESS' || err.code === 'OWNER') {
+          box.innerHTML = jnCard(`
+            <div class="space-y-4 max-w-2xl">
+              <div>
+                <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-link text-brand-500"></i>連結你的投資日誌</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">連結後可在這裡查看資產總覽、圖表中心、持股與交易紀錄。只有你本人登入時看得到。</p>
+              </div>
+              ${err.code !== 'NOLINK' ? `<div class="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/20 rounded-xl px-3 py-2"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escHtml(err.message || '')}</div>` : ''}
+              <ol class="space-y-2 text-xs text-slate-600 dark:text-slate-300 list-decimal pl-5">
+                <li>開啟你的投資日誌試算表 →「共用」→ 加入 <code class="px-1 rounded bg-slate-100 dark:bg-slate-800 font-mono">${ADMIN_SHARE_EMAIL}</code>，權限選「檢視者」。</li>
+                <li>確認日誌「資料中心」工作表的 <b>S2（會員信箱）</b>填的是你的登入信箱：<code class="px-1 rounded bg-slate-100 dark:bg-slate-800 font-mono">${escHtml(currentUser.email)}</code></li>
+                <li>複製試算表的<b>編輯網址</b>（…/spreadsheets/d/…/edit），貼在下方並按連結。<span class="text-slate-400">不需要也不建議「發布到網路」。</span></li>
+              </ol>
+              <div class="flex flex-col sm:flex-row gap-2">
+                <input id="journalUrlInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/…/edit" class="flex-1 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
+                <button onclick="linkJournal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition">驗證並連結</button>
+              </div>
+              <p id="journalLinkMsg" class="text-[11px] text-slate-500"></p>
+            </div>`);
+          return;
+        }
+        box.innerHTML = jnCard(`<div class="py-10 text-center space-y-3"><p class="text-xs text-amber-600 dark:text-amber-400"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escHtml(err.message || '投資日誌暫時無法讀取')}</p><button onclick="loadJournal(true)" class="px-4 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-xs">重試</button></div>`);
+        return;
+      }
+      const J = journalState.data;
+      if (!J) return;
+      try { renderJournalContent(J); } catch (e) { console.warn('日誌繪製失敗', e); box.innerHTML = jnCard('<div class="py-8 text-center text-xs text-amber-600">日誌資料格式異常，請確認試算表結構。</div>'); }
+    }
+
+    function renderJournalContent(J) {
+      const box = document.getElementById('tabJournal');
+      const hist = (J.history || []).filter(h => h.tv !== null);
+      const last = hist[hist.length - 1] || {};
+      const scope = journalState.scope;
+      const k = scope === 'stock' ? { v: 'sv', day: 'sDay', cost: 'sCost', pl: 'sPl', roi: 'sRoi', div: 'sDiv', plDiv: 'sPlDiv', roiDiv: 'sRoiDiv' }
+              : scope === 'etf' ? { v: 'ev', day: 'eDay', cost: 'eCost', pl: 'ePl', roi: 'eRoi', div: 'eDiv', plDiv: 'ePlDiv', roiDiv: 'eRoiDiv' }
+              : { v: 'tv', day: 'tDay', cost: 'tCost', pl: 'tPl', roi: 'tRoi', div: 'tDiv', plDiv: 'tPlDiv', roiDiv: 'tRoiDiv' };
+      const seg = (id, cur, opts, fn) => `<div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex text-[10px] sm:text-[11px]">${opts.map(([v, l]) => `<button onclick="${fn}('${v}')" class="px-2 py-0.5 rounded-md transition ${String(cur) === String(v) ? 'font-bold bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}">${l}</button>`).join('')}</div>`;
+      const tile = (label, val, sub, cls = '') => `
+        <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 min-w-0">
+          <div class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">${label}</div>
+          <div class="text-base sm:text-lg font-black font-mono truncate ${cls}">${val}</div>
+          ${sub ? `<div class="text-[10px] font-mono truncate">${sub}</div>` : ''}
+        </div>`;
+
+      const cur = hist.length ? hist[hist.length - 1] : null;
+      const lastDate = cur ? cur.date : '';
+      const kpi = cur ? [
+        tile('總淨值', jnFmt(cur[k.v]), `<span class="text-slate-400">資料日 ${lastDate.slice(5).replace('-', '/')}</span>`),
+        tile('今日損益', `<span class="${jnCol(cur[k.day])}">${jnSigned(cur[k.day])}</span>`, cur[k.v] ? `<span class="${jnCol(cur[k.day])}">${jnPct(cur[k.day] / (cur[k.v] - cur[k.day]) * 100)}</span>` : ''),
+        tile('庫存成本', jnFmt(cur[k.cost]), ''),
+        tile('庫存損益', `<span class="${jnCol(cur[k.pl])}">${jnSigned(cur[k.pl])}</span>`, `<span class="${jnCol(cur[k.roi])}">報酬率 ${jnPct(cur[k.roi])}</span>`),
+        tile('含息報酬', `<span class="${jnCol(cur[k.plDiv])}">${jnSigned(cur[k.plDiv])}</span>`, `<span class="${jnCol(cur[k.roiDiv])}">含息報酬率 ${jnPct(cur[k.roiDiv])}</span>`),
+        tile('累計股息', jnFmt(cur[k.div]), '')
+      ].join('') : '<div class="col-span-full text-xs text-slate-400">紀錄中心沒有資料</div>';
+
+      const holdings = (J.holdings || []);
+      const active = holdings.filter(h => h.shares > 0);
+      const closed = holdings.filter(h => !(h.shares > 0) && ((h.totalPl && h.totalPl !== 0) || (h.realized && h.realized !== 0)));
+
+      box.innerHTML = `
+        ${jnCard(`
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <div>
+              <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-book-open text-brand-500"></i>我的投資日誌</h2>
+              <p class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">來源：你的日誌試算表（${escHtml(J.updated || '')} 讀取）・僅本人可見</p>
+            </div>
+            <div class="flex items-center gap-2">
+              ${seg('scope', scope, [['total', '總體'], ['stock', '個股'], ['etf', 'ETF']], 'setJournalScope')}
+              <button onclick="loadJournal(true)" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand-500 text-xs" title="重新讀取"><i class="fa-solid fa-rotate-right ${journalState.loading ? 'fa-spin' : ''}"></i></button>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">${kpi}</div>
+        `)}
+
+        ${jnCard(`
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-chart-pie text-brand-500"></i>圖表中心</h2>
+            ${seg('range', journalState.range, [[20, '20日'], [60, '60日'], [120, '120日'], [0, '全期']], 'setJournalRange')}
+          </div>
+          <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
+            ${chartBox('jc_nav', '資產淨值與成本')}
+            ${chartBox('jc_roi', '累計報酬率（含息 vs 不含息）')}
+            ${chartBox('jc_bench', '策略績效 vs 加權指數', '以每日損益 ÷ 前日淨值串接的時間加權報酬，區間起點歸零')}
+            ${chartBox('jc_daily', '每日損益變動')}
+            ${chartBox('jc_split', '個股 vs ETF 含息報酬率')}
+            ${chartBox('jc_cost', '個股 vs ETF 成本趨勢')}
+            ${chartBox('jc_alloc', '持股現值配置', '', true)}
+            ${chartBox('jc_contrib', '損益貢獻（含息總損益）', '', true)}
+          </div>
+        `)}
+
+        ${jnCard(`
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-briefcase text-brand-500"></i>目前持股 <span class="text-xs font-normal text-slate-400">${active.length} 檔</span></h2>
+            <span class="text-[10px] text-slate-400">點擊列可展開該檔交易紀錄</span>
+          </div>
+          ${holdingsTable(active, cur ? cur.tv : null)}
+          ${closed.length ? `
+          <details class="mt-3 group">
+            <summary class="cursor-pointer text-xs font-bold text-slate-500 dark:text-slate-400 select-none">已出清 / 無庫存（${closed.length} 檔）</summary>
+            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+              ${closed.map(h => `<div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px]">
+                <span class="min-w-0 truncate"><b class="text-slate-800 dark:text-slate-100">${escHtml(h.name)}</b> <span class="text-slate-400 font-mono">${escHtml(h.code)}</span></span>
+                <span class="font-mono font-bold shrink-0 ${jnCol(h.totalPl ?? h.realized)}">已實現 ${jnSigned(h.realized ?? h.totalPl)}</span></div>`).join('')}
+            </div>
+          </details>` : ''}
+        `)}
+
+        ${jnCard(`
+          <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+            <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-receipt text-brand-500"></i>交易紀錄 <span class="text-xs font-normal text-slate-400">${(J.trades || []).length} 筆</span></h2>
+            <div class="flex items-center gap-2">
+              <input type="text" value="${escHtml(journalState.tradeQuery)}" oninput="journalState.tradeQuery=this.value; journalState.tradeLimit=30; renderTradeList()" placeholder="搜尋股名/代號/原因" class="w-36 sm:w-48 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px]">
+              ${seg('tf', journalState.tradeFilter, [['all', '全部'], ['買入', '買入'], ['賣出', '賣出']], 'setTradeFilter')}
+            </div>
+          </div>
+          <div id="tradeListBox"></div>
+        `)}
+
+        <div class="flex items-center justify-between text-[10px] text-slate-400 px-1">
+          <span><i class="fa-solid fa-lock mr-1"></i>資料由後端驗證身分後讀取，不會存到瀏覽器或公開發布。</span>
+          <button onclick="unlinkJournal()" class="hover:text-rose-500">解除日誌連結</button>
+        </div>`;
+
+      renderTradeList();
+      requestAnimationFrame(() => renderJournalCharts(J));
+    }
+
+    function chartBox(id, title, note = '', html = false) {
+      return `<div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 min-w-0">
+        <div class="flex items-center justify-between gap-2 mb-1"><h3 class="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">${title}</h3><div id="${id}_legend" class="flex flex-wrap justify-end gap-x-2 text-[10px]"></div></div>
+        ${note ? `<p class="text-[9px] text-slate-400 mb-1">${note}</p>` : ''}
+        <div id="${id}" class="relative w-full ${html ? '' : 'h-[190px] sm:h-[210px]'}"></div>
+      </div>`;
+    }
+
+    function setJournalScope(v) { journalState.scope = v; renderJournal(); }
+    function setJournalRange(v) { journalState.range = Number(v); renderJournal(); }
+    function setTradeFilter(v) { journalState.tradeFilter = v; journalState.tradeLimit = 30; renderJournal(); }
+    function toggleHoldingTrades(code) { journalState.openHolding = journalState.openHolding === code ? null : code; renderJournal(); }
+
+    function holdingsTable(active, totalValue) {
+      if (!active.length) return '<div class="py-6 text-center text-xs text-slate-400">目前沒有持股</div>';
+      const tv = totalValue || active.reduce((a, h) => a + (h.value || h.price * h.shares || 0), 0);
+      const rows = [...active].sort((a, b) => (b.value || 0) - (a.value || 0)).map(h => {
+        const val = h.value || (h.price * h.shares);
+        const w = tv ? val / tv * 100 : 0;
+        const open = journalState.openHolding === h.code;
+        const trades = open ? (journalState.data.trades || []).filter(t => t.code === h.code) : [];
+        return `
+          <tr onclick="toggleHoldingTrades('${escHtml(h.code)}')" class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 transition ${open ? 'bg-slate-50 dark:bg-slate-900/60' : ''}">
+            <td class="py-2 px-2 sm:px-3"><div class="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">${escHtml(h.name)}</div><div class="text-[10px] text-slate-400 font-mono">${escHtml(h.code)} · <span class="${h.type === 'etf' ? 'text-teal-600 dark:text-teal-400' : 'text-amber-600 dark:text-amber-400'}">${h.type === 'etf' ? 'ETF' : '個股'}</span></div></td>
+            <td class="py-2 px-2 text-right font-mono text-xs">${jnFmt(h.shares)}</td>
+            <td class="py-2 px-2 text-right font-mono text-xs hidden sm:table-cell">${jnFmt(h.avg, 2)}</td>
+            <td class="py-2 px-2 text-right font-mono text-xs"><div class="font-bold ${jnCol(h.dayChg)}">${jnFmt(h.price, 2)}</div><div class="text-[10px] ${jnCol(h.dayPct)}">${jnPct(h.dayPct)}</div></td>
+            <td class="py-2 px-2 text-right font-mono text-xs"><div class="font-bold ${jnCol(h.unrealized)}">${jnSigned(h.unrealized)}</div><div class="text-[10px] ${jnCol(h.plPct)}">${jnPct(h.plPct)}</div></td>
+            <td class="py-2 px-2 text-right font-mono text-xs hidden md:table-cell ${jnCol(h.dayPl)}">${jnSigned(h.dayPl)}</td>
+            <td class="py-2 px-2 sm:px-3 text-right hidden sm:table-cell"><div class="text-[11px] font-mono">${w.toFixed(1)}%</div><div class="h-1 mt-1 w-16 ml-auto rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden"><div class="h-full bg-brand-500" style="width:${Math.min(w, 100)}%"></div></div></td>
+          </tr>
+          ${open ? `<tr><td colspan="7" class="px-2 sm:px-3 pb-3 bg-slate-50 dark:bg-slate-900/60">
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-mono mb-2 mt-1">
+              <div>總買入 <b>${jnFmt(h.totalBuy)}</b></div><div>總賣出 <b>${jnFmt(h.totalSell)}</b></div>
+              <div>配息 <b>${jnFmt(h.dividend)}</b></div><div>含息總損益 <b class="${jnCol(h.totalPlDiv)}">${jnSigned(h.totalPlDiv)}</b></div>
+            </div>
+            ${tradeRowsHtml(trades, true)}</td></tr>` : ''}`;
+      }).join('');
+      return `<div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+        <table class="w-full text-left border-collapse">
+          <thead class="bg-slate-100 dark:bg-slate-950 text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400"><tr>
+            <th class="py-2 px-2 sm:px-3">標的</th><th class="py-2 px-2 text-right">股數</th><th class="py-2 px-2 text-right hidden sm:table-cell">均價</th>
+            <th class="py-2 px-2 text-right">現價</th><th class="py-2 px-2 text-right">未實現損益</th><th class="py-2 px-2 text-right hidden md:table-cell">今日損益</th><th class="py-2 px-2 sm:px-3 text-right hidden sm:table-cell">權重</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">${rows}</tbody>
+        </table></div>`;
+    }
+
+    function tradeRowsHtml(trades, compact) {
+      if (!trades.length) return '<div class="py-4 text-center text-[11px] text-slate-400">沒有符合的交易紀錄</div>';
+      return `<div class="divide-y divide-slate-100 dark:divide-slate-800/60 ${compact ? '' : 'rounded-xl border border-slate-200 dark:border-slate-800'}">
+        ${trades.map(t => {
+          const buy = t.side.indexOf('買') >= 0;
+          return `<div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 py-1.5 text-[11px]">
+            <span class="font-mono text-slate-400 w-20 shrink-0">${escHtml(t.date)}</span>
+            <span class="px-1.5 rounded text-[10px] font-bold ${buy ? 'bg-red-500/10 text-stockRed' : 'bg-green-500/10 text-stockGreen'}">${escHtml(t.side || '-')}</span>
+            ${compact ? '' : `<span class="font-bold text-slate-800 dark:text-slate-100">${escHtml(t.name)}</span><span class="text-[10px] text-slate-400 font-mono">${escHtml(t.code)}</span>`}
+            <span class="font-mono">${jnFmt(t.shares)} 股 @ ${jnFmt(t.price, 2)}</span>
+            <span class="font-mono text-slate-400 hidden sm:inline">≈ ${jnFmt((t.shares || 0) * (t.price || 0))} 元${t.fee ? `・費 ${jnFmt(t.fee)}` : ''}</span>
+            ${t.reason && t.reason !== '尚未填寫' ? `<span class="px-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escHtml(t.reason)}</span>` : (t.reason ? '<span class="text-slate-400">原因未填</span>' : '')}
+            ${t.note && t.note !== '-合併計入-' ? `<span class="text-slate-500 dark:text-slate-400 truncate">${escHtml(t.note)}</span>` : ''}
+          </div>`;
+        }).join('')}</div>`;
+    }
+
+    function renderTradeList() {
+      const box = document.getElementById('tradeListBox');
+      if (!box || !journalState.data) return;
+      const q = journalState.tradeQuery.trim().toLowerCase();
+      let list = (journalState.data.trades || []);
+      if (journalState.tradeFilter !== 'all') list = list.filter(t => t.side.indexOf(journalState.tradeFilter) >= 0);
+      if (q) list = list.filter(t => (t.name + t.code + t.reason + t.note).toLowerCase().includes(q));
+      const shown = list.slice(0, journalState.tradeLimit);
+      box.innerHTML = tradeRowsHtml(shown, false) + (list.length > shown.length
+        ? `<button onclick="journalState.tradeLimit += 50; renderTradeList()" class="w-full mt-2 py-1.5 rounded-xl border border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 hover:text-brand-500">顯示更多（還有 ${list.length - shown.length} 筆）</button>` : '');
+    }
+
+    // ---------- 圖表 ----------
+    function renderJournalCharts(J) {
+      const all = (J.history || []).filter(h => h.tv !== null);
+      const n = journalState.range;
+      const H = n ? all.slice(-n) : all;
+      if (!H.length) return;
+      const dates = H.map(h => h.date);
+
+      lineChart('jc_nav', dates, [
+        { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a, area: true },
+        { name: '庫存成本', values: H.map(h => h.tCost), color: JN_COLORS.muted, dash: true }
+      ], v => jnFmt(v));
+      lineChart('jc_roi', dates, [
+        { name: '含息', values: H.map(h => h.tRoiDiv), color: JN_COLORS.a },
+        { name: '不含息', values: H.map(h => h.tRoi), color: JN_COLORS.b, dash: true }
+      ], v => v.toFixed(1) + '%', true);
+
+      // 時間加權報酬 vs 加權指數（區間起點歸零）
+      let strat = 1; const sArr = [0];
+      for (let i = 1; i < H.length; i++) {
+        const prev = H[i - 1].tv, d = H[i].tDay;
+        if (prev && d !== null) strat *= 1 + d / prev;
+        sArr.push((strat - 1) * 100);
+      }
+      const idx0 = H.find(h => h.idx)?.idx;
+      lineChart('jc_bench', dates, [
+        { name: '我的策略', values: sArr, color: JN_COLORS.a },
+        { name: '加權指數', values: H.map(h => (h.idx && idx0) ? (h.idx / idx0 - 1) * 100 : null), color: JN_COLORS.muted, dash: true }
+      ], v => v.toFixed(1) + '%', true);
+
+      barChart('jc_daily', dates, H.map(h => h.tDay), v => jnSigned(v));
+      lineChart('jc_split', dates, [
+        { name: '個股', values: H.map(h => h.sRoiDiv), color: JN_COLORS.b },
+        { name: 'ETF', values: H.map(h => h.eRoiDiv), color: JN_COLORS.d }
+      ], v => v.toFixed(1) + '%', true);
+      lineChart('jc_cost', dates, [
+        { name: '個股成本', values: H.map(h => h.sCost), color: JN_COLORS.b },
+        { name: 'ETF成本', values: H.map(h => h.eCost), color: JN_COLORS.d }
+      ], v => jnFmt(v));
+
+      const active = (J.holdings || []).filter(h => h.shares > 0).map(h => ({ ...h, val: h.value || h.price * h.shares || 0 })).sort((a, b) => b.val - a.val);
+      donutChart('jc_alloc', active);
+      contribChart('jc_contrib', (J.holdings || []).filter(h => h.totalPlDiv !== null && h.totalPlDiv !== 0));
+    }
+
+    function chartLegend(id, series) {
+      const el = document.getElementById(id + '_legend');
+      if (el) el.innerHTML = series.map(s => `<span class="inline-flex items-center gap-1 text-slate-500 dark:text-slate-400"><span class="inline-block w-3 ${s.dash ? 'border-t-2 border-dashed' : 'h-0.5 rounded'}" style="${s.dash ? 'border-color:' + s.color : 'background:' + s.color}"></span>${s.name}</span>`).join('');
+    }
+
+    function niceTicks(min, max, count = 4) {
+      if (min === max) { min -= 1; max += 1; }
+      const rough = (max - min) / count;
+      const mag = Math.pow(10, Math.floor(Math.log10(rough)));
+      const step = [1, 2, 2.5, 5, 10].map(k => k * mag).find(s => s >= rough) || rough;
+      const lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step;
+      const ticks = []; for (let v = lo; v <= hi + step / 2; v += step) ticks.push(Math.round(v * 1e6) / 1e6);
+      return { lo, hi, ticks };
+    }
+
+    function axisLabel(v, pctMode) {
+      if (pctMode) return v.toFixed(Math.abs(v) < 10 ? 1 : 0) + '%';
+      const a = Math.abs(v);
+      return a >= 1e4 ? (v / 1e4).toFixed(a >= 1e5 ? 0 : 1) + '萬' : Math.round(v).toLocaleString('en-US');
+    }
+
+    function lineChart(id, dates, series, fmt, pctMode) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      chartLegend(id, series);
+      const W = Math.max(el.clientWidth, 240), Hh = Math.max(el.clientHeight, 160);
+      const padL = 44, padR = 6, padT = 8, padB = 18;
+      const vals = series.flatMap(s => s.values).filter(v => v !== null && v !== undefined && !isNaN(v));
+      if (!vals.length) { el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">暫無資料</div>'; return; }
+      const { lo, hi, ticks } = niceTicks(Math.min(...vals, pctMode ? 0 : Infinity), Math.max(...vals));
+      const n = dates.length;
+      const x = i => padL + (n <= 1 ? 0 : i / (n - 1)) * (W - padL - padR);
+      const y = v => padT + (1 - (v - lo) / (hi - lo || 1)) * (Hh - padT - padB);
+      let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="${t === 0 && pctMode ? 0.35 : 0.1}"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${axisLabel(t, pctMode)}</text>`).join('');
+      series.forEach(s => {
+        const pts = s.values.map((v, i) => (v === null || v === undefined || isNaN(v)) ? null : [x(i), y(v)]).filter(Boolean);
+        if (pts.length < 2) return;
+        if (s.area) g += `<polygon points="${pts.map(p => p.join(',')).join(' ')} ${pts[pts.length - 1][0]},${Hh - padB} ${pts[0][0]},${Hh - padB}" fill="${s.color}" fill-opacity="0.1"/>`;
+        g += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" ${s.dash ? 'stroke-dasharray="5 3"' : ''}/>`;
+      });
+      const li = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i);
+      g += li.map((i, k) => `<text x="${x(i)}" y="${Hh - 4}" text-anchor="${k === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle')}" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${dates[i].slice(5).replace('-', '/')}</text>`).join('');
+      g += `<line class="jc-cross" x1="0" x2="0" y1="${padT}" y2="${Hh - padB}" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="2 2" visibility="hidden"/>`;
+      g += `<rect x="${padL}" y="${padT}" width="${W - padL - padR}" height="${Hh - padT - padB}" fill="transparent"/>`;
+      el.innerHTML = `<svg width="${W}" height="${Hh}" class="block text-slate-500 dark:text-slate-400">${g}</svg><div class="jc-tip hidden absolute top-1 z-10 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>`;
+      attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div>` + series.map(s => `<div><span style="color:${s.color}">●</span> ${s.name} <b>${s.values[i] === null || s.values[i] === undefined ? '--' : fmt(s.values[i])}</b></div>`).join(''), padL, W - padR);
+    }
+
+    function barChart(id, dates, values, fmt) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const leg = document.getElementById(id + '_legend');
+      if (leg) leg.innerHTML = '<span class="text-stockRed">■ 獲利</span><span class="text-stockGreen">■ 虧損</span>';
+      const W = Math.max(el.clientWidth, 240), Hh = Math.max(el.clientHeight, 160);
+      const padL = 44, padR = 6, padT = 8, padB = 18;
+      const vals = values.filter(v => v !== null && !isNaN(v));
+      if (!vals.length) { el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">暫無資料</div>'; return; }
+      const { lo, hi, ticks } = niceTicks(Math.min(0, ...vals), Math.max(0, ...vals));
+      const n = dates.length, slot = (W - padL - padR) / n, bw = Math.max(slot - (slot > 5 ? 2 : 0.5), 1);
+      const x = i => padL + i * slot + slot / 2;
+      const y = v => padT + (1 - (v - lo) / (hi - lo || 1)) * (Hh - padT - padB);
+      let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="${t === 0 ? 0.35 : 0.1}"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${axisLabel(t)}</text>`).join('');
+      values.forEach((v, i) => {
+        if (v === null || isNaN(v)) return;
+        const y0 = y(0), y1 = y(v);
+        g += `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${Math.min(y0, y1).toFixed(1)}" width="${bw.toFixed(1)}" height="${Math.max(Math.abs(y1 - y0), 0.5).toFixed(1)}" fill="${v >= 0 ? '#ef4444' : '#22c55e'}" fill-opacity="0.8" rx="${bw > 4 ? 1.5 : 0}"/>`;
+      });
+      const li = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i);
+      g += li.map((i, k) => `<text x="${x(i)}" y="${Hh - 4}" text-anchor="${k === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle')}" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${dates[i].slice(5).replace('-', '/')}</text>`).join('');
+      g += `<line class="jc-cross" x1="0" x2="0" y1="${padT}" y2="${Hh - padB}" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="2 2" visibility="hidden"/>`;
+      el.innerHTML = `<svg width="${W}" height="${Hh}" class="block text-slate-500 dark:text-slate-400">${g}</svg><div class="jc-tip hidden absolute top-1 z-10 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>`;
+      attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div><div>當日損益 <b class="${values[i] >= 0 ? 'text-red-400' : 'text-green-400'}">${fmt(values[i])}</b></div>`, padL, W - padR);
+    }
+
+    function attachHover(el, n, xFn, html, x0, x1) {
+      const svg = el.querySelector('svg'), tip = el.querySelector('.jc-tip'), cross = el.querySelector('.jc-cross');
+      const move = ev => {
+        const r = svg.getBoundingClientRect();
+        const px = (ev.touches ? ev.touches[0].clientX : ev.clientX) - r.left;
+        if (px < x0 - 4 || px > x1 + 4) return;
+        let best = 0, bd = Infinity;
+        for (let i = 0; i < n; i++) { const d = Math.abs(xFn(i) - px); if (d < bd) { bd = d; best = i; } }
+        const cx = xFn(best);
+        cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible');
+        tip.innerHTML = html(best); tip.classList.remove('hidden');
+        const tw = tip.offsetWidth; let left = cx + 10; if (left + tw > r.width) left = cx - tw - 10;
+        tip.style.left = Math.max(0, left) + 'px';
+      };
+      svg.addEventListener('mousemove', move);
+      svg.addEventListener('touchstart', move, { passive: true });
+      svg.addEventListener('touchmove', move, { passive: true });
+      svg.addEventListener('mouseleave', () => { tip.classList.add('hidden'); cross.setAttribute('visibility', 'hidden'); });
+    }
+
+    function donutChart(id, items) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const total = items.reduce((a, h) => a + h.val, 0);
+      if (!total) { el.innerHTML = '<div class="py-8 text-center text-[11px] text-slate-400">暫無持股</div>'; return; }
+      const top = items.slice(0, 8);
+      const rest = items.slice(8).reduce((a, h) => a + h.val, 0);
+      const parts = top.map((h, i) => ({ name: h.name, code: h.code, val: h.val, color: DONUT_COLORS[i], type: h.type }));
+      if (rest > 0) parts.push({ name: '其他', code: '', val: rest, color: DONUT_COLORS[8] });
+      const etfV = items.filter(h => h.type === 'etf').reduce((a, h) => a + h.val, 0);
+      const R = 62, r = 40, C = 74;
+      let ang = -Math.PI / 2, arcs = '';
+      parts.forEach(p => {
+        const a = p.val / total * Math.PI * 2, a2 = ang + a, large = a > Math.PI ? 1 : 0;
+        const pt = (rad, rr) => `${(C + rr * Math.cos(rad)).toFixed(2)},${(C + rr * Math.sin(rad)).toFixed(2)}`;
+        arcs += a >= Math.PI * 2 - 1e-6
+          ? `<circle cx="${C}" cy="${C}" r="${(R + r) / 2}" fill="none" stroke="${p.color}" stroke-width="${R - r}"/>`
+          : `<path d="M${pt(ang, R)} A${R},${R} 0 ${large} 1 ${pt(a2, R)} L${pt(a2, r)} A${r},${r} 0 ${large} 0 ${pt(ang, r)} Z" fill="${p.color}" stroke="currentColor" stroke-width="1.5" class="text-white dark:text-slate-950"><title>${escHtml(p.name)} ${(p.val / total * 100).toFixed(1)}%</title></path>`;
+        ang = a2;
+      });
+      el.innerHTML = `<div class="flex flex-col sm:flex-row items-center gap-3">
+        <svg width="148" height="148" viewBox="0 0 148 148" class="shrink-0">${arcs}
+          <text x="${C}" y="${C - 4}" text-anchor="middle" font-size="9" class="fill-slate-500 dark:fill-slate-400">總現值</text>
+          <text x="${C}" y="${C + 10}" text-anchor="middle" font-size="12" font-weight="800" font-family="ui-monospace,monospace" class="fill-slate-900 dark:fill-slate-100">${axisLabel(total)}</text></svg>
+        <div class="flex-1 w-full space-y-1">
+          <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mb-1">
+            <span>個股 ${(100 - etfV / total * 100).toFixed(1)}%</span>
+            <div class="flex-1 h-1.5 rounded-full overflow-hidden flex bg-slate-200 dark:bg-slate-800"><div class="bg-amber-500" style="width:${100 - etfV / total * 100}%"></div><div class="bg-teal-600" style="width:${etfV / total * 100}%"></div></div>
+            <span>ETF ${(etfV / total * 100).toFixed(1)}%</span>
+          </div>
+          ${parts.map(p => `<div class="flex items-center justify-between gap-2 text-[11px]"><span class="flex items-center gap-1.5 min-w-0"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${p.color}"></span><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(p.name)}</span></span><span class="font-mono text-slate-500 dark:text-slate-400 shrink-0">${(p.val / total * 100).toFixed(1)}%</span></div>`).join('')}
+        </div></div>`;
+      const leg = document.getElementById(id + '_legend'); if (leg) leg.innerHTML = '';
+    }
+
+    function contribChart(id, items) {
+      const el = document.getElementById(id);
+      if (!el) return;
+      if (!items.length) { el.innerHTML = '<div class="py-8 text-center text-[11px] text-slate-400">暫無資料</div>'; return; }
+      const list = [...items].sort((a, b) => b.totalPlDiv - a.totalPlDiv);
+      const maxAbs = Math.max(...list.map(h => Math.abs(h.totalPlDiv)), 1);
+      el.innerHTML = `<div class="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">${list.map(h => {
+        const w = Math.max(Math.abs(h.totalPlDiv) / maxAbs * 50, 0.8), left = h.totalPlDiv < 0 ? 50 - w : 50;
+        return `<div class="grid grid-cols-[6rem_1fr_4.5rem] items-center gap-2 text-[11px]" title="${escHtml(h.name)}：加總損益 ${jnSigned(h.totalPl)}、含息 ${jnSigned(h.totalPlDiv)}">
+          <span class="truncate text-slate-700 dark:text-slate-200">${escHtml(h.name)}${h.shares > 0 ? '' : ' <span class="text-[9px] text-slate-400">出清</span>'}</span>
+          <div class="relative h-3 rounded bg-slate-200/70 dark:bg-slate-800"><div class="absolute inset-y-0 left-1/2 w-px bg-slate-400/70"></div><div class="absolute inset-y-0 rounded-sm ${h.totalPlDiv >= 0 ? 'bg-stockRed' : 'bg-stockGreen'}" style="left:${left}%;width:${w}%"></div></div>
+          <span class="text-right font-mono font-bold ${jnCol(h.totalPlDiv)}">${jnSigned(h.totalPlDiv)}</span></div>`;
+      }).join('')}</div>`;
+      const leg = document.getElementById(id + '_legend'); if (leg) leg.innerHTML = '<span class="text-slate-400">◀ 虧損　獲利 ▶</span>';
+    }
+
+    let jnResizeTimer = null;
+    window.addEventListener('resize', () => {
+      clearTimeout(jnResizeTimer);
+      jnResizeTimer = setTimeout(() => { if (personalTab === 'journal' && journalState.data) renderJournalCharts(journalState.data); }, 200);
+    });
   </script>
 </body>
 </html>
