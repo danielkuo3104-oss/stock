@@ -827,6 +827,7 @@
               <div id="marketStatusDot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
               <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 shrink-0">加權指數</h2>
               <span id="marketStatusBadge" class="text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center shrink-0">當日資訊</span>
+              <span id="liveBadge" class="hidden"></span>
             </div>
 
             <div class="flex flex-col sm:flex-row sm:items-baseline sm:space-x-2">
@@ -856,6 +857,7 @@
           </div>
         </div>
 
+        <div id="futuresStrip" class="hidden"></div>
         <div id="indexHighStrip" class="hidden"></div>
 
         <div class="space-y-2">
@@ -1102,6 +1104,9 @@
 
     // 💡 高點追蹤：請將 Apps Script 產生的「高點追蹤」工作表發布為 CSV，並把網址貼在這裡（留空則不顯示高點功能）
     const CSV_HIGHS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1896125645&single=true&output=csv';
+
+    // 💡 即時報價：已整合進後端 doGet（action=live），與 BACKEND_API_URL 同一個網址；設為 '' 可停用即時、只用試算表
+    const LIVE_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
 
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
@@ -1928,6 +1933,7 @@
       loadMarketIntel();
       await fetchAndParseCsv();
       loadHighs();
+      startLivePolling();
       pollAdminMaintenanceStatus();
       handleInitialHash();
     }
@@ -2113,6 +2119,7 @@
       const prevClose = closePrice - changeVal;
 
       document.getElementById('marketPrevClose').textContent = prevClose.toFixed(2);
+      indexCloseRef = { close: closePrice, date: normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || '') };
       document.getElementById('marketIndex').textContent = closePrice.toFixed(2);
 
       const isUp = changeVal > 0;
@@ -2155,6 +2162,8 @@
       colorizeMarketItem('marketLow', parseFloat(dataMap['最低'] || '0'), prevClose);
 
       parseAT10MarketCounts();
+      try { applyLiveIndex(); } catch (e) {}
+      try { renderFuturesStrip(); } catch (e) {}
     }
 
     function colorizeMarketItem(elId, val, prev) {
@@ -2716,7 +2725,7 @@ function getDynamicColorTier(rawPct) {
               </div>
               ${breadthBarHtml(st, 'h-1')}
               <div class="flex items-center justify-between gap-2 text-[10px]">
-                <span class="text-slate-500 dark:text-slate-400 truncate">領漲 ${L ? `<span class="font-bold text-slate-800 dark:text-slate-200">${escHtml(L.name)}</span> <span class="font-mono ${signColorClass(L.pctNum)}">${escHtml(L.pctStr)}</span>` : '--'}</span>
+                <span class="text-slate-500 dark:text-slate-400 truncate">${L ? `${L.pctNum > 0 ? '領漲' : '最抗跌'} <span class="font-bold text-slate-800 dark:text-slate-200">${escHtml(L.name)}</span> <span class="font-mono ${signColorClass(L.pctNum)}">${escHtml(L.pctStr)}</span>` : '--'}</span>
                 <span class="text-slate-400 font-mono shrink-0">${fmtTurnoverYi(st.turnover)}億</span>
               </div>
             </div>`;
@@ -2794,8 +2803,9 @@ function getDynamicColorTier(rawPct) {
                     <td class="py-2 px-2 sm:px-3 text-right font-mono text-slate-700 dark:text-slate-200">${fmtTurnoverYi(st.turnover)}</td>
                     <td class="py-2 px-3 text-right font-mono text-slate-500 dark:text-slate-400 hidden md:table-cell">${share.toFixed(1)}%</td>
                     <td class="py-2 px-3 hidden lg:table-cell text-[11px]">
-                      ${st.leader ? `<span class="font-bold text-slate-800 dark:text-slate-200">${escHtml(st.leader.name)}</span> <span class="font-mono ${signColorClass(st.leader.pctNum)}">${escHtml(st.leader.pctStr)}</span>` : '--'}
-                      ${st.laggard && st.laggard !== st.leader ? `<span class="text-slate-400 mx-1">/</span><span class="text-slate-600 dark:text-slate-300">${escHtml(st.laggard.name)}</span> <span class="font-mono ${signColorClass(st.laggard.pctNum)}">${escHtml(st.laggard.pctStr)}</span>` : ''}
+                      ${st.leader && st.leader.pctNum > 0 ? `<span class="font-bold text-slate-800 dark:text-slate-200">${escHtml(st.leader.name)}</span> <span class="font-mono ${signColorClass(st.leader.pctNum)}">${escHtml(st.leader.pctStr)}</span>` : '<span class="text-slate-400">無上漲</span>'}
+                      <span class="text-slate-400 mx-1">/</span>
+                      ${st.laggard && st.laggard.pctNum < 0 ? `<span class="text-slate-600 dark:text-slate-300">${escHtml(st.laggard.name)}</span> <span class="font-mono ${signColorClass(st.laggard.pctNum)}">${escHtml(st.laggard.pctStr)}</span>` : '<span class="text-slate-400">無下跌</span>'}
                     </td>
                   </tr>`;
               }).join('')}
@@ -2874,7 +2884,7 @@ function getDynamicColorTier(rawPct) {
         tile('漲 / 平 / 跌', `<span class="text-stockRed">${st.up}</span> / <span class="text-slate-400">${st.flat}</span> / <span class="text-stockGreen">${st.down}</span>`, breadthBarHtml(st, 'h-1 mt-1')),
         tile('等權平均漲幅', `<span class="${signColorClass(st.avgPct)}">${fmtPctSigned(st.avgPct)}</span>`, '成分股簡單平均'),
         tile('成交金額', `${fmtTurnoverYi(st.turnover)} 億`, '張數 × 收盤價估算'),
-        tile('領漲', st.leader ? `<span class="${signColorClass(st.leader.pctNum)}">${escHtml(st.leader.pctStr)}</span>` : '--', st.leader ? `${escHtml(st.leader.name)} ${st.leader.id}` : '')
+        tile(st.leader && st.leader.pctNum > 0 ? '領漲' : '最抗跌（無上漲）', st.leader ? `<span class="${signColorClass(st.leader.pctNum)}">${escHtml(st.leader.pctStr)}</span>` : '--', st.leader ? `${escHtml(st.leader.name)} ${st.leader.id}` : '')
       ].join('');
     }
 
@@ -3572,6 +3582,200 @@ function getDynamicColorTier(rawPct) {
     let volRangeInitialized = false;
     let preMarketItems = null;     // null = 無法取得
     let intelCurrentMode = '';
+    let indexCloseRef = null;   // { close, date }：加權收盤，用於計算期現貨價差
+
+    // 依資料時間判斷台指期盤別（日盤 08:45–13:45；夜盤 15:00–次日 05:00）
+    function futuresSession(timeStr) {
+      const m = String(timeStr || '').match(/(\d{1,2}):(\d{2})/);
+      if (!m) return { label: '盤別不明', night: false };
+      const t = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+      if (t >= 8 * 60 + 45 && t < 13 * 60 + 45) return { label: '日盤・盤中', night: false };
+      if (t >= 13 * 60 + 45 && t < 15 * 60) return { label: '日盤・收盤', night: false };
+      if (t >= 15 * 60 || t < 5 * 60) return { label: '夜盤・盤中', night: true };
+      return { label: '夜盤・收盤', night: true };
+    }
+
+    // =====================================================================
+    // 💡 即時報價（Apps Script 代理 Yahoo）＋ 試算表備援
+    // =====================================================================
+    const liveState = { ok: false, data: null, fails: 0, lastOk: 0, timer: null, started: false };
+
+    function taipeiNowParts() {
+      const d = new Date(Date.now() + 8 * 3600e3);
+      return { date: d.toISOString().slice(0, 10), min: d.getUTCHours() * 60 + d.getUTCMinutes() };
+    }
+    function minutesAgo(timeStr) {
+      const t = Date.parse(String(timeStr || '').replace(' ', 'T') + '+08:00');
+      return isNaN(t) ? Infinity : (Date.now() - t) / 60000;
+    }
+
+    function startLivePolling() {
+      if (!LIVE_API_URL || liveState.started) { renderLiveBadge(); return; }
+      liveState.started = true;
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) { clearTimeout(liveState.timer); }
+        else pollLive();
+      });
+      pollLive();
+    }
+
+    // 交易時段（含日盤前後、夜盤）每 30 秒；其餘時間每 5 分鐘；休市日每 15 分鐘
+    function nextLiveDelay() {
+      const st = getTodayMarketState();
+      const { min } = taipeiNowParts();
+      if (st.closed) return 15 * 60e3;
+      const active = (min >= 8 * 60 + 30 && min < 13 * 60 + 50) || min >= 14 * 60 + 55 || min < 5 * 60 + 5;
+      return active ? 30e3 : 5 * 60e3;
+    }
+
+    async function pollLive() {
+      clearTimeout(liveState.timer);
+      if (!LIVE_API_URL) return;
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 10000);
+        let j;
+        try {
+          const res = await fetch(LIVE_API_URL + (LIVE_API_URL.includes('?') ? '&' : '?') + 'action=live&_t=' + Date.now(), { signal: ctl.signal });
+          j = await res.json();
+        } finally { clearTimeout(timer); }
+        if (!j || !j.ok || (!j.taiex && !(j.futures && j.futures.length))) throw new Error('no data');
+        liveState.data = j; liveState.ok = true; liveState.fails = 0; liveState.lastOk = Date.now();
+      } catch (e) {
+        liveState.fails++;
+        // 連續失敗 2 次或超過 3 分鐘沒有成功 → 切回試算表資料
+        if (liveState.fails >= 2 || Date.now() - liveState.lastOk > 3 * 60e3) liveState.ok = false;
+      }
+      try {
+        if (liveState.ok) applyLiveIndex(); else if (rawCsvGrid.length) renderMarketData();
+        renderFuturesStrip();
+      } catch (e) { console.warn('即時資料套用失敗', e); }
+      renderLiveBadge();
+      if (!document.hidden) liveState.timer = setTimeout(pollLive, nextLiveDelay());
+    }
+
+    function renderLiveBadge() {
+      const el = document.getElementById('liveBadge');
+      if (!el) return;
+      if (!LIVE_API_URL) { el.className = 'hidden'; return; }
+      const base = 'text-[10px] px-2 py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center gap-1 shrink-0 ';
+      const tx = liveState.data && liveState.data.taiex;
+      if (liveState.ok && tx) {
+        const fresh = minutesAgo(tx.time) < 10;
+        el.className = base + (fresh ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' : 'bg-slate-500/10 text-slate-500 dark:text-slate-400 border-slate-500/20');
+        el.innerHTML = `<span class="w-1.5 h-1.5 rounded-full ${fresh ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}"></span>${fresh ? '即時' : '最近成交'} ${escHtml(tx.time.slice(11, 16))}`;
+        el.title = `來源：Yahoo 奇摩股市（經 Apps Script，約 20 秒快取）｜資料時間 ${tx.time}`;
+      } else if (liveState.fails > 0) {
+        el.className = base + 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30';
+        el.innerHTML = '<i class="fa-solid fa-plug-circle-xmark"></i>即時中斷・改用試算表';
+        el.title = '即時報價暫時無法取得，目前顯示試算表資料，系統會自動重試';
+      } else {
+        el.className = base + 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+        el.innerHTML = '連線中...';
+      }
+    }
+
+    // 以即時加權覆蓋大盤卡（成交金額、漲跌家數仍用試算表）
+    function applyLiveIndex() {
+      const tx = liveState.ok && liveState.data && liveState.data.taiex;
+      if (!tx || !(tx.price > 0)) return;
+      const sheetDate = normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || '');
+      const liveDate = normDate(tx.time);
+      if (sheetDate && liveDate && liveDate < sheetDate) return;   // 即時資料比試算表舊就不覆蓋
+      const col = tx.change > 0 ? 'text-stockRed' : (tx.change < 0 ? 'text-stockGreen' : 'text-slate-400');
+      const chgTxt = (tx.change > 0 ? '+' : '') + tx.change.toFixed(2);
+      const pctTxt = `(${tx.pct > 0 ? '+' : ''}${tx.pct.toFixed(2)}%)`;
+      const set = (id, txt, cls) => { const el = document.getElementById(id); if (el) { el.textContent = txt; if (cls) el.className = cls; } };
+      set('marketIndex', tx.price.toFixed(2), `market-val text-xl sm:text-2xl font-black font-mono ${col}`);
+      set('marketChange', chgTxt, `text-sm sm:text-base font-bold font-mono ${col}`);
+      set('marketPct', pctTxt, `text-sm sm:text-base font-bold font-mono ${col}`);
+      set('marketPrevClose', tx.prevClose.toFixed(2));
+      set('miniMarketIndex', tx.price.toFixed(2), `font-black text-sm sm:text-base ${col}`);
+      set('miniMarketChange', chgTxt, `font-bold ${col}`);
+      set('miniMarketPct', pctTxt, `font-bold ${col}`);
+      if (tx.open) colorizeMarketItem('marketOpen', tx.open, tx.prevClose);
+      if (tx.high) colorizeMarketItem('marketHigh', tx.high, tx.prevClose);
+      if (tx.low) colorizeMarketItem('marketLow', tx.low, tx.prevClose);
+      indexCloseRef = { close: tx.price, date: liveDate, live: true };
+
+      // 狀態徽章：今日盤中 / 今日收盤
+      const st = getTodayMarketState();
+      const badge = document.getElementById('marketStatusBadge');
+      const dot = document.getElementById('marketStatusDot');
+      if (!st.closed && liveDate === st.today && badge && dot) {
+        const { min } = taipeiNowParts();
+        const inSession = min >= 9 * 60 && min < 13 * 60 + 30 && minutesAgo(tx.time) < 10;
+        badge.textContent = inSession ? '盤中即時' : '今日收盤';
+        badge.className = 'text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20 whitespace-nowrap inline-flex items-center shrink-0';
+        dot.className = `w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 shrink-0 ${inSession ? 'animate-pulse' : ''}`;
+      }
+    }
+
+    // 台指期資料：優先即時，失敗時用試算表（盤前快報）
+    function getFuturesData() {
+      const live = liveState.ok && liveState.data && liveState.data.futures;
+      if (live && live.length) {
+        return { source: 'live', items: live.map(f => ({ code: f.code, name: f.name, price: f.price, chg: f.change, pct: f.pct, time: f.time, session: f.session, preOpen: f.preOpen })) };
+      }
+      const items = (preMarketItems || []).filter(it => it.zone.includes('期貨')).map(it => {
+        const nc = splitNameCode(it.name);
+        return { code: nc.code, name: nc.main.replace('近月', '').replace('貨', ''), price: parseLooseNum(it.price), chg: parseLooseNum(it.chg), pct: parseLooseNum(it.pct), time: it.time, session: null, preOpen: false };
+      });
+      return { source: 'sheet', items };
+    }
+
+    function futuresStatus(f) {
+      let night;
+      if (f.session) night = f.session === 'night';
+      else night = futuresSession(f.time).night;
+      let phase;
+      if (f.preOpen) phase = '尚未開盤';
+      else if (f.session) phase = minutesAgo(f.time) < 10 ? '盤中' : '收盤';
+      else phase = futuresSession(f.time).label.split('・')[1] || '';
+      return { night, label: (night ? '夜盤' : '日盤') + '・' + phase };
+    }
+
+    function renderFuturesStrip() {
+      const box = document.getElementById('futuresStrip');
+      if (!box) return;
+      const fd = getFuturesData();
+      const main = fd.items.find(it => /WTX/.test(it.code || '') || /台指/.test(it.name));
+      if (!main || !(main.price > 0)) { box.classList.add('hidden'); return; }
+      box.classList.remove('hidden');
+      const sess = futuresStatus(main);
+      const dataDate = normDate(main.time);
+      const col = signColorClass(main.pct ?? main.chg);
+      const fmtP = v => (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+      const sgn = v => (v > 0 ? '+' : '') + fmtP(v);
+
+      let basisHtml = '';
+      if (indexCloseRef && indexCloseRef.close) {
+        const basis = main.price - indexCloseRef.close;
+        let ref;
+        if (indexCloseRef.live) ref = `對加權${minutesAgo(liveState.data.taiex.time) < 10 ? '即時' : ' ' + shortDate(indexCloseRef.date) + ' 收盤'}`;
+        else {
+          const l = marketVolumeSeries[marketVolumeSeries.length - 1];
+          ref = `對加權${l && l.c && Math.abs(l.c - indexCloseRef.close) < 0.5 ? ' ' + shortDate(l.date) : '最近'} 收盤`;
+        }
+        basisHtml = `<span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">期現價差</span> <strong class="${signColorClass(basis)}">${basis > 0 ? '+' : ''}${basis.toFixed(2)}</strong> <span class="text-slate-400">點・${basis >= 0 ? '正價差' : '逆價差'}（${ref}）</span></span>`;
+      }
+      const others = fd.items.filter(it => it !== main && it.price > 0).map(it => `
+        <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">${escHtml(it.name)}</span> <strong class="text-slate-800 dark:text-slate-200">${fmtP(it.price)}</strong> <span class="${signColorClass(it.pct)}">${it.pct === null || it.pct === undefined ? '' : (it.pct > 0 ? '+' : '') + Number(it.pct).toFixed(2) + '%'}</span></span>`).join('');
+      const note = freshNoteText(dataDate);
+      const srcHtml = fd.source === 'live'
+        ? '<span class="text-emerald-600 dark:text-emerald-400">即時・Yahoo</span>'
+        : `<span class="${LIVE_API_URL ? 'text-amber-600 dark:text-amber-400' : ''}">${LIVE_API_URL ? '試算表備援' : '試算表'}</span>`;
+      box.innerHTML = `
+        <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
+          <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid ${sess.night ? 'fa-moon text-indigo-400' : 'fa-sun text-amber-500'}"></i>台指期</span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${sess.night ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-300 border border-indigo-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'}">${sess.label}</span>
+          ${freshBadgeHtml(dataDate)}
+          <span class="font-mono"><strong class="text-sm ${col}">${fmtP(main.price)}</strong> <span class="${col}">${sgn(main.chg)} (${main.pct > 0 ? '+' : ''}${Number(main.pct ?? 0).toFixed(2)}%)</span></span>
+          ${basisHtml}
+          <span class="hidden md:inline-flex items-center gap-4">${others}</span>
+          <span class="text-[10px] text-slate-400 ml-auto">${srcHtml}・${escHtml(main.time || '')}${note ? '・' + escHtml(note) : ''}</span>
+        </div>`;
+    }
 
     function escHtml(str) {
       return String(str ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
@@ -3708,6 +3912,7 @@ function getDynamicColorTier(rawPct) {
       try { marketVolumeSeries = vol.status === 'fulfilled' ? parseVolumeSeries(vol.value) : []; } catch (e) { marketVolumeSeries = []; }
 
       try { renderIntel(); } catch (e) { console.warn('市場情報繪製失敗', e); safeSetHtml('intelView', emptyStateHtml('市場情報暫時無法顯示', true)); }
+      try { renderFuturesStrip(); } catch (e) { console.warn('台指期繪製失敗', e); }
       try { renderVolumeModule(); } catch (e) { console.warn('K線模組繪製失敗', e); }
     }
 
@@ -4462,7 +4667,8 @@ function getDynamicColorTier(rawPct) {
       let maxDate = '';
       rows.slice(1).forEach(r => {
         const code = get(r, 'code');
-        const prevHigh = parseLooseNum(get(r, 'prevHigh'));
+        const r2 = v => (v === null || v === undefined || isNaN(v)) ? v : Math.round(v * 100) / 100;   // 去除浮點誤差
+        const prevHigh = r2(parseLooseNum(get(r, 'prevHigh')));
         if (!code || !prevHigh) return;
         const date = normDate(get(r, 'date'));
         if (date > maxDate && code !== 'TAIEX') maxDate = date;
@@ -4471,8 +4677,8 @@ function getDynamicColorTier(rawPct) {
         if (gap === null && c) gap = (c / prevHigh - 1) * 100;
         map[code] = {
           code, name: get(r, 'name'), prevHigh, prevDate: normDate(get(r, 'prevDate')) || get(r, 'prevDate'), date,
-          h: parseLooseNum(get(r, 'h')), c, status: get(r, 'status'), streak: parseInt(get(r, 'streak'), 10) || 0,
-          gap, recHigh: parseLooseNum(get(r, 'recHigh')), recDate: normDate(get(r, 'recDate')) || get(r, 'recDate'), updated: get(r, 'updated')
+          h: r2(parseLooseNum(get(r, 'h'))), c, status: get(r, 'status'), streak: parseInt(get(r, 'streak'), 10) || 0,
+          gap, recHigh: r2(parseLooseNum(get(r, 'recHigh'))), recDate: normDate(get(r, 'recDate')) || get(r, 'recDate'), updated: get(r, 'updated')
         };
       });
       highsDataDate = maxDate;
