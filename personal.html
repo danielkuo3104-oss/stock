@@ -859,6 +859,8 @@
 
 
 
+
+
     // =====================================================================
     // 💡 投資日誌（個人化分頁）
     //    - 資料由後端 getJournal 取得，需 email + 登入 token；只存在記憶體，不寫入瀏覽器儲存
@@ -884,9 +886,10 @@
       }
     }
 
-    async function journalPost(body) {
+    async function journalPost(body, timeoutMs) {
       const ctl = new AbortController();
-      const timer = setTimeout(() => ctl.abort(), 25000);
+      const limit = timeoutMs || 30000;
+      const timer = setTimeout(() => ctl.abort(), limit);
       try {
         const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify(body), signal: ctl.signal });
         const text = await res.text();
@@ -897,7 +900,7 @@
           throw new Error('HTTP ' + res.status + '：' + (plain.slice(0, 160) || '非 JSON 回應'));
         }
       } catch (e) {
-        if (e && e.name === 'AbortError') throw new Error('後端超過 25 秒沒有回應');
+        if (e && e.name === 'AbortError') throw new Error('後端超過 ' + Math.round(limit / 1000) + ' 秒沒有回應');
         throw e;
       } finally { clearTimeout(timer); }
     }
@@ -936,9 +939,9 @@
         renderJournal(); return;
       }
       journalState.loading = true;
-      if (!journalState.data) box.innerHTML = jnCard('<div class="py-12 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>正在讀取你的投資日誌...</div>');
+      if (!journalState.data) box.innerHTML = jnCard(`<div class="py-12 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>正在讀取你的投資日誌...<div class="mt-2 text-[10px]">${refresh ? '重新讀取試算表中，日誌含即時股價公式，約需 20–60 秒' : '若快取已過期，需重新讀取試算表（約 20–60 秒）'}</div></div>`);
       try {
-        const r = await journalPost({ action: 'getJournal', email: currentUser.email, token: currentUser.token, refresh: !!refresh });
+        const r = await journalPost({ action: 'getJournal', email: currentUser.email, token: currentUser.token, refresh: !!refresh }, 150000);
         if (r && r.success && r.journal) { journalState.data = r.journal; journalState.error = null; }
         else journalState.error = { code: (r && r.code) || 'ERR', message: (r && r.message) || '讀取失敗' };
       } catch (e) {
