@@ -858,6 +858,7 @@
     }
 
 
+
     // =====================================================================
     // 💡 投資日誌（個人化分頁）
     //    - 資料由後端 getJournal 取得，需 email + 登入 token；只存在記憶體，不寫入瀏覽器儲存
@@ -888,7 +889,16 @@
       const timer = setTimeout(() => ctl.abort(), 25000);
       try {
         const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify(body), signal: ctl.signal });
-        return await res.json();
+        const text = await res.text();
+        try { return JSON.parse(text); }
+        catch (pe) {
+          // 後端回的不是 JSON（Google 錯誤頁 / 授權頁）→ 抽出可讀的錯誤文字
+          const plain = text.replace(/<script[\s\S]*?<\/script>/gi, ' ').replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+          throw new Error('HTTP ' + res.status + '：' + (plain.slice(0, 160) || '非 JSON 回應'));
+        }
+      } catch (e) {
+        if (e && e.name === 'AbortError') throw new Error('後端超過 25 秒沒有回應');
+        throw e;
       } finally { clearTimeout(timer); }
     }
 
@@ -932,7 +942,7 @@
         if (r && r.success && r.journal) { journalState.data = r.journal; journalState.error = null; }
         else journalState.error = { code: (r && r.code) || 'ERR', message: (r && r.message) || '讀取失敗' };
       } catch (e) {
-        journalState.error = { code: 'NET', message: '連線逾時或網路異常，請稍後再試。' };
+        journalState.error = { code: 'NET', message: '連線失敗：' + ((e && e.message) || '網路異常') };
       }
       journalState.loading = false; journalState.loaded = true;
       renderJournal();
@@ -948,7 +958,7 @@
         const r = await journalPost({ action: 'linkJournal', email: currentUser.email, token: currentUser.token, url });
         if (r && r.success) { msg.className = 'text-[11px] text-emerald-500 font-bold'; msg.textContent = '連結成功，讀取中...'; journalState.data = null; await loadJournal(true); }
         else { msg.className = 'text-[11px] text-rose-500 font-bold'; msg.textContent = (r && r.message) || '連結失敗'; if (r && r.code === 'AUTH') { journalState.error = { code: 'AUTH' }; renderJournal(); } }
-      } catch (e) { msg.className = 'text-[11px] text-rose-500 font-bold'; msg.textContent = '連線失敗，請稍後再試'; }
+      } catch (e) { msg.className = 'text-[11px] text-rose-500 font-bold break-all'; msg.textContent = '連線失敗：' + ((e && e.message) || e); }
     }
 
     async function unlinkJournal() {
