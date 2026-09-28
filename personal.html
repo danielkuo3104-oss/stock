@@ -857,6 +857,7 @@
         .finally(() => setTimeout(renderWatchCards, 1500));
     }
 
+
     // =====================================================================
     // 💡 投資日誌（個人化分頁）
     //    - 資料由後端 getJournal 取得，需 email + 登入 token；只存在記憶體，不寫入瀏覽器儲存
@@ -889,6 +890,33 @@
         const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify(body), signal: ctl.signal });
         return await res.json();
       } finally { clearTimeout(timer); }
+    }
+
+    // 沒 token 時先診斷後端，避免「重新登入 → 還是沒 token」的無限循環
+    async function diagnoseBackend() {
+      const set = (html, ok) => {
+        const el = document.getElementById('jnDiag'); if (!el) return;
+        el.innerHTML = html;
+        const btn = document.getElementById('jnReloginBtn'); if (btn) btn.classList.toggle('hidden', !ok);
+      };
+      let r = null;
+      try { r = await journalPost({ action: 'ping' }); } catch (e) { r = null; }
+      if (!r) {
+        set(`<b class="text-rose-500">後端沒有回應（或回傳的不是 JSON）</b>，所以登入時用了離線模式、拿不到驗證憑證，重新登入也一樣。<br>
+          請到 Apps Script：① 在編輯器執行一次 <code>testJournalSetup</code> 並按「允許」授權 ② 部署 → 管理部署作業 → 編輯 → 版本選「新版本」→ 部署（執行身分：我、存取權：所有人）。完成後再按重新登入。`, false);
+        set.done = true;
+        const el = document.getElementById('jnDiag'); if (el) el.insertAdjacentHTML('beforeend', '<div class="mt-2"><button onclick="logout()" class="underline text-brand-600">我已完成，重新登入</button></div>');
+        return;
+      }
+      if (!r.journalApi) {
+        set(`<b class="text-rose-500">後端還是舊版</b>（沒有投資日誌功能）。請把新的 後端API_Code.gs、投資日誌.gs 貼上後，部署 → 管理部署作業 → 編輯 → 版本選「新版本」→ 部署，<b>只按儲存不會生效</b>。完成後再重新登入。`, true);
+        return;
+      }
+      if (!r.tokenOk) {
+        set(`<b class="text-rose-500">後端是新版，但無法發放憑證</b>。請在編輯器執行一次 <code>testJournalSetup</code> 並按「允許」，再建立新版本部署。`, true);
+        return;
+      }
+      set(`<span class="text-emerald-600 dark:text-emerald-400 font-bold">後端正常</span>。${currentUser && currentUser.offline ? '你上次登入時後端沒回應，' : '你目前的登入是舊版，'}按下方重新登入即可取得憑證。`, true);
     }
 
     async function loadJournal(refresh) {
@@ -945,12 +973,14 @@
       const err = journalState.error;
       if (err && !journalState.data) {
         if (err.code === 'NOTOKEN' || err.code === 'AUTH') {
+          if (err.code === 'NOTOKEN') diagnoseBackend();
           box.innerHTML = jnCard(`
             <div class="py-8 text-center space-y-3">
               <i class="fa-solid fa-shield-halved text-4xl text-brand-500"></i>
               <h3 class="text-base font-black text-slate-900 dark:text-slate-100">需要重新登入以驗證身分</h3>
               <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">投資日誌屬於個人資料，系統需確認「登入信箱」與「日誌擁有者」相同。${err.code === 'AUTH' ? '你的登入驗證已過期。' : '你目前的登入是舊版，尚未取得驗證憑證。'}</p>
-              <button onclick="logout()" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition">重新登入</button>
+              <div id="jnDiag" class="max-w-md mx-auto text-left text-[11px] rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 px-3 py-2 text-slate-500 ${err.code === 'NOTOKEN' ? '' : 'hidden'}"><i class="fa-solid fa-spinner fa-spin mr-1"></i>檢查後端狀態中…</div>
+              <button id="jnReloginBtn" onclick="logout()" class="px-5 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-sm font-semibold transition">重新登入</button>
             </div>`);
           return;
         }
