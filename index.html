@@ -1743,7 +1743,14 @@
           method: 'POST',
           body: JSON.stringify({ action: 'login', email, password: pass })
         });
-        const result = await res.json();
+        const rawText = await res.text();
+        let result;
+        try { result = JSON.parse(rawText); }
+        catch (pe) {
+          // 後端回的不是 JSON：多半是程式錯誤頁或授權頁 → 把錯誤原文顯示出來，方便排查
+          const m = rawText.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').match(/(SyntaxError|ReferenceError|TypeError|Exception|錯誤|授權|Authorization)[^。]{0,120}/i);
+          throw new Error('BACKEND_HTML:' + (m ? m[0] : rawText.slice(0, 120)));
+        }
         if (result.success) {
           currentUser = result.user;
           if (!currentUser.tier) currentUser.tier = '初級韭菜';
@@ -1756,16 +1763,25 @@
           showAuthMsg(result.message || '帳號未開通或密碼不符', true);
         }
       } catch (err) {
-        if (email === ADMIN_EMAIL && pass) {
-          currentUser = { name: '郭丹騏', email, role: 'admin', tier: '萬年韭皇', offline: true };  // 後端無回應時的離線登入（無 token，看不到投資日誌）
-          finalizeLogin(remember);
-        } else {
-          showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
-        }
+        // 不再自動離線登入（會拿不到憑證、關注清單也是空的，造成「一直重新登入」循環）
+        const detail = String(err && err.message || err).replace(/^BACKEND_HTML:/, '');
+        const box = document.getElementById('authAlert');
+        box.className = 'mt-4 text-[11px] text-left font-medium text-rose-500 space-y-1';
+        box.innerHTML = `<div class="font-bold">後端沒有正常回應，無法登入。</div>
+          <div class="text-slate-500 break-all">錯誤：${escHtml(detail || '連線失敗')}</div>
+          <div class="text-slate-500">請直接開啟 <a href="${BACKEND_API_URL}" target="_blank" class="underline text-brand-600">後端網址</a>：正常會看到 <code>SectorPulse API Ready</code>；若看到錯誤訊息，請截圖。</div>
+          ${email === ADMIN_EMAIL && pass ? '<button type="button" onclick="offlineAdminLogin()" class="underline text-slate-500">仍以離線模式進入（無法同步、看不到投資日誌）</button>' : ''}`;
+        box.classList.remove('hidden');
+        window.__offlineRemember = remember;
       } finally {
         btn.disabled = false;
         btn.textContent = "登入系統";
       }
+    }
+
+    function offlineAdminLogin() {
+      currentUser = { name: '郭丹騏', email: ADMIN_EMAIL, role: 'admin', tier: '萬年韭皇', offline: true };
+      finalizeLogin(!!window.__offlineRemember);
     }
 
     function finalizeLogin(remember) {
