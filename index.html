@@ -1779,6 +1779,12 @@
     }
 
     function logout() {
+      // 通知後端作廢工作階段 token（不等待結果）
+      try {
+        if (currentUser && currentUser.token) {
+          fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify({ action: 'logout', token: currentUser.token }) }).catch(() => {});
+        }
+      } catch (e) {}
       localStorage.removeItem('sectorpulse_user');
       sessionStorage.removeItem('sectorpulse_user');
       localStorage.removeItem('sectorpulse_watchlist');
@@ -1884,7 +1890,7 @@
         const result = await res.json();
         if (result.success) {
           showAuthMsg('註冊成功！歡迎信已寄送至您的信箱。', false);
-          currentUser = { name, email, role: 'member', tier: '初級韭菜' };
+          currentUser = { name, email, role: 'member', tier: '初級韭菜', token: result.token || '' };
           setTimeout(() => finalizeLogin(true), 1200);
         } else {
           showAuthMsg(result.message || '該信箱已被使用', true);
