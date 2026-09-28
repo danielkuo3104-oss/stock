@@ -123,7 +123,7 @@
               <i class="fa-solid fa-star text-amber-400"></i>
               <span>我的關注清單</span>
             </h2>
-            <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">從首頁或個股詳情點擊 ⭐ 即可加入；點卡片可開啟完整個股詳情</p>
+            <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">從首頁或個股詳情點擊 ⭐ 即可加入；點卡片可查看個股詳情</p>
           </div>
           <div id="quotaBox" class="w-full sm:w-56"></div>
         </div>
@@ -157,6 +157,11 @@
     </div>
   </main>
 
+  <!-- 個股詳情（本頁內顯示） -->
+  <div id="stockDetailModal" onclick="if (event.target.id === 'stockDetailModal') closeStockDetail()" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 hidden">
+    <div id="stockDetailBody" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl w-full max-w-lg p-5 sm:p-6 shadow-2xl max-h-[92vh] overflow-y-auto space-y-4"></div>
+  </div>
+
   <footer class="bg-slate-100 dark:bg-slate-950 border-t border-slate-200 dark:border-slate-800 py-6 px-4 text-center text-xs text-slate-500 space-y-1 mt-auto">
     <p>© 2026 股市助手 SectorPulse. 版權所有.</p>
     <p class="text-[10px] sm:text-[11px] text-slate-400 dark:text-slate-600">雙層加權族群觀測系統 | 維護通報：danielkuo3104@gmail.com</p>
@@ -164,6 +169,8 @@
 
   <script>
     const CSV_STOCKS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=706377990&single=true&output=csv';
+    // 高點追蹤 CSV 網址（與 index.html 相同；留空則不顯示）
+    const CSV_HIGHS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=1896125645&single=true&output=csv';
     const BACKEND_API_URL = 'https://script.google.com/macros/s/AKfycbyk4eJPQ6C7PdwBQ1p7WMWog52FPeSO7nFSk9lov_ZFR8mok5YkNbQ2cxvt2aZuEOzh/exec';
     const ADMIN_EMAIL = 'danielkuo3104@gmail.com';
     const TIER_LIMITS = { '初級韭菜': 20, '資深韭菜': 50, '萬年韭皇': Infinity };
@@ -172,6 +179,7 @@
     let userWatchlist = [];          // 保留加入順序
     let stockMap = new Map();        // id -> stock
     let dataLoaded = false;
+    let highMap = {};
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
@@ -306,6 +314,7 @@
         parseStocks(text);
         if (stockMap.size === 0) throw new Error('無個股資料');
         dataLoaded = true;
+        await loadHighs();
       } catch (e) {
         if (dataLoaded) return;   // 已有舊資料則保留畫面
         document.getElementById('dataTimestamp').textContent = '資料讀取失敗';
@@ -314,6 +323,53 @@
       }
       renderSummary();
       renderWatchCards();
+    }
+
+    // 高點追蹤：讀不到時靜默略過，不影響關注清單
+    async function loadHighs() {
+      if (!CSV_HIGHS_URL) return;
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 12000);
+        let text = '';
+        try {
+          const res = await fetch(CSV_HIGHS_URL + '&_t=' + Date.now(), { signal: ctl.signal });
+          if (res.ok) text = await res.text();
+        } finally { clearTimeout(timer); }
+        if (!text || /^\s*<(!doctype|html)/i.test(text)) return;
+        const rows = text.split(/\r\n|\n/).filter(l => l.trim()).map(parseCsvRow);
+        const hdr = rows[0].map(h => h.trim().replace(/\s+/g, ''));
+        const ix = (...names) => { for (const n of names) { const i = hdr.indexOf(n); if (i >= 0) return i; } return -1; };
+        const map = {};
+        rows.slice(1).forEach(r => {
+          const code = (r[ix('代號', '股票代號', '證券代號')] || '').trim();
+          const prevHigh = Math.round(parseFloat(String(r[ix('前高', '前高價')] || '').replace(/,/g, '')) * 100) / 100;
+          if (!code || !(prevHigh > 0)) return;
+          map[code] = {
+            prevHigh, prevDate: (r[ix('前高日期', '前高日')] || '').trim(), status: (r[ix('狀態', '註記')] || '').trim(),
+            gap: parseFloat(r[ix('距前高%', '距前高')]), streak: parseInt(r[ix('連續新高', '連續天數')], 10) || 0
+          };
+          // 今日若突破，前高即更新為今日最高；距前高以目前最高計算
+          const num = v => parseFloat(String(v || '').replace(/,/g, ''));
+          const h = num(r[ix('最高', '最高價')]), c = num(r[ix('收盤', '收盤價')]);
+          const recHigh = num(r[ix('區間最高')]), recDate = (r[ix('區間最高日')] || '').trim(), dataDate = (r[ix('資料日期')] || '').trim();
+          const m = map[code];
+          m.oldHigh = prevHigh; m.oldDate = m.prevDate; m.dayHigh = h; m.close = c; m.date = dataDate;
+          if (h > prevHigh) {
+            m.prevHigh = Math.round(Math.max(h, recHigh || 0) * 100) / 100;
+            m.prevDate = (recHigh >= h && recDate) ? recDate : dataDate;
+            m.broke = true;
+          }
+          if (c > 0) m.gap = (c / m.prevHigh - 1) * 100;
+        });
+        highMap = map;
+      } catch (e) { console.warn('高點追蹤讀取失敗', e); }
+    }
+    function highBadgeHtml(h) {
+      if (!h || !h.status) return '';
+      const st = h.status.indexOf('達成新高') === 0 ? 'bg-amber-500 text-white font-black'
+        : (h.status === '本日曾破新高' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold' : 'bg-orange-500/10 text-orange-500 border border-orange-500/30 font-semibold');
+      return `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${st}">${escHtml(h.status)}</span>`;
     }
 
     function parseStocks(csvText) {
@@ -368,7 +424,7 @@
         const tenDayVol = [];
         for (let c = 34; c <= 43; c++) {
           const v = row[c] ? row[c].trim() : '';
-          tenDayVol.push({ numVal: parseFloat(v) || 0, hasData: v !== '' && v !== '-' && v !== 'nan' });
+          tenDayVol.push({ date: volHeaders[c - 34], numVal: parseFloat(v) || 0, hasData: v !== '' && v !== '-' && v !== 'nan' });
         }
 
         const stock = {
@@ -376,6 +432,7 @@
           price, change, pctStr, pctNum, volume,
           cap: parseFloat(row[6]) || 0,
           note1: row[12] ? row[12].trim() : '',
+          note2: row[13] ? row[13].trim() : '',
           turnover: volume * 1000 * price,
           isLimitUp: pctNum >= 9.5 && change > 0,
           isLimitDown: pctNum <= -9.5 && change < 0,
@@ -548,9 +605,10 @@
         const pctTxt = (s.change > 0 && !s.pctStr.startsWith('+')) ? '+' + s.pctStr : s.pctStr;
         const cumCol = s.cumPct > 0 ? 'text-stockRed' : (s.cumPct < 0 ? 'text-stockGreen' : 'text-slate-400');
         const priceBox = s.isLimitUp ? 'bg-limitUp text-white px-1.5 rounded' : (s.isLimitDown ? 'bg-limitDown text-white px-1.5 rounded' : col);
-        const badges = s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
+        const hi = highMap[s.id];
+        const badges = highBadgeHtml(hi) + s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
         return `
-          <div onclick="openInHome('${escHtml(id)}')" class="cursor-pointer p-4 rounded-2xl border ${cardTone} hover:shadow-lg hover:border-brand-500/60 transition space-y-2.5 min-w-0">
+          <div onclick="openStockDetail('${escHtml(id)}')" class="cursor-pointer p-4 rounded-2xl border ${cardTone} hover:shadow-lg hover:border-brand-500/60 transition space-y-2.5 min-w-0">
             <div class="flex items-start justify-between gap-2">
               <div class="min-w-0">
                 <div class="flex items-center space-x-2">
@@ -585,12 +643,168 @@
               </div>
             </div>
 
+            ${hi ? `<div class="flex items-center justify-between text-[10px] font-mono bg-white/60 dark:bg-slate-900/60 rounded-lg px-2 py-1">
+              <span class="text-slate-400 font-sans">區間前高 <strong class="text-slate-700 dark:text-slate-200 font-mono">${hi.prevHigh.toLocaleString('en-US', { maximumFractionDigits: 2 })}</strong> <span class="text-slate-400">${escHtml(/^\d{4}-\d{2}-\d{2}$/.test(hi.prevDate) ? hi.prevDate.slice(5).replace('-', '/') : '日期補查中')}</span>${hi.broke ? ' <span class="text-amber-500">今日創高</span>' : ''}</span>
+              <span class="${isNaN(hi.gap) ? 'text-slate-400' : (hi.gap >= 0 ? 'text-stockRed' : 'text-stockGreen')} font-bold">距前高 ${isNaN(hi.gap) ? '--' : (hi.gap > 0 ? '+' : '') + hi.gap.toFixed(2) + '%'}</span>
+            </div>` : ''}
             ${badges ? `<div class="flex flex-wrap gap-1">${badges}</div>` : ''}
           </div>`;
       }).join('');
 
       const missing = userWatchlist.filter(id => !stockMap.has(id)).length;
       info.textContent = `共關注 ${userWatchlist.length} 檔` + (q ? `，符合搜尋 ${items.length} 檔` : '') + (missing ? `（${missing} 檔查無資料）` : '');
+    }
+
+    let detailStockId = null;
+    function closeStockDetail() {
+      document.getElementById('stockDetailModal').classList.add('hidden');
+      detailStockId = null;
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeStockDetail(); });
+
+    function fmtNum(v, d = 2) { return (v === null || v === undefined || isNaN(v)) ? '--' : Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }); }
+    function colOf(v) { return v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400'); }
+    function fmtHD(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d.replace(/-/g, '/') : (d ? '日期補查中' : '--'); }
+
+    function openStockDetail(id) {
+      const s = stockMap.get(id);
+      if (!s) return;
+      detailStockId = id;
+      const hi = highMap[id];
+      const col = colOf(s.change);
+      const pctTxt = (s.change > 0 && !s.pctStr.startsWith('+')) ? '+' + s.pctStr : s.pctStr;
+      const tile = (label, val, sub) => `
+        <div class="bg-slate-100 dark:bg-slate-950 p-2.5 rounded-2xl min-w-0">
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 block mb-0.5">${label}</span>
+          <span class="text-sm sm:text-base font-black font-mono block truncate">${val}</span>
+          ${sub ? `<span class="text-[9px] text-slate-400 font-mono block truncate">${sub}</span>` : ''}
+        </div>`;
+      const wtile = (label, val, sub) => `
+        <div class="bg-white dark:bg-slate-900 rounded-xl p-2 border border-slate-200 dark:border-slate-800 min-w-0">
+          <span class="text-[10px] text-slate-500 dark:text-slate-400 block">${label}</span>
+          <span class="text-sm font-black font-mono block truncate">${val}</span>
+          ${sub ? `<span class="text-[9px] text-slate-400 font-mono block truncate">${sub}</span>` : ''}
+        </div>`;
+
+      // 高點追蹤
+      let highHtml = '';
+      if (hi) {
+        const cur = s.price || hi.close;
+        const gap = cur && hi.prevHigh ? (cur / hi.prevHigh - 1) * 100 : hi.gap;
+        const diff = cur && hi.prevHigh ? cur - hi.prevHigh : null;
+        const breakPct = hi.broke && cur && hi.oldHigh ? (cur / hi.oldHigh - 1) * 100 : null;
+        highHtml = `
+          <div class="space-y-2">
+            <div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">新高狀態</span><div class="flex items-center gap-1.5">${highBadgeHtml(hi) || '<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-200/70 dark:bg-slate-800 text-slate-500">未突破</span>'}${hi.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${hi.streak} 日</span>` : ''}</div></div>
+            <div class="grid grid-cols-3 gap-2">
+              ${wtile('追蹤區間前高', fmtNum(hi.prevHigh), fmtHD(hi.prevDate) + (hi.broke ? ' <span class="text-amber-500">今日創高</span>' : ''))}
+              ${wtile('距前高', `<span class="${colOf(gap)}">${gap > 0 ? '+' : ''}${isNaN(gap) ? '--' : gap.toFixed(2) + '%'}</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
+              ${hi.broke
+                ? wtile('突破原前高', `<span class="${colOf(breakPct)}">${breakPct > 0 ? '+' : ''}${(breakPct ?? 0).toFixed(2)}%</span>`, `原前高 ${fmtNum(hi.oldHigh)}・${fmtHD(hi.oldDate)}`)
+                : wtile('當日最高', hi.dayHigh ? fmtNum(hi.dayHigh) : '--', hi.date ? '資料日 ' + fmtHD(hi.date) : '')}
+            </div>
+          </div>`;
+      }
+      // 近十日高低（收盤價回推）
+      const pts = s.prices.map((p, i) => (s.tenDayHistory[i].hasData && p) ? { p, date: s.tenDayHistory[i].date } : null).filter(Boolean);
+      let tenHtml = '';
+      if (pts.length >= 2) {
+        let hiP = pts[0], loP = pts[0];
+        pts.forEach(x => { if (x.p >= hiP.p) hiP = x; if (x.p <= loP.p) loP = x; });
+        const g = (s.price / hiP.p - 1) * 100;
+        const pos = hiP.p > loP.p ? ((s.price - loP.p) / (hiP.p - loP.p)) * 100 : 100;
+        tenHtml = `
+          <div class="space-y-2">
+            <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">近十日高低（收盤價）</span>
+            <div class="grid grid-cols-3 gap-2">
+              ${wtile('十日最高', fmtNum(hiP.p), escHtml(hiP.date || ''))}
+              ${wtile('距十日高', `<span class="${colOf(g)}">${g > 0 ? '+' : ''}${g.toFixed(2)}%</span>`, `${(s.price - hiP.p) > 0 ? '+' : ''}${(s.price - hiP.p).toFixed(2)} 元`)}
+              ${wtile('十日最低', fmtNum(loP.p), escHtml(loP.date || ''))}
+            </div>
+            <div class="relative h-2 rounded-full bg-gradient-to-r from-emerald-500/30 via-slate-300/40 dark:via-slate-700/60 to-red-500/30">
+              <div class="absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-brand-500 border-2 border-white dark:border-slate-900 shadow" style="left:calc(${Math.min(Math.max(pos, 0), 100)}% - 6px)"></div>
+            </div>
+            <div class="text-[9px] text-slate-400 text-center">目前位於十日區間 ${Math.round(pos)}%</div>
+          </div>`;
+      }
+
+      // 十日價格線圖 + 成交量柱
+      const W = 440, H = 120, pad = 22;
+      let priceSvg = '<div class="text-xs text-slate-400 py-6 text-center">暫無十日走勢</div>';
+      if (pts.length >= 2) {
+        const min = Math.min(...pts.map(x => x.p)), max = Math.max(...pts.map(x => x.p));
+        const rng = (max - min) || max * 0.02 || 1;
+        const xs = i => pad + (i / (pts.length - 1)) * (W - pad * 2);
+        const ys = p => H - pad - ((p - min) / rng) * (H - pad * 2);
+        const color = s.cumPct >= 0 ? '#ef4444' : '#22c55e';
+        priceSvg = `<svg viewBox="0 0 ${W} ${H}" class="w-full h-28 overflow-visible">
+          <polyline points="${pts.map((x, i) => `${xs(i)},${ys(x.p)}`).join(' ')}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>
+          ${pts.map((x, i) => `<circle cx="${xs(i)}" cy="${ys(x.p)}" r="3" fill="${color}"/><text x="${xs(i)}" y="${ys(x.p) - 6}" text-anchor="middle" font-size="8" font-family="monospace" fill="#94a3b8">${x.p >= 100 ? Math.round(x.p) : x.p.toFixed(1)}</text>`).join('')}
+        </svg>
+        <div class="flex justify-between text-[9px] text-slate-400 font-mono px-1"><span>${escHtml(pts[0].date || '')}</span><span class="text-brand-500 font-bold">${escHtml(pts[pts.length - 1].date || '')}</span></div>`;
+      }
+      const vols = s.tenDayVol.filter(v => v.hasData);
+      let volSvg = '';
+      if (vols.length) {
+        const vmax = Math.max(...vols.map(v => v.numVal), 1);
+        const bw = (W - pad * 2) / vols.length;
+        volSvg = `<svg viewBox="0 0 ${W} 70" class="w-full h-16">
+          ${vols.map((v, i) => { const h = (v.numVal / vmax) * 52; return `<rect x="${pad + i * bw + 2}" y="${62 - h}" width="${bw - 4}" height="${Math.max(h, 1)}" rx="2" fill="#f59e0b" opacity="${i === vols.length - 1 ? 1 : 0.55}"><title>${escHtml(v.date || '')}：${Math.round(v.numVal).toLocaleString()} 張</title></rect>`; }).join('')}
+        </svg>`;
+      }
+
+      document.getElementById('stockDetailBody').innerHTML = `
+        <div class="flex items-start justify-between gap-2 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2">
+              <button onclick="removeFromWatchlist('${escHtml(id)}'); closeStockDetail();" class="text-amber-400 hover:text-slate-400 text-lg" title="取消關注"><i class="fa-solid fa-star"></i></button>
+              <h3 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100 truncate">${escHtml(s.name)}</h3>
+              <span class="text-sm font-mono text-slate-500 dark:text-slate-400">${escHtml(s.id)}</span>
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">${escHtml(s.groups.join('、') || '—')}</div>
+            <div class="flex flex-wrap gap-1 mt-2">${highBadgeHtml(hi)}${s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[10px] ${b.color}">${b.text}</span>`).join('')}</div>
+          </div>
+          <button onclick="closeStockDetail()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          ${tile('收盤價', `<span class="${col}">${fmtNum(s.price)}</span>`)}
+          ${tile('漲跌', `<span class="${col}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</span>`)}
+          ${tile('漲跌幅', `<span class="${col}">${escHtml(pctTxt)}</span>`)}
+          ${tile('成交量', Math.round(s.volume).toLocaleString(), '張')}
+        </div>
+
+        ${(highHtml || tenHtml) ? `
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-3">
+          <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-mountain-sun text-amber-500"></i>高點資訊</h4>
+          ${highHtml}${highHtml && tenHtml ? '<div class="border-t border-slate-200 dark:border-slate-800"></div>' : ''}${tenHtml}
+        </div>` : ''}
+
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-800 space-y-2">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-chart-line text-brand-500"></i>近十日走勢（收盤價）</h4>
+            <span class="text-[10px] font-mono font-bold px-2 py-0.5 rounded-full ${s.cumPct >= 0 ? 'bg-red-500/10 text-stockRed' : 'bg-green-500/10 text-stockGreen'}">十日累積 ${s.cumPct > 0 ? '+' : ''}${s.cumPct.toFixed(2)}%</span>
+          </div>
+          ${priceSvg}
+          ${volSvg ? `<div class="pt-1"><div class="text-[10px] text-slate-500 dark:text-slate-400 mb-1">近十日成交量（張）・量比 ${s.volRatio.toFixed(2)}x</div>${volSvg}</div>` : ''}
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 text-xs">
+          <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800"><span class="text-slate-500 dark:text-slate-400">預估成交金額</span><span class="font-bold font-mono text-amber-500">${s.turnover >= 1e8 ? (s.turnover / 1e8).toFixed(2) + ' 億' : Math.round(s.turnover / 1e4).toLocaleString() + ' 萬'}</span></div>
+          <div class="flex justify-between py-2 border-b border-slate-100 dark:border-slate-800"><span class="text-slate-500 dark:text-slate-400">市值（億）</span><span class="font-bold font-mono">${fmtNum(s.cap)}</span></div>
+        </div>
+
+        <div class="bg-slate-100 dark:bg-slate-950 p-3 sm:p-4 rounded-2xl space-y-1.5 text-xs">
+          <h4 class="font-bold text-slate-900 dark:text-slate-100 flex items-center gap-1.5"><i class="fa-solid fa-lightbulb text-amber-500"></i>核心業務與產業題材</h4>
+          <p class="text-slate-700 dark:text-slate-200">${escHtml(s.note1 || '暫無核心業務摘要')}</p>
+          ${s.note2 ? `<p class="text-slate-500 dark:text-slate-400">${escHtml(s.note2)}</p>` : ''}
+        </div>
+
+        <button onclick="openInHome('${escHtml(id)}')" class="w-full py-2 rounded-xl border border-slate-200 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 hover:text-brand-500 hover:border-brand-500 transition">
+          到首頁查看族群權重與同族群個股 <i class="fa-solid fa-arrow-right ml-1"></i>
+        </button>
+        <p class="text-[9px] text-slate-400 text-center">公司業務與題材由 AI 輔助彙整；所有數據僅供參考，不構成投資建議。</p>`;
+      document.getElementById('stockDetailModal').classList.remove('hidden');
     }
 
     function openInHome(id) {
