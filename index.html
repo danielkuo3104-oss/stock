@@ -1757,7 +1757,7 @@
         }
       } catch (err) {
         if (email === ADMIN_EMAIL && pass) {
-          currentUser = { name: '郭丹騏', email, role: 'admin', tier: '萬年韭皇' };
+          currentUser = { name: '郭丹騏', email, role: 'admin', tier: '萬年韭皇', offline: true };  // 後端無回應時的離線登入（無 token，看不到投資日誌）
           finalizeLogin(remember);
         } else {
           showAuthMsg('連線異常，請確認網路或試算表狀態。', true);
