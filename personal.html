@@ -17,6 +17,15 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
   <script>
+    window.addEventListener('error', function (e) {
+      try {
+        var b = document.getElementById('jsErrBanner');
+        if (!b) { b = document.createElement('div'); b.id = 'jsErrBanner'; b.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;font:12px/1.5 sans-serif;padding:8px 12px;border-radius:10px'; (document.body || document.documentElement).appendChild(b); }
+        b.textContent = '頁面程式錯誤（請截圖回報）：' + (e.message || '未知錯誤') + (e.filename ? '｜行 ' + e.lineno : '') + '｜' + navigator.userAgent;
+      } catch (x) {}
+    });
+  </script>
+  <script>
     tailwind.config = {
       darkMode: 'class',
       theme: {
@@ -208,8 +217,10 @@
       try {
         currentUser = JSON.parse(stored);
       } catch (e) { window.location.replace('index.html'); return; }
+      if (currentUser.role === 'admin') currentUser.tier = '萬年韭皇';
       if (!currentUser.tier) currentUser.tier = '初級韭菜';
       renderUserBadge();
+      syncProfile();
 
       if (currentUser.role === 'guest') {
         document.getElementById('lockedView').classList.remove('hidden');
@@ -230,11 +241,27 @@
       fetchStocks();
     }
 
+    // 向後端同步最新等級（與首頁一致；管理員改等級後不必重新登入）
+    async function syncProfile() {
+      if (!currentUser || !currentUser.token || currentUser.role === 'guest') return;
+      try {
+        const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify({ action: 'me', email: currentUser.email, token: currentUser.token }) });
+        const r = await res.json();
+        if (!r || !r.success || !r.user) return;
+        Object.assign(currentUser, { tier: r.user.tier, role: r.user.role, name: r.user.name || currentUser.name, hasJournal: r.user.hasJournal });
+        const key = 'sectorpulse_user';
+        if (localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(currentUser));
+        else if (sessionStorage.getItem(key)) sessionStorage.setItem(key, JSON.stringify(currentUser));
+        renderUserBadge();
+        if (typeof renderSummary === 'function' && document.getElementById('quotaBox')) renderSummary();
+      } catch (e) {}
+    }
+
     function renderUserBadge() {
       const el = document.getElementById('userBadge');
       const tier = currentUser.tier || '初級韭菜';
       if (currentUser.role === 'admin') {
-        el.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${escHtml(currentUser.name)} (管理員)</span>`;
+        el.innerHTML = `<i class="fa-solid fa-shield-halved mr-1 text-blue-600 dark:text-blue-400"></i><span>${escHtml(currentUser.name)} (管理員 · 韭皇)</span>`;
         el.className = 'text-[10px] sm:text-xs px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full font-bold bg-blue-50 dark:bg-blue-500/15 text-blue-600 dark:text-blue-300 border border-blue-200 dark:border-blue-500/40 whitespace-nowrap inline-flex items-center';
       } else if (currentUser.role === 'guest') {
         el.innerHTML = `<i class="fa-solid fa-user-secret mr-1"></i><span>訪客</span>`;
