@@ -5055,7 +5055,10 @@ function getDynamicColorTier(rawPct) {
         s.badges = (s.badges || []).filter(b => !b.hi);
         const h = highMap[s.id];
         s.high = h || null;
-        const kind = h ? highKind(h.status) : '';
+        // 高點追蹤與個股報價不是同一天 → 先不顯示新高標籤（避免用舊的高點判斷今天的價格）
+        const stockDate = effectiveTradeDate(s.stampDate || s.dataDate || '');
+        s.highSynced = !!(h && h.date && stockDate && h.date === stockDate);
+        const kind = (h && s.highSynced) ? highKind(h.status) : '';
         if (kind) s.badges.unshift({ text: h.status, color: HIGH_BADGE_STYLE[kind], hi: true });
       });
     }
