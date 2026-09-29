@@ -2552,6 +2552,7 @@
       attachHighBadges();
       attachDisposalBadges();
       try { renderWatchDisposalBanner(); } catch (e) {}
+      try { if (currentTab === 'home') renderHighRadar(); } catch (e) {}
       renderHotCards(Array.from(stockMap.values()));
       applyFilters();
       // 個股資料就緒後重繪盤後權值股，讓其可點擊開啟個股詳情
@@ -5439,7 +5440,12 @@ function getDynamicColorTier(rawPct) {
         if (body) body.innerHTML = emptyStateHtml('高點追蹤資料暫時無法取得', true);
         return;
       }
-      const list = Object.values(highMap).filter(h => h.code !== 'TAIEX' && highKind(h.status));
+      // 與個股標籤同一套規則：高點資料與該檔報價同一天才列入（避免雷達與標籤篩選結果不一致）
+      const list = Object.values(highMap).filter(h => {
+        if (h.code === 'TAIEX' || !highKind(h.status)) return false;
+        const st = parsedStocks.find(x => x.id === h.code);
+        return st ? st.highSynced !== false : false;
+      });
       const groups = [
         { kind: 'new', label: '達成新高', items: list.filter(h => highKind(h.status) === 'new').sort((a, b) => b.streak - a.streak || b.gap - a.gap) },
         { kind: 'touched', label: '本日曾破新高', items: list.filter(h => highKind(h.status) === 'touched').sort((a, b) => b.gap - a.gap) },
