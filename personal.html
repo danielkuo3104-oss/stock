@@ -132,6 +132,7 @@
             <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 flex items-center space-x-2">
               <i class="fa-solid fa-star text-amber-400"></i>
               <span>我的關注清單</span>
+              <span id="watchFresh" class="text-xs"></span>
             </h2>
             <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">從首頁或個股詳情點擊 ⭐ 即可加入；點卡片可查看個股詳情</p>
           </div>
@@ -285,6 +286,60 @@
     }
 
     // ---------- 工具 ----------
+    // ---------- 資料新鮮度（與首頁同規則）：個股報價依 L 欄「執行戳記」判斷 ----------
+    const PF_HOLIDAYS_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSENLLgR0CHFcaTBEQ3QLK0rdxmdaI8Fevn69-Mn3F-OwiMl1VRjMSvlXd3CSgRGj75Ob4JuU13nBf9/pub?gid=349903105&single=true&output=csv';
+    let pfHolidays = null, pfStockDate = '', pfStockNewest = '', pfLoadTime = '';
+    function pfNormDate(str) { const m = String(str ?? '').match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/); return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : ''; }
+    function pfToday() { return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10); }
+    function pfNowMin() { const d = new Date(Date.now() + 8 * 3600e3); return d.getUTCHours() * 60 + d.getUTCMinutes(); }
+    function pfShort(d) { return d ? d.slice(5).replace('-', '/') : '--'; }
+    function pfMmddToIso(txt) {
+      const full = pfNormDate(txt); if (full) return full;
+      const m = String(txt || '').match(/(\d{1,2})\/(\d{1,2})/); if (!m) return '';
+      const t = pfToday(), y = +t.slice(0, 4);
+      let iso = `${y}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+      return iso > t ? `${y - 1}${iso.slice(4)}` : iso;
+    }
+    function pfIsTradingDay(iso) {
+      const wd = new Date(iso + 'T12:00:00+08:00').getUTCDay();
+      if (wd === 0 || wd === 6) return false;
+      return !(pfHolidays || []).includes(iso);
+    }
+    function pfPrevTradingDay(iso) {
+      let t = Date.parse(iso + 'T12:00:00+08:00');
+      for (let i = 0; i < 20; i++) { t -= 86400e3; const d = new Date(t + 8 * 3600e3).toISOString().slice(0, 10); if (pfIsTradingDay(d)) return d; }
+      return '';
+    }
+    function pfFresh(date) {
+      if (!date) return { lv: 'unknown', text: '日期未知' };
+      const t = pfToday();
+      if (date === t) return { lv: 'today', text: '當日' };
+      const closed = !pfIsTradingDay(t);
+      const exp = closed ? pfPrevTradingDay(t) : (pfNowMin() >= 14 * 60 + 30 ? t : pfPrevTradingDay(t));
+      if (date >= exp) return { lv: 'latest', text: closed ? '最近交易日' : '前一交易日' };
+      return { lv: 'stale', text: '非當日' };
+    }
+    const PF_CLS = { today: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20', latest: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20', stale: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30', unknown: 'bg-slate-200/70 dark:bg-slate-800 text-slate-500' };
+    function pfBadge(date, prefix) {
+      const f = pfFresh(date);
+      const txt = (prefix ? prefix + ' ' : '') + (f.lv === 'today' || f.lv === 'unknown' ? f.text : pfShort(date) + ' ' + f.text);
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold whitespace-nowrap align-middle ${PF_CLS[f.lv]}">${escHtml(txt)}</span>`;
+    }
+    async function pfLoadHolidays() {
+      if (pfHolidays) return;
+      try {
+        const res = await fetch(PF_HOLIDAYS_URL);
+        const text = await res.text();
+        pfHolidays = text.split(/\r\n|\n/).slice(1).map(l => pfNormDate(parseCsvRow(l)[0] || '')).filter(Boolean);
+      } catch (e) { pfHolidays = []; }
+    }
+    function pfRenderFresh() {
+      const ts = document.getElementById('dataTimestamp');
+      if (ts && pfStockDate) ts.textContent = `個股 ${pfShort(pfStockDate)} ${pfFresh(pfStockDate).text}${pfLoadTime ? '・讀取 ' + pfLoadTime : ''}`;
+      const wf = document.getElementById('watchFresh');
+      if (wf) wf.innerHTML = pfStockDate ? pfBadge(pfStockDate, '報價') : '';
+    }
+
     function escHtml(str) {
       return String(str ?? '').replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
     }
@@ -315,18 +370,19 @@
     async function handleRefresh() {
       const icon = document.getElementById('refreshIcon');
       icon.classList.add('fa-spin');
-      try { await fetchStocks(); } finally { setTimeout(() => icon.classList.remove('fa-spin'), 600); }
+      try { await fetchStocks(); } finally { setTimeout(() => icon.classList.remove('fa-spin'), 600); }   // fetchStocks 內含高點追蹤
     }
 
     // ---------- 讀取個股資料（與首頁同一張工作表、同樣欄位定義）----------
     async function fetchStocks() {
       if (!currentUser || currentUser.role === 'guest') return;
+      await pfLoadHolidays();
       try {
         const ctl = new AbortController();
         const timer = setTimeout(() => ctl.abort(), 15000);
         let text = '';
         try {
-          const res = await fetch(CSV_STOCKS_URL + '&_t=' + Date.now(), { signal: ctl.signal });
+          const res = await fetch(CSV_STOCKS_URL + '&_t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
           if (!res.ok) throw new Error('HTTP ' + res.status);
           text = await res.text();
         } finally { clearTimeout(timer); }
@@ -353,7 +409,7 @@
         const timer = setTimeout(() => ctl.abort(), 12000);
         let text = '';
         try {
-          const res = await fetch(CSV_HIGHS_URL + '&_t=' + Date.now(), { signal: ctl.signal });
+          const res = await fetch(CSV_HIGHS_URL + '&_t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
           if (res.ok) text = await res.text();
         } finally { clearTimeout(timer); }
         if (!text || /^\s*<(!doctype|html)/i.test(text)) return;
@@ -406,7 +462,8 @@
       const at2 = (grid[1] && grid[1][45]) ? grid[1][45].trim() : '';
       const now = new Date();
       const t = [now.getHours(), now.getMinutes(), now.getSeconds()].map(n => String(n).padStart(2, '0')).join(':');
-      document.getElementById('dataTimestamp').textContent = at2 ? `${at2} ${t}` : `即時資料 (${t})`;
+      pfLoadTime = t.slice(0, 5);
+      document.getElementById('dataTimestamp').textContent = `讀取 ${t}`;
 
       const volHeaders = [], pctHeaders = [];
       for (let c = 34; c <= 43; c++) volHeaders.push(grid[0][c] ? grid[0][c].trim() : '');
@@ -435,6 +492,7 @@
         const pctStr = row[5] ? row[5].trim() : '0.00%';
         const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
         const volume = parseFloat(row[43]) || 0;
+        const dataDate = pfMmddToIso(row[11] || '');
 
         const tenDayHistory = [];
         for (let c = 46; c <= 55; c++) {
@@ -456,11 +514,17 @@
           turnover: volume * 1000 * price,
           isLimitUp: pctNum >= 9.5 && change > 0,
           isLimitDown: pctNum <= -9.5 && change < 0,
-          tenDayHistory, tenDayVol
+          tenDayHistory, tenDayVol, dataDate
         };
         computeDerived(stock);
         stockMap.set(id, stock);
       }
+      const cnt = {};
+      stockMap.forEach(st => { if (st.dataDate) cnt[st.dataDate] = (cnt[st.dataDate] || 0) + 1; });
+      const ks = Object.keys(cnt).sort();
+      pfStockNewest = ks[ks.length - 1] || '';
+      pfStockDate = ks.reduce((a, k) => (!a || cnt[k] > cnt[a] || (cnt[k] === cnt[a] && k > a)) ? k : a, '');
+      pfRenderFresh();
     }
 
     // 十日價格回推、累積漲幅、量比與動態標籤（規則與首頁相同）
@@ -634,6 +698,7 @@
                 <div class="flex items-center space-x-2">
                   <span class="stock-name font-black text-base text-slate-900 dark:text-slate-100 truncate">${escHtml(s.name)}</span>
                   <span class="text-[10px] text-slate-400 font-mono">${escHtml(s.id)}</span>
+                  ${(s.dataDate && pfStockNewest && s.dataDate < pfStockNewest) ? `<span class="px-1 rounded text-[9px] font-bold font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="這檔的報價停在 ${s.dataDate}，比其他個股舊">${pfShort(s.dataDate)}</span>` : ''}
                 </div>
                 <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5">${escHtml(s.groups.join('、') || '—')}</div>
               </div>
