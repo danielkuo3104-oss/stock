@@ -1042,7 +1042,8 @@
     const ADMIN_SHARE_EMAIL = 'danielkuo3104@gmail.com';
     const JN_COLORS = { a: '#3b82f6', b: '#f59e0b', c: '#c026d3', d: '#0d9488', muted: '#94a3b8' };
     const DONUT_COLORS = ['#3b82f6', '#f59e0b', '#c026d3', '#0d9488', '#6366f1', '#84cc16', '#ec4899', '#0ea5e9', '#94a3b8'];
-    let journalState = { loaded: false, loading: false, data: null, error: null, range: 60, scope: 'total', tradeFilter: 'all', tradeQuery: '', tradeLimit: 30, openHolding: null };
+    let journalState = { loaded: false, loading: false, data: null, error: null, range: 60, scope: 'total', tradeFilter: 'all', tradeQuery: '', tradeLimit: 30, openHolding: null,
+      allocView: 'all', allocMore: false, dailyView: 'bar', reasonScope: 'all', reasonEdit: null, pendingOpen: false, pendingDraft: {}, divOpen: false, divForm: {}, writeMsg: null, saving: false };
     let personalTab = 'watch';
 
     const PERSONAL_TABS = ['watch', 'journal', 'alerts', 'track', 'notes'];
@@ -1159,6 +1160,10 @@
     const jnPct = (v, d = 2) => (v === null || v === undefined || isNaN(v)) ? '--' : (v > 0 ? '+' : '') + Number(v).toFixed(d) + '%';
     const jnCol = v => v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
 
+    function jnSeg(cur, opts, fn) {
+      return `<div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex text-[10px] sm:text-[11px]">${opts.map(([v, l]) => `<button onclick="${fn}('${v}')" class="px-2 py-0.5 rounded-md transition whitespace-nowrap ${String(cur) === String(v) ? 'font-bold bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}">${l}</button>`).join('')}</div>`;
+    }
+
     function renderJournal() {
       const box = document.getElementById('tabJournal');
       if (!box || personalTab !== 'journal') return;
@@ -1215,7 +1220,7 @@
       const k = scope === 'stock' ? { v: 'sv', day: 'sDay', cost: 'sCost', pl: 'sPl', roi: 'sRoi', div: 'sDiv', plDiv: 'sPlDiv', roiDiv: 'sRoiDiv' }
               : scope === 'etf' ? { v: 'ev', day: 'eDay', cost: 'eCost', pl: 'ePl', roi: 'eRoi', div: 'eDiv', plDiv: 'ePlDiv', roiDiv: 'eRoiDiv' }
               : { v: 'tv', day: 'tDay', cost: 'tCost', pl: 'tPl', roi: 'tRoi', div: 'tDiv', plDiv: 'tPlDiv', roiDiv: 'tRoiDiv' };
-      const seg = (id, cur, opts, fn) => `<div class="bg-slate-100 dark:bg-slate-950 p-0.5 rounded-lg border border-slate-200 dark:border-slate-800 flex text-[10px] sm:text-[11px]">${opts.map(([v, l]) => `<button onclick="${fn}('${v}')" class="px-2 py-0.5 rounded-md transition ${String(cur) === String(v) ? 'font-bold bg-brand-600 text-white' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}">${l}</button>`).join('')}</div>`;
+      const seg = (id, cur, opts, fn) => jnSeg(cur, opts, fn);
       const tile = (label, val, sub, cls = '') => `
         <div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 min-w-0">
           <div class="text-[10px] sm:text-[11px] text-slate-500 dark:text-slate-400">${label}</div>
@@ -1225,13 +1230,15 @@
 
       const cur = hist.length ? hist[hist.length - 1] : null;
       const lastDate = cur ? cur.date : '';
+      const RZ = jnRealized(J.holdings || [], scope);
       const kpi = cur ? [
         tile('總淨值', jnFmt(cur[k.v]), `<span class="text-slate-400">資料日 ${lastDate.slice(5).replace('-', '/')}</span>`),
         tile('今日損益', `<span class="${jnCol(cur[k.day])}">${jnSigned(cur[k.day])}</span>`, cur[k.v] ? `<span class="${jnCol(cur[k.day])}">${jnPct(cur[k.day] / (cur[k.v] - cur[k.day]) * 100)}</span>` : ''),
         tile('庫存成本', jnFmt(cur[k.cost]), ''),
         tile('庫存損益', `<span class="${jnCol(cur[k.pl])}">${jnSigned(cur[k.pl])}</span>`, `<span class="${jnCol(cur[k.roi])}">報酬率 ${jnPct(cur[k.roi])}</span>`),
         tile('含息報酬', `<span class="${jnCol(cur[k.plDiv])}">${jnSigned(cur[k.plDiv])}</span>`, `<span class="${jnCol(cur[k.roiDiv])}">含息報酬率 ${jnPct(cur[k.roiDiv])}</span>`),
-        tile('累計股息', jnFmt(cur[k.div]), '')
+        tile('累計股息', jnFmt(cur[k.div]), ''),
+        tile('已了結損益', `<span class="${jnCol(RZ.total)}">${jnSigned(RZ.total)}</span>`, `<span class="text-slate-400">含股息 </span><span class="${jnCol(RZ.total + RZ.div)}">${jnSigned(RZ.total + RZ.div)}</span>`)
       ].join('') : '<div class="col-span-full text-xs text-slate-400">紀錄中心沒有資料</div>';
 
       const holdings = (J.holdings || []);
@@ -1250,7 +1257,8 @@
               <button onclick="loadJournal(true)" class="p-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-500 hover:text-brand-500 text-xs" title="重新讀取"><i class="fa-solid fa-rotate-right ${journalState.loading ? 'fa-spin' : ''}"></i></button>
             </div>
           </div>
-          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">${kpi}</div>
+          <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">${kpi}</div>
+          ${jnWriteBanner()}
         `)}
 
         ${jnCard(`
@@ -1259,7 +1267,7 @@
             ${seg('range', journalState.range, [[20, '20日'], [60, '60日'], [120, '120日'], [0, '全期']], 'setJournalRange')}
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            ${chartBox('jc_nav', '資產淨值與成本')}
+            ${chartBox('jc_nav', '資產淨值與成本', '通道：淨值高於成本為獲利（紅），低於成本為虧損（綠）')}
             ${chartBox('jc_roi', '累計報酬率（含息 vs 不含息）')}
             ${chartBox('jc_bench', '策略績效 vs 加權指數', '以每日損益 ÷ 前日淨值串接的時間加權報酬，區間起點歸零')}
             ${chartBox('jc_daily', '每日損益變動')}
@@ -1273,19 +1281,15 @@
         ${jnCard(`
           <div class="flex items-center justify-between gap-2 mb-3">
             <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-briefcase text-brand-500"></i>目前持股 <span class="text-xs font-normal text-slate-400">${active.length} 檔</span></h2>
-            <span class="text-[10px] text-slate-400">點擊列可展開該檔交易紀錄</span>
+            <div class="flex items-center gap-2"><span class="text-[10px] text-slate-400 hidden sm:inline">點擊列可展開該檔交易紀錄</span>
+              <button onclick="jnOpenDividend('')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white"><i class="fa-solid fa-coins mr-1"></i>登記配息</button></div>
           </div>
+          ${journalState.divOpen ? jnDividendForm(holdings) : ''}
           ${holdingsTable(active, cur ? cur.tv : null)}
-          ${closed.length ? `
-          <details class="mt-3 group">
-            <summary class="cursor-pointer text-xs font-bold text-slate-500 dark:text-slate-400 select-none">已出清 / 無庫存（${closed.length} 檔）</summary>
-            <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-              ${closed.map(h => `<div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px]">
-                <span class="min-w-0 truncate"><b class="text-slate-800 dark:text-slate-100">${escHtml(h.name)}</b> <span class="text-slate-400 font-mono">${escHtml(h.code)}</span></span>
-                <span class="font-mono font-bold shrink-0 ${jnCol(h.totalPl ?? h.realized)}">已實現 ${jnSigned(h.realized ?? h.totalPl)}</span></div>`).join('')}
-            </div>
-          </details>` : ''}
+          ${jnRealizedHtml(RZ)}
         `)}
+
+        ${jnCard(jnReasonCard(J))}
 
         ${jnCard(`
           <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
@@ -1309,11 +1313,18 @@
 
     function chartBox(id, title, note = '', html = false) {
       return `<div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 min-w-0">
-        <div class="flex items-center justify-between gap-2 mb-1"><h3 class="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">${title}</h3><div id="${id}_legend" class="flex flex-wrap justify-end gap-x-2 text-[10px]"></div></div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1"><h3 class="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">${title}</h3><div class="flex flex-wrap items-center justify-end gap-2"><div id="${id}_tools"></div><div id="${id}_legend" class="flex flex-wrap justify-end gap-x-2 text-[10px]"></div></div></div>
         ${note ? `<p class="text-[9px] text-slate-400 mb-1">${note}</p>` : ''}
         <div id="${id}" class="relative w-full ${html ? '' : 'h-[190px] sm:h-[210px]'}"></div>
+        <div id="${id}_note" class="empty:hidden mt-2 flex flex-wrap gap-1.5"></div>
       </div>`;
     }
+    // 圖表下方的重點數字（小標籤）
+    function setChartNote(id, items) {
+      const el = document.getElementById(id + '_note'); if (!el) return;
+      el.innerHTML = items.filter(Boolean).map(([label, val, cls]) => `<span class="inline-flex items-baseline gap-1 px-2 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[10px] text-slate-500 dark:text-slate-400">${label}<b class="font-mono text-[11px] ${cls || 'text-slate-800 dark:text-slate-100'}">${val}</b></span>`).join('');
+    }
+    function setChartTools(id, html) { const el = document.getElementById(id + '_tools'); if (el) el.innerHTML = html; }
 
     function setJournalScope(v) { journalState.scope = v; renderJournal(); }
     function setJournalRange(v) { journalState.range = Number(v); renderJournal(); }
@@ -1341,7 +1352,8 @@
           ${open ? `<tr><td colspan="7" class="px-2 sm:px-3 pb-3 bg-slate-50 dark:bg-slate-900/60">
             <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[10px] font-mono mb-2 mt-1">
               <div>總買入 <b>${jnFmt(h.totalBuy)}</b></div><div>總賣出 <b>${jnFmt(h.totalSell)}</b></div>
-              <div>配息 <b>${jnFmt(h.dividend)}</b></div><div>含息總損益 <b class="${jnCol(h.totalPlDiv)}">${jnSigned(h.totalPlDiv)}</b></div>
+              <div>配息 <b>${jnFmt(h.dividend)}</b> <button onclick="event.stopPropagation(); jnOpenDividend('${escHtml(h.code)}')" class="ml-1 px-1.5 rounded bg-brand-600/10 text-brand-600 dark:text-brand-400 font-sans font-bold">＋登記</button></div><div>含息總損益 <b class="${jnCol(h.totalPlDiv)}">${jnSigned(h.totalPlDiv)}</b></div>
+              <div>已了結 <b class="${jnCol(h.realized)}">${jnSigned(h.realized)}</b></div>
             </div>
             ${tradeRowsHtml(trades, true)}</td></tr>` : ''}`;
       }).join('');
@@ -1366,7 +1378,7 @@
             ${compact ? '' : `<span class="font-bold text-slate-800 dark:text-slate-100">${escHtml(t.name)}</span><span class="text-[10px] text-slate-400 font-mono">${escHtml(t.code)}</span>`}
             <span class="font-mono">${jnFmt(t.shares)} 股 @ ${jnFmt(t.price, 2)}</span>
             <span class="font-mono text-slate-400 hidden sm:inline">≈ ${jnFmt((t.shares || 0) * (t.price || 0))} 元${t.fee ? `・費 ${jnFmt(t.fee)}` : ''}</span>
-            ${t.reason && t.reason !== '尚未填寫' ? `<span class="px-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escHtml(t.reason)}</span>` : (t.reason ? '<span class="text-slate-400">原因未填</span>' : '')}
+            ${jnReasonChip(t)}
             ${t.note && t.note !== '-合併計入-' ? `<span class="text-slate-500 dark:text-slate-400 truncate">${escHtml(t.note)}</span>` : ''}
           </div>`;
         }).join('')}</div>`;
@@ -1391,17 +1403,36 @@
       const H = n ? all.slice(-n) : all;
       if (!H.length) return;
       const dates = H.map(h => h.date);
+      const L = H[H.length - 1], F = H[0];
+      const ok = v => v !== null && v !== undefined && !isNaN(v);
+      const pp = v => ok(v) ? (v > 0 ? '+' : '') + v.toFixed(2) + '%' : '--';   // 百分點差
 
+      // 1) 資產淨值與成本：通道圖（兩線之間填色）
       lineChart('jc_nav', dates, [
-        { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a, area: true },
+        { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a },
         { name: '庫存成本', values: H.map(h => h.tCost), color: JN_COLORS.muted, dash: true }
-      ], v => jnFmt(v));
+      ], v => jnFmt(v), false, { band: [0, 1], extraTip: i => { const d = ok(H[i].tv) && ok(H[i].tCost) ? H[i].tv - H[i].tCost : null; return `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(d)}</b></div>`; } });
+      const profit = ok(L.tPl) ? L.tPl : (ok(L.tv) && ok(L.tCost) ? L.tv - L.tCost : null);
+      const profit0 = ok(F.tPl) ? F.tPl : (ok(F.tv) && ok(F.tCost) ? F.tv - F.tCost : null);
+      setChartNote('jc_nav', [
+        ['當前獲利', jnSigned(profit), jnCol(profit)],
+        ['報酬率', jnPct(ok(L.tRoi) ? L.tRoi : (profit !== null && L.tCost ? profit / L.tCost * 100 : null)), jnCol(profit)],
+        H.length > 1 && profit !== null && profit0 !== null ? ['區間獲利變化', jnSigned(profit - profit0), jnCol(profit - profit0)] : null
+      ]);
+
+      // 2) 累計報酬率
       lineChart('jc_roi', dates, [
         { name: '含息', values: H.map(h => h.tRoiDiv), color: JN_COLORS.a },
         { name: '不含息', values: H.map(h => h.tRoi), color: JN_COLORS.b, dash: true }
       ], v => v.toFixed(1) + '%', true);
+      const divGain = ok(L.tRoiDiv) && ok(L.tRoi) ? L.tRoiDiv - L.tRoi : null;
+      setChartNote('jc_roi', [
+        ['含息增益', pp(divGain), jnCol(divGain)],
+        ['股息貢獻', jnSigned(ok(L.tPlDiv) && ok(L.tPl) ? L.tPlDiv - L.tPl : L.tDiv), jnCol(1)],
+        ['含息報酬率', jnPct(L.tRoiDiv), jnCol(L.tRoiDiv)]
+      ]);
 
-      // 時間加權報酬 vs 加權指數（區間起點歸零）
+      // 3) 時間加權報酬 vs 加權指數（區間起點歸零）
       let strat = 1; const sArr = [0];
       for (let i = 1; i < H.length; i++) {
         const prev = H[i - 1].tv, d = H[i].tDay;
@@ -1409,25 +1440,83 @@
         sArr.push((strat - 1) * 100);
       }
       const idx0 = H.find(h => h.idx)?.idx;
+      const iArr = H.map(h => (h.idx && idx0) ? (h.idx / idx0 - 1) * 100 : null);
       lineChart('jc_bench', dates, [
         { name: '我的策略', values: sArr, color: JN_COLORS.a },
-        { name: '加權指數', values: H.map(h => (h.idx && idx0) ? (h.idx / idx0 - 1) * 100 : null), color: JN_COLORS.muted, dash: true }
+        { name: '加權指數', values: iArr, color: JN_COLORS.muted, dash: true }
       ], v => v.toFixed(1) + '%', true);
+      const sL = sArr[sArr.length - 1], iL = [...iArr].reverse().find(ok);
+      setChartNote('jc_bench', [
+        ['策略增益', pp(ok(iL) ? sL - iL : null), jnCol(ok(iL) ? sL - iL : 0)],
+        ['我的策略', jnPct(sL), jnCol(sL)],
+        ['加權指數', jnPct(iL), jnCol(iL)]
+      ]);
 
-      barChart('jc_daily', dates, H.map(h => h.tDay), v => jnSigned(v));
+      // 4) 每日損益：長條 / 面積
+      const dv = H.map(h => h.tDay);
+      setChartTools('jc_daily', jnSeg(journalState.dailyView, [['bar', '長條'], ['area', '面積']], 'setDailyView'));
+      if (journalState.dailyView === 'area')
+        lineChart('jc_daily', dates, [{ name: '當日損益', values: dv, color: '#64748b' }], v => jnSigned(v), false, { band: [0, null], zero: true, noLegend: true });
+      else barChart('jc_daily', dates, dv, v => jnSigned(v));
+      const leg = document.getElementById('jc_daily_legend'); if (leg) leg.innerHTML = '<span class="text-stockRed">■ 獲利</span><span class="text-stockGreen">■ 虧損</span>';
+      const gain = dv.filter(v => v > 0), loss = dv.filter(v => v < 0);
+      const sum = a => a.reduce((x, y) => x + y, 0);
+      setChartNote('jc_daily', [
+        ['期間總盈餘', jnSigned(sum(gain)), 'text-stockRed'],
+        ['總虧損', jnSigned(sum(loss)), 'text-stockGreen'],
+        ['損益', jnSigned(sum(gain) + sum(loss)), jnCol(sum(gain) + sum(loss))],
+        ['賺／賠天數', gain.length + '／' + loss.length + (gain.length + loss.length ? `（勝率 ${(gain.length / (gain.length + loss.length) * 100).toFixed(0)}%）` : '')]
+      ]);
+
+      // 5) 個股 vs ETF
       lineChart('jc_split', dates, [
         { name: '個股', values: H.map(h => h.sRoiDiv), color: JN_COLORS.b },
         { name: 'ETF', values: H.map(h => h.eRoiDiv), color: JN_COLORS.d }
       ], v => v.toFixed(1) + '%', true);
+      const eMinusS = ok(L.eRoiDiv) && ok(L.sRoiDiv) ? L.eRoiDiv - L.sRoiDiv : null;
+      setChartNote('jc_split', [
+        ['ETF−個股增益', pp(eMinusS), jnCol(eMinusS)],
+        ['個股含息', jnPct(L.sRoiDiv), jnCol(L.sRoiDiv)],
+        ['ETF 含息', jnPct(L.eRoiDiv), jnCol(L.eRoiDiv)]
+      ]);
+
+      // 6) 成本
       lineChart('jc_cost', dates, [
         { name: '個股成本', values: H.map(h => h.sCost), color: JN_COLORS.b },
         { name: 'ETF成本', values: H.map(h => h.eCost), color: JN_COLORS.d }
       ], v => jnFmt(v));
+      const cs = L.sCost || 0, ce = L.eCost || 0, ct = cs + ce;
+      setChartNote('jc_cost', ct ? [
+        ['成本佔比　個股', (cs / ct * 100).toFixed(1) + '%', 'text-amber-600 dark:text-amber-400'],
+        ['ETF', (ce / ct * 100).toFixed(1) + '%', 'text-teal-600 dark:text-teal-400'],
+        ['總成本', jnFmt(ct)]
+      ] : []);
 
-      const active = (J.holdings || []).filter(h => h.shares > 0).map(h => ({ ...h, val: h.value || h.price * h.shares || 0 })).sort((a, b) => b.val - a.val);
-      donutChart('jc_alloc', active);
-      contribChart('jc_contrib', (J.holdings || []).filter(h => h.totalPlDiv !== null && h.totalPlDiv !== 0));
+      renderAllocChart();
+      const contrib = (J.holdings || []).filter(h => h.totalPlDiv !== null && h.totalPlDiv !== 0);
+      contribChart('jc_contrib', contrib);
+      const cl = contrib.filter(h => !(h.shares > 0));
+      setChartNote('jc_contrib', contrib.length ? [
+        ['合計含息損益', jnSigned(sum(contrib.map(h => h.totalPlDiv))), jnCol(sum(contrib.map(h => h.totalPlDiv)))],
+        cl.length ? ['已出清 ' + cl.length + ' 檔', jnSigned(sum(cl.map(h => h.totalPlDiv))), jnCol(sum(cl.map(h => h.totalPlDiv)))] : null
+      ] : []);
     }
+    function setDailyView(v) { journalState.dailyView = v; if (journalState.data) renderJournalCharts(journalState.data); }
+
+    // 持股現值配置：全部 / ETF / 個股，「其他」可展開
+    function renderAllocChart() {
+      const J = journalState.data; if (!J) return;
+      const view = journalState.allocView;
+      setChartTools('jc_alloc', jnSeg(view, [['all', '全部'], ['etf', 'ETF'], ['stock', '個股']], 'setAllocView'));
+      const items = (J.holdings || []).filter(h => h.shares > 0 && (view === 'all' || h.type === view))
+        .map(h => ({ ...h, val: h.value || h.price * h.shares || 0 })).sort((a, b) => b.val - a.val);
+      donutChart('jc_alloc', items, { split: view === 'all', more: journalState.allocMore });
+      const tot = items.reduce((a, h) => a + h.val, 0);
+      const top3 = items.slice(0, 3).reduce((a, h) => a + h.val, 0);
+      setChartNote('jc_alloc', tot ? [['總現值', jnFmt(tot)], ['檔數', items.length], ['前三大集中度', (top3 / tot * 100).toFixed(1) + '%']] : []);
+    }
+    function setAllocView(v) { journalState.allocView = v; journalState.allocMore = false; renderAllocChart(); }
+    function toggleAllocMore() { journalState.allocMore = !journalState.allocMore; renderAllocChart(); }
 
     function chartLegend(id, series) {
       const el = document.getElementById(id + '_legend');
@@ -1450,19 +1539,21 @@
       return a >= 1e4 ? (v / 1e4).toFixed(a >= 1e5 ? 0 : 1) + '萬' : Math.round(v).toLocaleString('en-US');
     }
 
-    function lineChart(id, dates, series, fmt, pctMode) {
+    function lineChart(id, dates, series, fmt, pctMode, opts) {
+      opts = opts || {};
       const el = document.getElementById(id);
       if (!el) return;
-      chartLegend(id, series);
+      if (opts.noLegend) { const lg = document.getElementById(id + '_legend'); if (lg) lg.innerHTML = ''; } else chartLegend(id, series);
       const W = Math.max(el.clientWidth, 240), Hh = Math.max(el.clientHeight, 160);
       const padL = 44, padR = 6, padT = 8, padB = 18;
       const vals = series.flatMap(s => s.values).filter(v => v !== null && v !== undefined && !isNaN(v));
       if (!vals.length) { el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">暫無資料</div>'; return; }
-      const { lo, hi, ticks } = niceTicks(Math.min(...vals, pctMode ? 0 : Infinity), Math.max(...vals));
+      const { lo, hi, ticks } = niceTicks(Math.min(...vals, (pctMode || opts.zero) ? 0 : Infinity), Math.max(...vals, opts.zero ? 0 : -Infinity));
       const n = dates.length;
       const x = i => padL + (n <= 1 ? 0 : i / (n - 1)) * (W - padL - padR);
       const y = v => padT + (1 - (v - lo) / (hi - lo || 1)) * (Hh - padT - padB);
-      let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="${t === 0 && pctMode ? 0.35 : 0.1}"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${axisLabel(t, pctMode)}</text>`).join('');
+      let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="${t === 0 && (pctMode || opts.zero) ? 0.35 : 0.1}"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${axisLabel(t, pctMode)}</text>`).join('');
+      if (opts.band) g += bandPaths(series[opts.band[0]].values, opts.band[1] === null ? null : series[opts.band[1]].values, x, y, opts.bandColors || ['#ef4444', '#22c55e']);
       series.forEach(s => {
         const pts = s.values.map((v, i) => (v === null || v === undefined || isNaN(v)) ? null : [x(i), y(v)]).filter(Boolean);
         if (pts.length < 2) return;
@@ -1474,7 +1565,32 @@
       g += `<line class="jc-cross" x1="0" x2="0" y1="${padT}" y2="${Hh - padB}" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="2 2" visibility="hidden"/>`;
       g += `<rect x="${padL}" y="${padT}" width="${W - padL - padR}" height="${Hh - padT - padB}" fill="transparent"/>`;
       el.innerHTML = `<svg width="${W}" height="${Hh}" class="block text-slate-500 dark:text-slate-400">${g}</svg><div class="jc-tip hidden absolute top-1 z-10 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>`;
-      attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div>` + series.map(s => `<div><span style="color:${s.color}">●</span> ${s.name} <b>${s.values[i] === null || s.values[i] === undefined ? '--' : fmt(s.values[i])}</b></div>`).join(''), padL, W - padR);
+      attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div>` + series.map(s => `<div><span style="color:${s.color}">●</span> ${s.name} <b>${s.values[i] === null || s.values[i] === undefined ? '--' : fmt(s.values[i])}</b></div>`).join('') + (opts.extraTip ? opts.extraTip(i) : ''), padL, W - padR);
+    }
+
+    // 通道填色：a 在 b 之上 → 正色，之下 → 負色；交叉處切開。b 為 null 時以 0 為基準
+    function bandPaths(A, B, x, y, colors) {
+      const ok = v => v !== null && v !== undefined && !isNaN(v);
+      const runs = []; let run = null;
+      const flush = () => { if (run && run.pts.length >= 2) runs.push(run); run = null; };
+      for (let i = 0; i < A.length; i++) {
+        const a = A[i], b = B ? B[i] : 0;
+        if (!ok(a) || !ok(b)) { flush(); continue; }
+        const sg = a - b >= 0 ? 1 : -1;
+        if (run && run.sign !== sg) {
+          const pa = A[i - 1], pb = B ? B[i - 1] : 0, d0 = pa - pb, d1 = a - b, t = d0 / (d0 - d1);
+          const xm = x(i - 1) + (x(i) - x(i - 1)) * t, vm = pa + (a - pa) * t;
+          run.pts.push([xm, vm, vm]); flush();
+          run = { sign: sg, pts: [[xm, vm, vm]] };
+        }
+        if (!run) run = { sign: sg, pts: [] };
+        run.pts.push([x(i), a, b]);
+      }
+      flush();
+      return runs.map(r => {
+        const up = r.pts.map(p => `${p[0].toFixed(1)},${y(p[1]).toFixed(1)}`), dn = r.pts.slice().reverse().map(p => `${p[0].toFixed(1)},${y(p[2]).toFixed(1)}`);
+        return `<polygon points="${up.concat(dn).join(' ')}" fill="${r.sign > 0 ? colors[0] : colors[1]}" fill-opacity="0.2"/>`;
+      }).join('');
     }
 
     function barChart(id, dates, values, fmt) {
@@ -1523,7 +1639,8 @@
       svg.addEventListener('mouseleave', () => { tip.classList.add('hidden'); cross.setAttribute('visibility', 'hidden'); });
     }
 
-    function donutChart(id, items) {
+    function donutChart(id, items, opts) {
+      opts = opts || { split: true };
       const el = document.getElementById(id);
       if (!el) return;
       const total = items.reduce((a, h) => a + h.val, 0);
@@ -1531,7 +1648,8 @@
       const top = items.slice(0, 8);
       const rest = items.slice(8).reduce((a, h) => a + h.val, 0);
       const parts = top.map((h, i) => ({ name: h.name, code: h.code, val: h.val, color: DONUT_COLORS[i], type: h.type }));
-      if (rest > 0) parts.push({ name: '其他', code: '', val: rest, color: DONUT_COLORS[8] });
+      const restItems = items.slice(8);
+      if (rest > 0) parts.push({ name: '其他（' + restItems.length + ' 檔）', code: '', val: rest, color: DONUT_COLORS[8], other: true });
       const etfV = items.filter(h => h.type === 'etf').reduce((a, h) => a + h.val, 0);
       const R = 62, r = 40, C = 74;
       let ang = -Math.PI / 2, arcs = '';
@@ -1540,7 +1658,7 @@
         const pt = (rad, rr) => `${(C + rr * Math.cos(rad)).toFixed(2)},${(C + rr * Math.sin(rad)).toFixed(2)}`;
         arcs += a >= Math.PI * 2 - 1e-6
           ? `<circle cx="${C}" cy="${C}" r="${(R + r) / 2}" fill="none" stroke="${p.color}" stroke-width="${R - r}"/>`
-          : `<path d="M${pt(ang, R)} A${R},${R} 0 ${large} 1 ${pt(a2, R)} L${pt(a2, r)} A${r},${r} 0 ${large} 0 ${pt(ang, r)} Z" fill="${p.color}" stroke="currentColor" stroke-width="1.5" class="text-white dark:text-slate-950"><title>${escHtml(p.name)} ${(p.val / total * 100).toFixed(1)}%</title></path>`;
+          : `<path d="M${pt(ang, R)} A${R},${R} 0 ${large} 1 ${pt(a2, R)} L${pt(a2, r)} A${r},${r} 0 ${large} 0 ${pt(ang, r)} Z" fill="${p.color}" stroke="currentColor" stroke-width="1.5" class="text-white dark:text-slate-950 ${p.other ? 'cursor-pointer' : ''}" ${p.other ? 'onclick="toggleAllocMore()"' : ''}><title>${escHtml(p.name)} ${(p.val / total * 100).toFixed(1)}%</title></path>`;
         ang = a2;
       });
       el.innerHTML = `<div class="flex flex-col sm:flex-row items-center gap-3">
@@ -1548,12 +1666,13 @@
           <text x="${C}" y="${C - 4}" text-anchor="middle" font-size="9" class="fill-slate-500 dark:fill-slate-400">總現值</text>
           <text x="${C}" y="${C + 10}" text-anchor="middle" font-size="12" font-weight="800" font-family="ui-monospace,monospace" class="fill-slate-900 dark:fill-slate-100">${axisLabel(total)}</text></svg>
         <div class="flex-1 w-full space-y-1">
-          <div class="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mb-1">
+          <div class="${opts.split ? 'flex' : 'hidden'} items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mb-1">
             <span>個股 ${(100 - etfV / total * 100).toFixed(1)}%</span>
             <div class="flex-1 h-1.5 rounded-full overflow-hidden flex bg-slate-200 dark:bg-slate-800"><div class="bg-amber-500" style="width:${100 - etfV / total * 100}%"></div><div class="bg-teal-600" style="width:${etfV / total * 100}%"></div></div>
             <span>ETF ${(etfV / total * 100).toFixed(1)}%</span>
           </div>
-          ${parts.map(p => `<div class="flex items-center justify-between gap-2 text-[11px]"><span class="flex items-center gap-1.5 min-w-0"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${p.color}"></span><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(p.name)}</span></span><span class="font-mono text-slate-500 dark:text-slate-400 shrink-0">${(p.val / total * 100).toFixed(1)}%</span></div>`).join('')}
+          ${parts.map(p => `<div ${p.other ? 'onclick="toggleAllocMore()"' : ''} class="flex items-center justify-between gap-2 text-[11px] ${p.other ? 'cursor-pointer rounded hover:bg-slate-100 dark:hover:bg-slate-900' : ''}"><span class="flex items-center gap-1.5 min-w-0"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${p.color}"></span><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(p.name)}</span>${p.other ? `<span class="text-[10px] text-brand-600 dark:text-brand-400 shrink-0">${opts.more ? '收合 ▲' : '查看 ▼'}</span>` : ''}</span><span class="font-mono text-slate-500 dark:text-slate-400 shrink-0">${(p.val / total * 100).toFixed(1)}%</span></div>`).join('')}
+          ${opts.more && restItems.length ? `<div class="mt-1 ml-4 pl-2 border-l-2 border-slate-200 dark:border-slate-800 space-y-0.5 max-h-40 overflow-y-auto">${restItems.map(h => `<div class="flex items-center justify-between gap-2 text-[10px]"><span class="truncate text-slate-600 dark:text-slate-300">${escHtml(h.name)} <span class="font-mono text-slate-400">${escHtml(h.code)}</span></span><span class="font-mono text-slate-500 shrink-0">${jnFmt(h.val)}・${(h.val / total * 100).toFixed(1)}%</span></div>`).join('')}</div>` : ''}
         </div></div>`;
       const leg = document.getElementById(id + '_legend'); if (leg) leg.innerHTML = '';
     }
@@ -1567,11 +1686,266 @@
       el.innerHTML = `<div class="space-y-1.5 max-h-[260px] overflow-y-auto pr-1">${list.map(h => {
         const w = Math.max(Math.abs(h.totalPlDiv) / maxAbs * 50, 0.8), left = h.totalPlDiv < 0 ? 50 - w : 50;
         return `<div class="grid grid-cols-[6rem_1fr_4.5rem] items-center gap-2 text-[11px]" title="${escHtml(h.name)}：加總損益 ${jnSigned(h.totalPl)}、含息 ${jnSigned(h.totalPlDiv)}">
-          <span class="truncate text-slate-700 dark:text-slate-200">${escHtml(h.name)}${h.shares > 0 ? '' : ' <span class="text-[9px] text-slate-400">出清</span>'}</span>
-          <div class="relative h-3 rounded bg-slate-200/70 dark:bg-slate-800"><div class="absolute inset-y-0 left-1/2 w-px bg-slate-400/70"></div><div class="absolute inset-y-0 rounded-sm ${h.totalPlDiv >= 0 ? 'bg-stockRed' : 'bg-stockGreen'}" style="left:${left}%;width:${w}%"></div></div>
-          <span class="text-right font-mono font-bold ${jnCol(h.totalPlDiv)}">${jnSigned(h.totalPlDiv)}</span></div>`;
+          <span class="truncate ${h.shares > 0 ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-500'}">${escHtml(h.name)}${h.shares > 0 ? '' : ' <span class="text-[9px]">出清</span>'}</span>
+          <div class="relative h-3 rounded bg-slate-200/70 dark:bg-slate-800"><div class="absolute inset-y-0 left-1/2 w-px bg-slate-400/70"></div><div class="absolute inset-y-0 rounded-sm ${h.totalPlDiv >= 0 ? 'bg-stockRed' : 'bg-stockGreen'}" style="left:${left}%;width:${w}%;opacity:${h.shares > 0 ? 1 : 0.35}"></div></div>
+          <span class="text-right font-mono font-bold ${jnCol(h.totalPlDiv)}" style="opacity:${h.shares > 0 ? 1 : 0.5}">${jnSigned(h.totalPlDiv)}</span></div>`;
       }).join('')}</div>`;
-      const leg = document.getElementById(id + '_legend'); if (leg) leg.innerHTML = '<span class="text-slate-400">◀ 虧損　獲利 ▶</span>';
+      const leg = document.getElementById(id + '_legend'); if (leg) leg.innerHTML = '<span class="text-slate-400">◀ 虧損　獲利 ▶・淡色＝已出清</span>';
+    }
+
+    // =====================================================================
+    // 已了結損益（含已出清與部分賣出）
+    // =====================================================================
+    function jnRealized(holdings, scope) {
+      const list = holdings.filter(h => scope === 'total' || (scope === 'etf' ? h.type === 'etf' : h.type === 'stock'))
+        .map(h => ({ ...h, rz: h.realized !== null && h.realized !== undefined ? h.realized : (!(h.shares > 0) ? (h.totalPl || 0) : 0) }))
+        .filter(h => h.rz);
+      return { list: list.sort((a, b) => b.rz - a.rz), total: list.reduce((a, h) => a + h.rz, 0),
+        div: holdings.filter(h => scope === 'total' || (scope === 'etf' ? h.type === 'etf' : h.type === 'stock')).reduce((a, h) => a + (h.dividend || 0), 0),
+        closed: list.filter(h => !(h.shares > 0)).length };
+    }
+    function jnRealizedHtml(RZ) {
+      if (!RZ.list.length) return '';
+      const win = RZ.list.filter(h => h.rz > 0), lose = RZ.list.filter(h => h.rz < 0);
+      return `<details class="mt-3" ${journalState.realizedOpen ? 'open' : ''} ontoggle="journalState.realizedOpen=this.open">
+        <summary class="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 select-none">已了結損益明細 <span class="font-mono ${jnCol(RZ.total)}">${jnSigned(RZ.total)}</span>
+          <span class="font-normal text-slate-400">・${RZ.list.length} 檔（已出清 ${RZ.closed}）・獲利 ${win.length} 檔 ${jnSigned(win.reduce((a, h) => a + h.rz, 0))}／虧損 ${lose.length} 檔 ${jnSigned(lose.reduce((a, h) => a + h.rz, 0))}</span></summary>
+        <div class="mt-2 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+          ${RZ.list.map(h => `<div class="flex items-center justify-between gap-2 p-2 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-[11px] ${h.shares > 0 ? '' : 'opacity-75'}">
+            <span class="min-w-0 truncate"><b class="text-slate-800 dark:text-slate-100">${escHtml(h.name)}</b> <span class="text-slate-400 font-mono">${escHtml(h.code)}</span>
+              <span class="ml-1 text-[9px] px-1 rounded ${h.shares > 0 ? 'bg-brand-500/10 text-brand-600 dark:text-brand-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}">${h.shares > 0 ? '部分賣出' : '已出清'}</span></span>
+            <span class="font-mono font-bold shrink-0 ${jnCol(h.rz)}">${jnSigned(h.rz)}${h.realizedPct !== null && h.realizedPct !== undefined ? `<span class="text-[10px] font-normal ml-1">${jnPct(h.realizedPct)}</span>` : ''}</span></div>`).join('')}
+        </div></details>`;
+    }
+
+    // =====================================================================
+    // 寫入日誌（買賣原因 / 配息）— 需把日誌共用給管理員「編輯者」
+    // =====================================================================
+    function jnWriteBanner() {
+      const m = journalState.writeMsg; if (!m) return '';
+      const cls = m.ok ? 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200/70 dark:border-emerald-500/20'
+                       : 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border-amber-200/70 dark:border-amber-500/20';
+      return `<div class="mt-3 flex items-start justify-between gap-2 text-[11px] border rounded-xl px-3 py-2 ${cls}">
+        <span><i class="fa-solid ${m.ok ? 'fa-circle-check' : 'fa-triangle-exclamation'} mr-1"></i>${escHtml(m.text)}${m.code === 'READONLY' ? `<br><span class="text-slate-500">共用對象：<code class="font-mono">${ADMIN_SHARE_EMAIL}</code> → 權限改成「編輯者」。讀取不受影響。</span>` : ''}</span>
+        <button onclick="journalState.writeMsg=null; renderJournal()" class="shrink-0 opacity-60 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button></div>`;
+    }
+    const jnTradeKey = t => t.sheet + '|' + t.row + '|' + t.col;
+    const jnIsBuy = t => String(t.side || '').indexOf('賣') < 0;
+    const JN_UNFILLED = '尚未填寫';
+    function jnReasonOptions(t) {
+      const L = (journalState.data && journalState.data.reasonLists) || {};
+      return (jnIsBuy(t) ? L.buy : L.sell) || [];
+    }
+    function jnReasonChip(t) {
+      const editable = !!(t.sheet && t.row && t.col);
+      const unfilled = !t.reason || t.reason === JN_UNFILLED;
+      if (editable && journalState.reasonEdit === jnTradeKey(t)) return jnReasonSelect(t, `jnSaveOne('${jnTradeKey(t)}', this.value)`) + `<button onclick="event.stopPropagation(); journalState.reasonEdit=null; renderJournal()" class="text-[10px] text-slate-400">取消</button>`;
+      const label = unfilled ? (t.reason ? '原因未填' : '') : escHtml(t.reason);
+      if (!editable) return label ? `<span class="px-1.5 rounded ${unfilled ? 'text-slate-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'}">${label}</span>` : '';
+      return `<button onclick="event.stopPropagation(); journalState.reasonEdit='${jnTradeKey(t)}'; renderJournal()" title="點擊編輯買賣原因"
+        class="px-1.5 rounded ${unfilled ? 'border border-dashed border-amber-400 text-amber-600 dark:text-amber-400' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:ring-1 hover:ring-brand-400'}">${label || '填寫原因'} <i class="fa-solid fa-pen text-[8px] opacity-60"></i></button>`;
+    }
+    function jnReasonSelect(t, onchange, value) {
+      const opts = jnReasonOptions(t), cur = value !== undefined ? value : t.reason;
+      if (!opts.length) return `<input type="text" value="${escHtml(cur && cur !== JN_UNFILLED ? cur : '')}" placeholder="原因" onclick="event.stopPropagation()" onchange="${onchange}" class="w-28 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1.5 py-0.5 text-[11px]">`;
+      return `<select onclick="event.stopPropagation()" onchange="${onchange}" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-1 py-0.5 text-[11px] max-w-[11rem]">
+        <option value="${JN_UNFILLED}" ${!cur || cur === JN_UNFILLED ? 'selected' : ''}>${JN_UNFILLED}</option>
+        ${opts.filter(o => o !== JN_UNFILLED).map(o => `<option ${o === cur ? 'selected' : ''}>${escHtml(o)}</option>`).join('')}</select>`;
+    }
+    function jnFindTrade(key) { return ((journalState.data || {}).trades || []).find(t => jnTradeKey(t) === key); }
+    function jnSaveOne(key, reason) {
+      const t = jnFindTrade(key); if (!t) return;
+      journalState.reasonEdit = null;
+      if (reason === t.reason) { renderJournal(); return; }
+      jnSaveReasons([{ t, reason }]);
+    }
+    async function jnSaveReasons(items) {
+      if (journalState.saving || !items.length) return;
+      journalState.saving = true; journalState.writeMsg = { ok: true, text: '寫入日誌中…（' + items.length + ' 筆）' }; renderJournal();
+      try {
+        const r = await journalPost({ action: 'updateTradeReasons', email: currentUser.email, token: currentUser.token,
+          updates: items.map(({ t, reason }) => ({ sheet: t.sheet, row: t.row, col: t.col, code: t.code, date: t.date, reason })) }, 60000);
+        (r.done || []).forEach(d => { const t = jnFindTrade(d.sheet + '|' + d.row + '|' + d.col); if (t) t.reason = d.reason; delete journalState.pendingDraft[d.sheet + '|' + d.row + '|' + d.col]; });
+        journalState.writeMsg = { ok: !!r.success, code: r.code, text: r.message || (r.success ? '已更新' : '寫入失敗') };
+      } catch (e) { journalState.writeMsg = { ok: false, text: '連線失敗：' + ((e && e.message) || e) }; }
+      journalState.saving = false; renderJournal();
+    }
+
+    // ---------- 買賣原因統計 ----------
+    function setReasonScope(v) { journalState.reasonScope = v; renderJournal(); }
+    function jnReasonCard(J) {
+      const trades = (J.trades || []);
+      const editable = trades.some(t => t.sheet && t.row);
+      const lists = J.reasonLists || null;
+      const priceOf = {}; (J.holdings || []).forEach(h => { if (h.price > 0) priceOf[h.code] = h.price; });
+      const codes = []; trades.forEach(t => { if (!codes.some(c => c.code === t.code)) codes.push({ code: t.code, name: t.name }); });
+      const sc = journalState.reasonScope !== 'all' && !codes.some(c => c.code === journalState.reasonScope) ? 'all' : journalState.reasonScope;
+      const pool = sc === 'all' ? trades : trades.filter(t => t.code === sc);
+      const pending = trades.filter(t => t.reason === JN_UNFILLED);
+      const group = side => {
+        const m = {};
+        pool.filter(t => (side === 'buy') === jnIsBuy(t) && t.reason && t.reason !== JN_UNFILLED).forEach(t => {
+          const g = m[t.reason] = m[t.reason] || { reason: t.reason, n: 0, amt: 0, rets: [] };
+          g.n++; g.amt += (t.shares || 0) * (t.price || 0);
+          const now = priceOf[t.code];
+          if (now && t.price > 0) g.rets.push(side === 'buy' ? (now / t.price - 1) * 100 : (t.price / now - 1) * 100);
+        });
+        return Object.values(m).sort((a, b) => b.n - a.n);
+      };
+      const block = (side, arr) => {
+        const max = Math.max(1, ...arr.map(g => g.n)), tot = arr.reduce((a, g) => a + g.n, 0);
+        const unf = pool.filter(t => (side === 'buy') === jnIsBuy(t) && t.reason === JN_UNFILLED).length;
+        return `<div class="min-w-0">
+          <div class="flex items-center justify-between mb-1.5"><h4 class="text-xs font-bold ${side === 'buy' ? 'text-stockRed' : 'text-stockGreen'}">${side === 'buy' ? '買入原因' : '賣出原因'} <span class="font-normal text-slate-400">${tot} 筆${unf ? `・未填 ${unf}` : ''}</span></h4>
+            <span class="text-[9px] text-slate-400">${side === 'buy' ? '報酬＝現價 ÷ 買價' : '報酬＝賣價 ÷ 現價（正＝賣得比現在高）'}</span></div>
+          ${arr.length ? `<div class="space-y-1">${arr.map(g => {
+            const avg = g.rets.length ? g.rets.reduce((a, b) => a + b, 0) / g.rets.length : null, wr = g.rets.length ? g.rets.filter(x => x > 0).length / g.rets.length * 100 : null;
+            return `<div class="grid grid-cols-[minmax(0,6rem)_1fr] sm:grid-cols-[minmax(0,7.5rem)_1fr_9.5rem] items-center gap-x-2 gap-y-0.5 text-[11px]">
+              <span class="truncate text-slate-700 dark:text-slate-200" title="${escHtml(g.reason)}">${escHtml(g.reason)}</span>
+              <div class="relative h-4 rounded bg-slate-200/70 dark:bg-slate-800 overflow-hidden"><div class="absolute inset-y-0 left-0 ${side === 'buy' ? 'bg-red-500/60' : 'bg-green-500/60'}" style="width:${g.n / max * 100}%"></div><span class="absolute inset-0 px-1.5 flex items-center text-[10px] font-mono font-bold text-slate-800 dark:text-slate-100">${g.n} 筆・${(g.n / tot * 100).toFixed(0)}%</span></div>
+              <span class="col-start-2 sm:col-start-auto font-mono text-[10px] sm:text-right whitespace-nowrap"><span class="text-slate-400">${axisLabel(g.amt)}</span> <b class="${jnCol(avg)}">${avg === null ? '--' : jnPct(avg, 1)}</b>${wr === null ? '' : `<span class="text-slate-400"> 勝${wr.toFixed(0)}%</span>`}</span></div>`;
+          }).join('')}</div>` : '<div class="py-3 text-center text-[11px] text-slate-400">沒有已填寫原因的交易</div>'}
+        </div>`;
+      };
+      const pendingHtml = !pending.length ? '' : `
+        <div class="mt-4 rounded-xl border border-amber-300/70 dark:border-amber-500/30 bg-amber-50/60 dark:bg-amber-500/5 p-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="text-xs font-bold text-amber-700 dark:text-amber-400"><i class="fa-solid fa-pen-to-square mr-1"></i>尚未填寫原因：${pending.length} 筆</span>
+            ${editable ? `<button onclick="journalState.pendingOpen=!journalState.pendingOpen; renderJournal()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-400 text-white">${journalState.pendingOpen ? '收合' : '逐筆填寫'}</button>` : '<span class="text-[10px] text-slate-500">按右上角「重新讀取」後即可在此填寫</span>'}
+          </div>
+          ${journalState.pendingOpen && editable ? `
+            <div class="mt-2 max-h-80 overflow-y-auto divide-y divide-amber-200/60 dark:divide-amber-500/10">
+              ${pending.map(t => { const key = jnTradeKey(t), dv = journalState.pendingDraft[key]; return `<div class="flex flex-wrap items-center gap-x-3 gap-y-1 py-1.5 text-[11px]">
+                <span class="font-mono text-slate-400 w-20">${escHtml(t.date)}</span>
+                <span class="px-1.5 rounded text-[10px] font-bold ${jnIsBuy(t) ? 'bg-red-500/10 text-stockRed' : 'bg-green-500/10 text-stockGreen'}">${escHtml(t.side || '-')}</span>
+                <span class="font-bold text-slate-800 dark:text-slate-100">${escHtml(t.name)}</span><span class="font-mono text-slate-400">${jnFmt(t.shares)} 股 @ ${jnFmt(t.price, 2)}</span>
+                <span class="ml-auto">${jnReasonSelect(t, `jnDraftReason('${key}', this.value)`, dv)}</span></div>`; }).join('')}
+            </div>
+            <div class="mt-2 flex items-center justify-end gap-2">
+              <span class="text-[10px] text-slate-500">已選 ${Object.keys(journalState.pendingDraft).filter(k => journalState.pendingDraft[k] && journalState.pendingDraft[k] !== JN_UNFILLED).length} 筆</span>
+              <button onclick="jnSavePending()" ${journalState.saving ? 'disabled' : ''} class="px-3 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50">${journalState.saving ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>寫入中' : '寫入日誌'}</button>
+            </div>` : ''}
+        </div>`;
+      return `
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-brand-500"></i>買賣原因統計</h2>
+          <div class="flex items-center gap-2">
+            ${jnSeg(sc === 'all' ? 'all' : 'one', [['all', '綜合'], ['one', '個別']], 'jnReasonMode')}
+            ${sc !== 'all' || journalState.reasonScopeOne ? `<select onchange="setReasonScope(this.value)" class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] max-w-[10rem]">
+              ${codes.map(c => `<option value="${escHtml(c.code)}" ${c.code === sc ? 'selected' : ''}>${escHtml(c.name)} ${escHtml(c.code)}</option>`).join('')}</select>` : ''}
+          </div>
+        </div>
+        ${!lists || (!lists.buy.length && !lists.sell.length) ? `<p class="text-[10px] text-slate-400 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>${lists ? '讀不到日誌「資料中心」G2／H2 的下拉選單，編輯時改為自行輸入。' : '按右上角「重新讀取」可載入「資料中心」G2（買入）／H2（賣出）的原因選單。'}</p>` : ''}
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${block('buy', group('buy'))}${block('sell', group('sell'))}</div>
+        ${pendingHtml}
+        <p class="mt-2 text-[10px] text-slate-400">交易紀錄的原因標籤可直接點擊修改，會寫回你的日誌（需共用為「編輯者」）。</p>`;
+    }
+    function jnReasonMode(v) {
+      if (v === 'all') { journalState.reasonScope = 'all'; journalState.reasonScopeOne = false; }
+      else { journalState.reasonScopeOne = true; const t = ((journalState.data || {}).trades || [])[0]; if (journalState.reasonScope === 'all' && t) journalState.reasonScope = t.code; }
+      renderJournal();
+    }
+    function jnDraftReason(key, v) { journalState.pendingDraft[key] = v; }
+    function jnSavePending() {
+      const items = Object.keys(journalState.pendingDraft).filter(k => journalState.pendingDraft[k] && journalState.pendingDraft[k] !== JN_UNFILLED)
+        .map(k => ({ t: jnFindTrade(k), reason: journalState.pendingDraft[k] })).filter(x => x.t);
+      if (!items.length) { journalState.writeMsg = { ok: false, text: '請先在下拉選單選好原因' }; renderJournal(); return; }
+      jnSaveReasons(items);
+    }
+
+    // ---------- 登記配息 ----------
+    function jnOpenDividend(code) {
+      const today = (typeof pfToday === 'function' ? pfToday() : new Date().toISOString().slice(0, 10));
+      journalState.divOpen = code === '' ? !journalState.divOpen : true;
+      journalState.divForm = { code: code || journalState.divForm.code || '', amount: '', date: today, note: '' };
+      renderJournal();
+      if (journalState.divOpen) setTimeout(() => { const el = document.getElementById('jnDivAmt'); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus(); } }, 50);
+    }
+    function jnDividendForm(holdings) {
+      const f = journalState.divForm, list = [...holdings].sort((a, b) => (b.shares > 0) - (a.shares > 0) || (b.value || 0) - (a.value || 0));
+      const h = list.find(x => x.code === f.code);
+      const inp = 'w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs';
+      const lab = (t, inner) => `<label class="block"><span class="block text-[10px] text-slate-500 mb-0.5">${t}</span>${inner}</label>`;
+      return `<div class="mb-3 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/50 dark:bg-brand-500/5 p-3 space-y-2">
+        <div class="text-xs font-bold text-slate-800 dark:text-slate-100"><i class="fa-solid fa-coins text-brand-500 mr-1"></i>登記配息 <span class="font-normal text-[10px] text-slate-500">金額會加到日誌該股的「總配息」，並記錄在日誌新增的「配息紀錄」分頁</span></div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          ${lab('股票', `<select onchange="journalState.divForm.code=this.value; renderJournal()" class="${inp}"><option value="">選擇股票</option>${list.map(x => `<option value="${escHtml(x.code)}" ${x.code === f.code ? 'selected' : ''}>${escHtml(x.name)} ${escHtml(x.code)}${x.shares > 0 ? '' : '（已出清）'}</option>`).join('')}</select>`)}
+          ${lab('實收金額（元）', `<input id="jnDivAmt" type="number" step="1" value="${escHtml(f.amount)}" oninput="journalState.divForm.amount=this.value" placeholder="例如 1250" class="${inp} font-mono">`)}
+          ${lab('發放日', `<input type="date" value="${escHtml(f.date)}" oninput="journalState.divForm.date=this.value" class="${inp}">`)}
+          ${lab('備註', `<input type="text" value="${escHtml(f.note)}" oninput="journalState.divForm.note=this.value" placeholder="例如 Q2 季配" maxlength="100" class="${inp}">`)}
+        </div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <span class="text-[10px] text-slate-500">${h ? `目前總配息 <b class="font-mono">${jnFmt(h.dividend)}</b>・持有 ${jnFmt(h.shares)} 股` : ''}</span>
+          <div class="flex gap-2"><button onclick="journalState.divOpen=false; renderJournal()" class="px-3 py-1 rounded-lg text-[11px] border border-slate-300 dark:border-slate-700">取消</button>
+          <button onclick="jnSubmitDividend()" ${journalState.saving ? 'disabled' : ''} class="px-3 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50">${journalState.saving ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>寫入中' : '加總寫入'}</button></div>
+        </div></div>`;
+    }
+    async function jnSubmitDividend() {
+      const f = journalState.divForm, amt = Number(f.amount);
+      if (!f.code || !isFinite(amt) || !amt) { journalState.writeMsg = { ok: false, text: '請選擇股票並輸入配息金額' }; renderJournal(); return; }
+      const h = (journalState.data.holdings || []).find(x => x.code === f.code);
+      if (!confirm(`確定登記 ${h ? h.name : f.code} 配息 ${jnFmt(amt)} 元？\n總配息 ${jnFmt(h && h.dividend)} → ${jnFmt(((h && h.dividend) || 0) + amt)}`)) return;
+      journalState.saving = true; renderJournal();
+      try {
+        const r = await journalPost({ action: 'addDividend', email: currentUser.email, token: currentUser.token, code: f.code, amount: amt, date: f.date, note: f.note }, 60000);
+        if (r.success) {
+          (journalState.data.holdings || []).forEach(x => { if (x.code === f.code) { x.dividend = r.after; if (x.totalPlDiv !== null && x.totalPlDiv !== undefined) x.totalPlDiv += amt; } });
+          journalState.divOpen = false;
+          journalState.writeMsg = { ok: true, text: r.message + '（淨值與報酬率會在日誌重新計算後更新）' };
+        } else journalState.writeMsg = { ok: false, code: r.code, text: r.message || '寫入失敗' };
+      } catch (e) { journalState.writeMsg = { ok: false, text: '連線失敗：' + ((e && e.message) || e) }; }
+      journalState.saving = false; renderJournal();
+    }
+
+    // =====================================================================
+    // K 線＋成交量（長期追蹤用）bars = [{date, open, high, low, close, vol}]
+    // =====================================================================
+    function candleChart(id, bars) {
+      const el = document.getElementById(id); if (!el) return;
+      const ok = v => v !== null && v !== undefined && !isNaN(v) && v > 0;
+      const B = bars.filter(b => ok(b.close)).map((b, i, a) => {
+        const prev = i ? a[i - 1].close : null;
+        const open = ok(b.open) ? b.open : (prev || b.close);
+        return { ...b, open, approx: !ok(b.open), high: Math.max(ok(b.high) ? b.high : -Infinity, open, b.close), low: Math.min(ok(b.low) ? b.low : Infinity, open, b.close), prev };
+      });
+      if (B.length < 2) { el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">資料不足</div>'; return; }
+      const ma = k => B.map((b, i) => i + 1 < k ? null : B.slice(i + 1 - k, i + 1).reduce((a, x) => a + x.close, 0) / k);
+      const ma5 = ma(5), ma20 = ma(20);
+      const leg = document.getElementById(id + '_legend');
+      if (leg) leg.innerHTML = `<span class="text-stockRed">■ 漲</span><span class="text-stockGreen">■ 跌</span><span class="inline-flex items-center gap-1 text-slate-500"><span class="inline-block w-3 h-0.5 rounded" style="background:#f59e0b"></span>MA5</span>${B.length >= 20 ? '<span class="inline-flex items-center gap-1 text-slate-500"><span class="inline-block w-3 h-0.5 rounded" style="background:#c026d3"></span>MA20</span>' : ''}`;
+      const W = Math.max(el.clientWidth, 260), Hh = Math.max(el.clientHeight, 260);
+      const padL = 44, padR = 6, padT = 8, padB = 18, gap = 10;
+      const volH = Math.round((Hh - padT - padB) * 0.26), pxH = Hh - padT - padB - volH - gap;
+      const hiV = Math.max(...B.map(b => b.high)), loV = Math.min(...B.map(b => b.low));
+      const { lo, hi, ticks } = niceTicks(loV, hiV);
+      const vols = B.map(b => ok(b.vol) ? b.vol : 0), vMax = Math.max(1, ...vols);
+      const n = B.length, slot = (W - padL - padR) / n, bw = Math.max(Math.min(slot * 0.7, 12), 1);
+      const x = i => padL + i * slot + slot / 2;
+      const y = v => padT + (1 - (v - lo) / (hi - lo || 1)) * pxH;
+      const vy0 = padT + pxH + gap + volH, vy = v => vy0 - v / vMax * volH;
+      const up = b => b.close > b.open || (b.close === b.open && b.prev !== null && b.close >= b.prev);
+      let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="0.1"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${t.toLocaleString('en-US')}</text>`).join('');
+      g += `<line x1="${padL}" x2="${W - padR}" y1="${vy0}" y2="${vy0}" stroke="currentColor" stroke-opacity="0.2"/><text x="${padL - 5}" y="${vy(vMax) + 8}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.6" font-family="ui-monospace,monospace">${axisLabel(vMax)}</text>`;
+      B.forEach((b, i) => {
+        const c = up(b) ? '#ef4444' : '#22c55e', cx = x(i).toFixed(1);
+        const yo = y(b.open), yc = y(b.close), top = Math.min(yo, yc), h = Math.max(Math.abs(yc - yo), 1);
+        g += `<line x1="${cx}" x2="${cx}" y1="${y(b.high).toFixed(1)}" y2="${y(b.low).toFixed(1)}" stroke="${c}" stroke-width="1"/>`;
+        g += `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${top.toFixed(1)}" width="${bw.toFixed(1)}" height="${h.toFixed(1)}" fill="${c}" ${b.approx ? `fill-opacity="0.35" stroke="${c}" stroke-dasharray="2 1"` : ''}/>`;
+        if (vols[i]) g += `<rect x="${(x(i) - bw / 2).toFixed(1)}" y="${vy(vols[i]).toFixed(1)}" width="${bw.toFixed(1)}" height="${(vy0 - vy(vols[i])).toFixed(1)}" fill="${c}" fill-opacity="0.55"/>`;
+      });
+      const line = (arr, col) => { const pts = arr.map((v, i) => v === null ? null : `${x(i).toFixed(1)},${y(v).toFixed(1)}`).filter(Boolean); return pts.length > 1 ? `<polyline points="${pts.join(' ')}" fill="none" stroke="${col}" stroke-width="1.3"/>` : ''; };
+      g += line(ma5, '#f59e0b') + line(ma20, '#c026d3');
+      const li = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i);
+      g += li.map((i, k) => `<text x="${x(i)}" y="${Hh - 4}" text-anchor="${k === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle')}" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${B[i].date.slice(5).replace('-', '/')}</text>`).join('');
+      g += `<line class="jc-cross" x1="0" x2="0" y1="${padT}" y2="${vy0}" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="2 2" visibility="hidden"/>`;
+      g += `<rect x="${padL}" y="${padT}" width="${W - padL - padR}" height="${vy0 - padT}" fill="transparent"/>`;
+      el.innerHTML = `<svg width="${W}" height="${Hh}" class="block text-slate-500 dark:text-slate-400">${g}</svg><div class="jc-tip hidden absolute top-1 z-10 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>`;
+      const f2 = v => ok(v) ? Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 }) : '--';
+      attachHover(el, n, x, i => { const b = B[i], chg = b.prev ? (b.close / b.prev - 1) * 100 : null; return `<div class="font-bold text-slate-300 mb-0.5">${b.date}</div>
+        <div>開 <b>${f2(b.open)}</b>${b.approx ? '<span class="text-slate-400">（估）</span>' : ''}　高 <b class="text-red-400">${f2(b.high)}</b></div>
+        <div>收 <b>${f2(b.close)}</b>　低 <b class="text-green-400">${f2(b.low)}</b></div>
+        <div>漲跌 <b class="${chg > 0 ? 'text-red-400' : (chg < 0 ? 'text-green-400' : '')}">${chg === null ? '--' : (chg > 0 ? '+' : '') + chg.toFixed(2) + '%'}</b>　量 <b>${vols[i] ? vols[i].toLocaleString() : '--'}</b></div>
+        ${ma5[i] !== null ? `<div class="text-slate-400">MA5 ${f2(ma5[i])}${ma20[i] !== null ? '　MA20 ' + f2(ma20[i]) : ''}</div>` : ''}`; }, padL, W - padR);
     }
 
     let jnResizeTimer = null;
@@ -1887,6 +2261,8 @@
     // =====================================================================
     // 📌 長期追蹤
     // =====================================================================
+    let pzTrackRange = 120;
+    function pzSetTrackRange(v) { pzTrackRange = Number(v); renderPzTrack(); }
     function renderPzTrack() {
       const box = document.getElementById('tabTrack');
       if (!box || pzNeedToken('tabTrack')) return;
@@ -1900,7 +2276,7 @@
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-thumbtack text-brand-500 mr-1.5"></i>長期追蹤</h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">每個交易日收盤後自動記錄收盤價、漲跌幅、成交量、最高與最低，從加入當天開始累積。</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">每個交易日收盤後自動記錄開盤、最高、最低、收盤、漲跌幅與成交量（K 線），從加入當天開始累積。</p>
           </div>
           <div class="flex items-center gap-2 w-full sm:w-auto"><div class="flex-1 sm:w-56">${pzWatchSelect('pzT_code', '', false)}</div><button onclick="pzAddTrack()" class="${pzBtn}">加入追蹤</button></div>
         </div>
@@ -1914,19 +2290,23 @@
             <span>你自 ${escHtml((tracks.find(t => t.code === pzTrackSel) || {}).since || '--')} 開始追蹤・共享紀錄 <b>${hist.length}</b> 天${first ? `（最早 ${escHtml(first.date)}）` : ''}${(pzState.trackUsers || {})[pzTrackSel] > 1 ? `・${pzState.trackUsers[pzTrackSel]} 位會員共用` : ''}${chg !== null ? `・期間漲跌 <b class="${chg > 0 ? 'text-stockRed' : (chg < 0 ? 'text-stockGreen' : '')}">${chg > 0 ? '+' : ''}${chg.toFixed(2)}%</b>` : ''}</span>
             <button onclick="if(confirm('取消追蹤？已記錄的歷史仍會保留在後端')) pzToggleTrack('${pzTrackSel}', true)" class="${pzBtnGhost}">取消追蹤</button>
           </div>
-          ${hist.length >= 2 ? `<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${chartBox('pz_track_px', '收盤價與最高／最低')}${chartBox('pz_track_vol', '成交量（張）')}</div>` : '<div class="py-6 text-center text-xs text-slate-400">資料累積中：收盤後會自動記錄，至少兩天後顯示走勢圖</div>'}
-          ${hist.length ? `<div class="max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800"><table class="w-full text-xs font-mono"><thead class="sticky top-0 bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr><th class="py-1.5 px-2 text-left">日期</th><th class="text-right px-2">收盤</th><th class="text-right px-2">漲跌幅</th><th class="text-right px-2">成交量</th><th class="text-right px-2">最高</th><th class="text-right px-2">最低</th></tr></thead><tbody>
-            ${hist.slice().reverse().map(h => `<tr class="border-t border-slate-100 dark:border-slate-800/60"><td class="py-1 px-2">${h.date}</td><td class="text-right px-2">${h.close}</td><td class="text-right px-2 ${h.pct > 0 ? 'text-stockRed' : (h.pct < 0 ? 'text-stockGreen' : '')}">${(h.pct === null || h.pct === undefined || isNaN(h.pct)) ? '--' : (h.pct > 0 ? '+' : '') + h.pct.toFixed(2) + '%'}</td><td class="text-right px-2">${(h.vol === null || h.vol === undefined || isNaN(h.vol)) ? '--' : h.vol.toLocaleString()}</td><td class="text-right px-2">${(h.high === null || h.high === undefined || isNaN(h.high)) ? '--' : h.high}</td><td class="text-right px-2">${(h.low === null || h.low === undefined || isNaN(h.low)) ? '--' : h.low}</td></tr>`).join('')}
+          ${hist.length >= 2 ? `<div class="flex items-center justify-end gap-2 -mb-1">${jnSeg(pzTrackRange, [[60, '60日'], [120, '120日'], [0, '全部']], 'pzSetTrackRange')}</div>${chartBox('pz_track_k', 'K 線＋成交量（張）', hist.some(h => !(h.open > 0)) ? '虛線框的 K 棒缺開盤價，以前一日收盤近似' : '', false)}` : '<div class="py-6 text-center text-xs text-slate-400">資料累積中：收盤後會自動記錄，至少兩天後顯示走勢圖</div>'}
+          ${hist.length ? `<div class="max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800"><table class="w-full text-xs font-mono"><thead class="sticky top-0 bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr><th class="py-1.5 px-2 text-left">日期</th><th class="text-right px-2">開盤</th><th class="text-right px-2">最高</th><th class="text-right px-2">最低</th><th class="text-right px-2">收盤</th><th class="text-right px-2">漲跌幅</th><th class="text-right px-2">成交量</th></tr></thead><tbody>
+            ${hist.slice().reverse().map(h => { const nv = v => (v === null || v === undefined || isNaN(v)) ? '--' : v; return `<tr class="border-t border-slate-100 dark:border-slate-800/60"><td class="py-1 px-2">${h.date}</td><td class="text-right px-2">${nv(h.open)}</td><td class="text-right px-2">${nv(h.high)}</td><td class="text-right px-2">${nv(h.low)}</td><td class="text-right px-2 font-bold">${h.close}</td><td class="text-right px-2 ${h.pct > 0 ? 'text-stockRed' : (h.pct < 0 ? 'text-stockGreen' : '')}">${(h.pct === null || h.pct === undefined || isNaN(h.pct)) ? '--' : (h.pct > 0 ? '+' : '') + h.pct.toFixed(2) + '%'}</td><td class="text-right px-2">${(h.vol === null || h.vol === undefined || isNaN(h.vol)) ? '--' : h.vol.toLocaleString()}</td></tr>`; }).join('')}
           </tbody></table></div>` : ''}` : ''}`);
       if (hist.length >= 2) {
-        const dates = hist.map(h => h.date);
-        lineChart('pz_track_px', dates, [
-          { name: '收盤', values: hist.map(h => h.close), color: JN_COLORS.a, area: true },
-          { name: '最高', values: hist.map(h => (h.high === null || h.high === undefined || isNaN(h.high)) ? null : h.high), color: '#ef4444', dash: true },
-          { name: '最低', values: hist.map(h => (h.low === null || h.low === undefined || isNaN(h.low)) ? null : h.low), color: '#22c55e', dash: true }
-        ], v => Number(v).toLocaleString());
-        barChart('pz_track_vol', dates, hist.map(h => (h.vol === null || h.vol === undefined || isNaN(h.vol)) ? 0 : h.vol), v => Number(v).toLocaleString() + ' 張');
-        const lg = document.getElementById('pz_track_vol_legend'); if (lg) lg.innerHTML = '';
+        const kEl = document.getElementById('pz_track_k'); if (kEl) kEl.className = 'relative w-full h-[300px] sm:h-[360px]';
+        const H = pzTrackRange ? hist.slice(-pzTrackRange) : hist;
+        candleChart('pz_track_k', H);
+        const L = H[H.length - 1], hiB = H.reduce((a, h) => (h.high || h.close) > (a.high || a.close) ? h : a, H[0]), loB = H.reduce((a, h) => (h.low || h.close) < (a.low || a.close) ? h : a, H[0]);
+        const vv = H.map(h => h.vol).filter(v => v > 0), avgV = vv.length ? vv.reduce((a, b) => a + b, 0) / vv.length : null;
+        setChartNote('pz_track_k', [
+          ['區間最高', `${hiB.high || hiB.close}（${hiB.date.slice(5)}）`, 'text-stockRed'],
+          ['區間最低', `${loB.low || loB.close}（${loB.date.slice(5)}）`, 'text-stockGreen'],
+          ['區間漲跌', jnPct((L.close / H[0].close - 1) * 100), jnCol(L.close - H[0].close)],
+          avgV ? ['均量', Math.round(avgV).toLocaleString() + ' 張'] : null,
+          avgV && L.vol > 0 ? ['最新量／均量', (L.vol / avgV).toFixed(2) + ' 倍', L.vol > avgV * 1.5 ? 'text-stockRed' : ''] : null
+        ]);
       }
     }
     async function pzAddTrack() {
@@ -2093,7 +2473,7 @@
         </details>`);
       if (showForm) pzTradeCalc(false);
       const nav = pzState.nav;
-      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a, area: true }, { name: '成本', values: nav.map(n => n.cost), color: JN_COLORS.muted, dash: true }], v => jnFmt(v));
+      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a }, { name: '成本', values: nav.map(n => n.cost), color: JN_COLORS.muted, dash: true }], v => jnFmt(v), false, { band: [0, 1] });
       else { const el = document.getElementById('pz_nav'); if (el) el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">資料累積中</div>'; }
       donutChart('pz_alloc', open.map(h => ({ name: h.name, code: h.code, val: h.value ?? h.cost, type: /^00/.test(h.code) ? 'etf' : 'stock' })));
     }
@@ -2144,7 +2524,7 @@
         <div class="flex items-center justify-between"><h3 class="text-base font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-circle-question text-brand-500 mr-1.5"></i>個人化使用說明</h3><button onclick="document.getElementById('pzHelpModal').remove()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button></div>
         ${sec('fa-star text-amber-400', '關注清單', ['在首頁清單或個股詳情點 ⭐ 加入；卡片會顯示漲跌、十日走勢、量能與新高標籤。', '關注的股票若被列為<b>處置股</b>（橘色）或<b>注意股</b>（淡黃）會在頁首提醒；兩者都是時以處置為準。', '處置期間是分盤撮合、成交量自然變小，系統會暫停「窒息量／量縮」判斷避免誤判。'])}
         ${sec('fa-bell text-amber-500', '到價提醒', ['到「提醒」分頁輸入代號、條件（漲到 ≥／跌到 ≤）與目標價。', '「分段價位」可自行輸入多個價位（例如目標 900，另設 600、700、800），到達每個價位各通知一次；也可用 % 快選依目標價換算（目標 1000、−5% ＝ 950）。', `需勾選「寄信提醒」才會寄信到你的登入信箱，<b>隨時可以取消勾選關閉</b>；也可單獨停用某一筆。`, '盤中（09:00–13:40）每 10 分鐘檢查一次（Yahoo 行情）；同一價位每天只寄一次，一次跨過多個價位會合併成一封。', `用量上限：初級韭菜 5 筆、資深韭菜 20 筆、萬年韭皇無上限（你目前 ${L.alert >= 9999 ? '無上限' : L.alert + ' 筆'}）。`])}
-        ${sec('fa-thumbtack text-brand-500', '長期追蹤', ['只能追蹤「關注清單」中的股票：在個股詳情按「長期追蹤」，或到「長期追蹤」分頁從下拉選單挑選。', '每個交易日收盤後自動記錄收盤價、漲跌幅、成交量、最高與最低，存在後端，換裝置也看得到。', '同一檔股票全體會員共用一份紀錄（系統只抓一次），若有人比你早追蹤，你加入後就能看到更早的歷史。', '至少兩天紀錄後顯示走勢圖；取消追蹤不會刪除已記錄的歷史。', `用量上限：初級韭菜 3 檔、資深韭菜 10 檔、萬年韭皇無上限（你目前 ${L.track >= 9999 ? '無上限' : L.track + ' 檔'}）。`])}
+        ${sec('fa-thumbtack text-brand-500', '長期追蹤', ['只能追蹤「關注清單」中的股票：在個股詳情按「長期追蹤」，或到「長期追蹤」分頁從下拉選單挑選。', '每個交易日收盤後自動記錄開盤、最高、最低、收盤、漲跌幅與成交量（K 線），存在後端，換裝置也看得到。', '同一檔股票全體會員共用一份紀錄（系統只抓一次），若有人比你早追蹤，你加入後就能看到更早的歷史。', '至少兩天紀錄後顯示走勢圖；取消追蹤不會刪除已記錄的歷史。', `用量上限：初級韭菜 3 檔、資深韭菜 10 檔、萬年韭皇無上限（你目前 ${L.track >= 9999 ? '無上限' : L.track + ' 檔'}）。`])}
         ${sec('fa-pen text-emerald-500', '投資筆記', ['記下觀察、買進理由、賣出檢討、心得或重大事件；股票從關注清單挑選，也可選「不指定股票」寫大盤心得。', '可搜尋、編輯、刪除；建議買進時寫下理由與停損條件，賣出後回頭檢討。'])}
         ${sec('fa-book-open text-indigo-500', '投資日誌', ['<b>預設為手動記帳</b>：按「記一筆交易」輸入日期、代號、買賣、股數、價格；手續費與交易稅會自動試算，可依券商折扣修改。', '以平均成本法計算持股、未實現與已實現損益；每日收盤後自動記錄一次資產淨值，累積成走勢圖。', '已經有自己的投資日誌試算表，可在頁面下方「改用連結」，連結後改讀你的試算表。', '只有你本人登入時看得到你的日誌。'])}
         ${sec('fa-envelope text-rose-500', '股票沒有收錄？', ['輸入不在收錄清單的代號時，會出現已填好內容的申請信，按「寄給管理員申請收錄」即可。', '未收錄的股票仍可記帳與設到價提醒（後端直接查證交所），只是網頁上無法顯示即時價格與標籤，日誌市值暫以成本計算。'])}
