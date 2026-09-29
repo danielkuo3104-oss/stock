@@ -87,6 +87,16 @@
     html.mode-simple .simple-only-inline { display: inline; }
     html.mode-simple #mainMarketSection > div:first-child { border-bottom-width: 0; padding-bottom: 0; }
   </style>
+  <script>
+    // 相容性保護：程式若在舊版瀏覽器（例如舊平板）發生錯誤，畫面上方顯示原因，方便回報
+    window.addEventListener('error', function (e) {
+      try {
+        var b = document.getElementById('jsErrBanner');
+        if (!b) { b = document.createElement('div'); b.id = 'jsErrBanner'; b.style.cssText = 'position:fixed;left:8px;right:8px;top:8px;z-index:99999;background:#7f1d1d;color:#fff;font:12px/1.5 sans-serif;padding:8px 12px;border-radius:10px;box-shadow:0 6px 20px rgba(0,0,0,.3)'; (document.body || document.documentElement).appendChild(b); }
+        b.textContent = '頁面程式錯誤（請截圖回報）：' + (e.message || '未知錯誤') + (e.filename ? '｜行 ' + e.lineno : '') + '｜' + navigator.userAgent;
+      } catch (x) {}
+    });
+  </script>
   <script>try { if (localStorage.getItem('sp_view_mode') === 'simple') document.documentElement.classList.add('mode-simple'); } catch (e) {}</script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
@@ -1208,7 +1218,6 @@
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
       updateModeButtons();
-      preloadMembersFromSheet();
       preloadHolidays();
       loadWatchlist();
       checkRememberedLogin();
@@ -1612,21 +1621,32 @@
     }
 
     // 1. 修正快取讀取
+    // 會員清單：改由後端（需管理員 token）提供，不再讀公開的會員 CSV
     async function preloadMembersFromSheet() {
+      if (!currentUser || currentUser.role !== 'admin' || !currentUser.token) return;
       try {
-        const res = await fetch(CSV_MEMBERS_URL);
-        const text = await res.text();
-        const lines = text.split(/\r\n|\n/).filter(l => l.trim() !== '');
-        memberListCache = lines.slice(1).map(line => {
-          const row = parseCsvRow(line);
-          return {
-            name: row[0] ? row[0].trim() : '',
-            email: row[1] ? row[1].trim() : '',
-            tier: row[5] ? row[5].trim() : '初級韭菜',
-            hasPass: !!(row[5] && row[5].trim())
-          };
-        }).filter(m => m.name && m.email);
-        populateAdminMemberSelect(memberListCache);
+        const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify({ action: 'listMembers', admin: ADMIN_EMAIL, token: currentUser.token }) });
+        const r = await res.json();
+        if (r && r.success && Array.isArray(r.members)) {
+          memberListCache = r.members;
+          populateAdminMemberSelect(memberListCache);
+        }
+      } catch (e) {}
+    }
+
+    // 開頁時向後端同步自己的等級（管理員改等級後，首頁與個人化頁都會更新）
+    async function syncProfile() {
+      if (!currentUser || !currentUser.token || currentUser.role === 'guest') return;
+      try {
+        const res = await fetch(BACKEND_API_URL, { method: 'POST', body: JSON.stringify({ action: 'me', email: currentUser.email, token: currentUser.token }) });
+        const r = await res.json();
+        if (!r || !r.success || !r.user) return;
+        const changed = r.user.tier !== currentUser.tier || r.user.role !== currentUser.role;
+        Object.assign(currentUser, { tier: r.user.tier, role: r.user.role, name: r.user.name || currentUser.name, hasJournal: r.user.hasJournal });
+        const key = 'sectorpulse_user';
+        if (localStorage.getItem(key)) localStorage.setItem(key, JSON.stringify(currentUser));
+        else if (sessionStorage.getItem(key)) sessionStorage.setItem(key, JSON.stringify(currentUser));
+        if (changed) renderUserBadge();
       } catch (e) {}
     }
 
@@ -2028,8 +2048,7 @@
       }
     }
 
-    async function launchApp() {
-      document.getElementById('mainApp').classList.remove('hidden');
+    function renderUserBadge() {
       const badgeEl = document.getElementById('userBadge');
       const tierName = currentUser.tier || '初級韭菜';
 
@@ -2052,12 +2071,20 @@
         }
       }
 
+    }
+
+    async function launchApp() {
+      document.getElementById('mainApp').classList.remove('hidden');
+      renderUserBadge();
+      syncProfile();
+
       if (currentUser.role === 'admin') {
         const adminBtn = document.getElementById('btnAdminConsole');
         if (adminBtn) {
           adminBtn.classList.remove('hidden');
           adminBtn.classList.add('flex');
         }
+        preloadMembersFromSheet();
       }
 
       showDisclaimerToast();
@@ -2188,7 +2215,7 @@
       } else if (originalAnnouncements.length > 0) {
         document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
       }
-      renderMarketStatusBadge();
+      try { renderMarketStatusBadge(); } catch (e) { console.warn('狀態徽章失敗', e); }
     }
 
     function updateAdminStatusIndicator(isMaint) {
@@ -3712,8 +3739,10 @@ function getDynamicColorTier(rawPct) {
       return { date: d.toISOString().slice(0, 10), min: d.getUTCHours() * 60 + d.getUTCMinutes() };
     }
     function minutesAgo(timeStr) {
-      const t = Date.parse(String(timeStr || '').replace(' ', 'T') + '+08:00');
-      return isNaN(t) ? Infinity : (Date.now() - t) / 60000;
+      const m = String(timeStr || '').match(/(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})[ T](\d{1,2}):(\d{2})(?::(\d{2}))?/);
+      if (!m) return Infinity;
+      const t = Date.UTC(+m[1], +m[2] - 1, +m[3], +m[4] - 8, +m[5], +(m[6] || 0));   // 台北時間 → UTC
+      return (Date.now() - t) / 60000;
     }
 
     function startLivePolling() {
@@ -3807,7 +3836,7 @@ function getDynamicColorTier(rawPct) {
       if (tx.low) colorizeMarketItem('marketLow', tx.low, tx.prevClose);
       indexCloseRef = { close: tx.price, date: liveDate, live: true };
 
-      renderMarketStatusBadge();
+      try { renderMarketStatusBadge(); } catch (e) { console.warn('狀態徽章失敗', e); }
     }
 
     // 台指期資料：優先即時，失敗時用試算表（盤前快報）
@@ -3823,15 +3852,17 @@ function getDynamicColorTier(rawPct) {
       return { source: 'sheet', items };
     }
 
+    // 盤別以「報價時間」判斷，不依賴來源頁面的文字（Yahoo 盤後頁也會出現「一般」字樣，曾造成誤判）
+    //   日盤 08:45–13:45、夜盤 15:00–次日 05:00；報價在 10 分鐘內且落在交易時段 → 盤中
     function futuresStatus(f) {
-      let night;
-      if (f.session) night = f.session === 'night';
-      else night = futuresSession(f.time).night;
+      const ts = futuresSession(f.time);
+      const night = ts.label === '盤別不明' ? f.session === 'night' : ts.night;
       let phase;
       if (f.preOpen) phase = '尚未開盤';
-      else if (f.session) phase = minutesAgo(f.time) < 10 ? '盤中' : '收盤';
-      else phase = futuresSession(f.time).label.split('・')[1] || '';
-      return { night, label: (night ? '夜盤' : '日盤') + '・' + phase };
+      else if (ts.label === '盤別不明') phase = '';
+      else if (/盤中/.test(ts.label) && minutesAgo(f.time) < 10) phase = '盤中';
+      else phase = '收盤';
+      return { night, label: (night ? '夜盤' : '日盤') + (phase ? '・' + phase : '') };
     }
 
     function renderFuturesStrip() {
@@ -3867,8 +3898,8 @@ function getDynamicColorTier(rawPct) {
         : `<span class="${LIVE_API_URL ? 'text-amber-600 dark:text-amber-400' : ''}">${LIVE_API_URL ? '試算表備援' : '試算表'}</span>`;
       box.innerHTML = `
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
-          <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid ${sess.night ? 'fa-moon text-indigo-400' : 'fa-sun text-amber-500'}"></i>台指期</span>
-          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${sess.night ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-300 border border-indigo-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'}">${sess.label}</span>
+          <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid ${sess.night ? 'fa-moon text-purple-500' : 'fa-sun text-amber-500'}"></i>台指期</span>
+          <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${sess.night ? 'bg-purple-500/10 text-purple-600 dark:text-purple-300 border border-purple-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'}">${sess.label}</span>
           ${freshBadgeHtml(dataDate, futExpectToday)}
           <span class="font-mono"><strong class="text-sm ${col}">${fmtP(main.price)}</strong> <span class="${col}">${sgn(main.chg)} (${main.pct > 0 ? '+' : ''}${Number(main.pct ?? 0).toFixed(2)}%)</span></span>
           ${basisHtml}
@@ -3943,21 +3974,13 @@ function getDynamicColorTier(rawPct) {
       const m = String(str ?? '').match(/(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/);
       return m ? `${m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
     }
+    // 台北時間：直接以 UTC+8 計算，不依賴 Intl 語系格式（部分平板 Safari 的 en-CA 格式不同，曾導致日期解析失敗）
     function taipeiTodayStr() {
-      try {
-        return new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Taipei', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-      } catch (e) {
-        const d = new Date();
-        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      }
+      return new Date(Date.now() + 8 * 3600e3).toISOString().slice(0, 10);
     }
     function taipeiMinutesNow() {
-      try {
-        const parts = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Taipei', hour12: false, hour: '2-digit', minute: '2-digit' }).formatToParts(new Date());
-        const h = parseInt((parts.find(p => p.type === 'hour') || {}).value, 10) % 24;
-        const m = parseInt((parts.find(p => p.type === 'minute') || {}).value, 10);
-        return h * 60 + m;
-      } catch (e) { const d = new Date(); return d.getHours() * 60 + d.getMinutes(); }
+      const d = new Date(Date.now() + 8 * 3600e3);
+      return d.getUTCHours() * 60 + d.getUTCMinutes();
     }
     function getTodayMarketState() {
       const today = taipeiTodayStr();
@@ -3978,11 +4001,13 @@ function getDynamicColorTier(rawPct) {
     function isTradingDay(iso) {
       if (!iso) return false;
       const wd = new Date(iso + 'T12:00:00+08:00').getUTCDay();
+      if (isNaN(wd)) return false;
       if (wd === 0 || wd === 6) return false;
       return !(holidaysList || []).some(h => normDate(h.date) === iso);
     }
     function prevTradingDay(iso) {
       let t = Date.parse(iso + 'T12:00:00+08:00');
+      if (isNaN(t)) return '';
       for (let i = 0; i < 20; i++) {
         t -= 86400e3;
         const d = new Date(t + 8 * 3600e3).toISOString().slice(0, 10);
