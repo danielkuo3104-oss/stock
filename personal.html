@@ -581,9 +581,9 @@
         (await pfJson('https://www.tpex.org.tw/openapi/v1/tpex_disposal_information', 10000)).forEach(rec => {
           const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim(), all = keys.map(val).join(' ');
           const code = val(keys.find(k => /^(Code|SecuritiesCompanyCode)$/i.test(k)) || '');
-          const pk = keys.find(k => /\d{2,3}\/\d{1,2}\/\d{1,2}\s*[～~\-－至]\s*\d{2,3}\/\d{1,2}\/\d{1,2}/.test(val(k)));
+          const pk = keys.find(k => /(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/.test(val(k)));
           if (!/^\d{4,6}[A-Z]?$/.test(code) || !pk) return;
-          const p = val(pk).match(/(\d{2,3}\/\d{1,2}\/\d{1,2})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2})/);
+          const p = val(pk).match(/(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/);
           const mm = all.match(/第.次處置|再次處置/);
           items.push({ code, level: /第二次|第三次|再次/.test(all) ? 2 : 1, measure: mm ? mm[0] : '處置', start: pfRoc(p[1]), end: pfRoc(p[2]), mkt: '上櫃' });
         });
@@ -611,7 +611,7 @@
         s.badges = (s.badges || []).filter(b => !b.dsp);
         const d = pfDisposal[s.id], n = pfNotice[s.id];
         s.disposal = d || null; s.notice = n || null;
-        if (n && !(d && d.state === 'active')) s.badges.unshift({ text: '注意股', dsp: true, color: 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-500/40 font-bold' });
+        if (n && !d) s.badges.unshift({ text: '注意股', dsp: true, color: 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-500/40 font-bold' });
         if (!d) return;
         if (d.state === 'active') {
           s.badges = s.badges.filter(b => !PF_DSP_VOL.includes(b.text));
@@ -780,7 +780,9 @@
             </div>`;
         }
         const col = s.change > 0 ? 'text-stockRed' : (s.change < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400');
-        const cardTone = s.change > 0 ? 'border-red-500/25 bg-red-500/5' : (s.change < 0 ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950');
+        const cardTone = s.disposal ? 'border-orange-400/60 bg-orange-100/70 dark:bg-orange-500/10'
+          : (s.notice ? 'border-yellow-400/60 bg-yellow-50 dark:bg-yellow-400/10'
+          : (s.change > 0 ? 'border-red-500/25 bg-red-500/5' : (s.change < 0 ? 'border-emerald-500/25 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950')));
         const pctTxt = (s.change > 0 && !s.pctStr.startsWith('+')) ? '+' + s.pctStr : s.pctStr;
         const cumCol = s.cumPct > 0 ? 'text-stockRed' : (s.cumPct < 0 ? 'text-stockGreen' : 'text-slate-400');
         const priceBox = s.isLimitUp ? 'bg-limitUp text-white px-1.5 rounded' : (s.isLimitDown ? 'bg-limitDown text-white px-1.5 rounded' : col);
