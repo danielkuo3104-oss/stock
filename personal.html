@@ -1267,7 +1267,7 @@
             ${seg('range', journalState.range, [[20, '20日'], [60, '60日'], [120, '120日'], [0, '全期']], 'setJournalRange')}
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            ${chartBox('jc_nav', '資產淨值與成本', '兩線之間的色帶＝未實現損益：紅色獲利、綠色虧損')}
+            ${chartBox('jc_nav', '資產淨值與成本', '淨值與成本之間的色帶＝未實現損益（藍：淨值高於成本；灰：低於成本）')}
             ${chartBox('jc_roi', '累計報酬率（含息 vs 不含息）')}
             ${chartBox('jc_bench', '策略績效 vs 加權指數', '以每日損益 ÷ 前日淨值串接的時間加權報酬，區間起點歸零')}
             ${chartBox('jc_daily', '每日損益變動')}
@@ -1413,7 +1413,7 @@
       lineChart('jc_nav', dates, [
         { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a, width: 2.2 },
         { name: '庫存成本', values: H.map(h => h.tCost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }
-      ], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, endGap: d => (d >= 0 ? '獲利 +' : '虧損 ') + axisLabel(d), extraTip: i => { const d = ok(H[i].tv) && ok(H[i].tCost) ? H[i].tv - H[i].tCost : null; return `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(d)}</b></div>`; } });
+      ], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, bandColors: [JN_COLORS.a, '#94a3b8'], endGap: d => [d >= 0 ? '未實現' : '未實現', (d >= 0 ? '+' : '') + axisLabel(d)], extraTip: i => { const d = ok(H[i].tv) && ok(H[i].tCost) ? H[i].tv - H[i].tCost : null; return `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(d)}</b></div>`; } });
       const profit = ok(L.tPl) ? L.tPl : (ok(L.tv) && ok(L.tCost) ? L.tv - L.tCost : null);
       const profit0 = ok(F.tPl) ? F.tPl : (ok(F.tv) && ok(F.tCost) ? F.tv - F.tCost : null);
       setChartNote('jc_nav', [
@@ -1538,7 +1538,8 @@
     function axisLabel(v, pctMode) {
       if (pctMode) return v.toFixed(Math.abs(v) < 10 ? 1 : 0) + '%';
       const a = Math.abs(v);
-      return a >= 1e4 ? (v / 1e4).toFixed(a >= 1e5 ? 0 : 1) + '萬' : Math.round(v).toLocaleString('en-US');
+      if (a >= 1e4) { const w = v / 1e4; return (Math.abs(w - Math.round(w)) < 1e-9 ? Math.round(w) : +w.toFixed(a >= 1e5 ? 1 : 2)) + '萬'; }
+      return Math.round(v).toLocaleString('en-US');
     }
 
     function lineChart(id, dates, series, fmt, pctMode, opts) {
@@ -1559,7 +1560,7 @@
       let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="${t === 0 && (pctMode || opts.zero) ? 0.35 : 0.1}"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${axisLabel(t, pctMode)}</text>`).join('');
       const bc = opts.bandColors || ['#ef4444', '#22c55e'];
       if (opts.band) {
-        if (opts.gradient) g += `<defs><linearGradient id="${id}_gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${bc[0]}" stop-opacity="0.26"/><stop offset="1" stop-color="${bc[0]}" stop-opacity="0.03"/></linearGradient><linearGradient id="${id}_gn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${bc[1]}" stop-opacity="0.26"/><stop offset="1" stop-color="${bc[1]}" stop-opacity="0.03"/></linearGradient></defs>`;
+        if (opts.gradient) g += `<defs><linearGradient id="${id}_gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${bc[0]}" stop-opacity="0.22"/><stop offset="1" stop-color="${bc[0]}" stop-opacity="0.02"/></linearGradient><linearGradient id="${id}_gn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${bc[1]}" stop-opacity="0.22"/><stop offset="1" stop-color="${bc[1]}" stop-opacity="0.02"/></linearGradient></defs>`;
         g += bandPaths(series[opts.band[0]].values, opts.band[1] === null ? null : series[opts.band[1]].values, x, y, opts.gradient ? [`url(#${id}_gp)`, `url(#${id}_gn)`] : bc, opts.gradient ? 1 : 0.2);
       }
       series.forEach(s => {
@@ -1573,10 +1574,12 @@
         const A = series[opts.band[0]].values, B = series[opts.band[1]].values;
         let iL = n - 1; while (iL >= 0 && !(A[iL] !== null && B[iL] !== null && !isNaN(A[iL]) && !isNaN(B[iL]))) iL--;
         if (iL > 0) {
-          const d = A[iL] - B[iL], xa = x(iL), ya = y(A[iL]), yb = y(B[iL]), col = d >= 0 ? bc[0] : bc[1];
-          const label = opts.endGap(d), tw = [...label].reduce((w, ch) => w + (/[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 10.5 : 6.2), 0) + 14, ym = (ya + yb) / 2;
-          g += `<line x1="${xa - 3}" x2="${xa - 3}" y1="${ya}" y2="${yb}" stroke="${col}" stroke-width="1.5"/><line x1="${xa - 6}" x2="${xa}" y1="${ya}" y2="${ya}" stroke="${col}" stroke-width="1.5"/><line x1="${xa - 6}" x2="${xa}" y1="${yb}" y2="${yb}" stroke="${col}" stroke-width="1.5"/>`;
-          g += `<rect x="${xa - 10 - tw}" y="${ym - 9}" width="${tw}" height="18" rx="9" fill="${col}"/><text x="${xa - 10 - tw / 2}" y="${ym + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="ui-monospace,monospace">${label}</text>`;
+          const d = A[iL] - B[iL], xa = x(iL), ya = y(A[iL]), yb = y(B[iL]), ym = (ya + yb) / 2;
+          const lab = opts.endGap(d), numCol = d >= 0 ? '#ef4444' : '#16a34a';
+          const tw = [...(lab[0] + ' ' + lab[1])].reduce((w, ch) => w + (/[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 10.5 : 6.4), 0) + 16;
+          g += `<path d="M${xa - 7},${ya} H${xa - 3} V${yb} H${xa - 7}" fill="none" stroke="currentColor" stroke-opacity="0.45" stroke-width="1.2"/>`;
+          g += `<rect x="${xa - 12 - tw}" y="${ym - 10}" width="${tw}" height="20" rx="6" class="fill-white dark:fill-slate-900" stroke="currentColor" stroke-opacity="0.25"/>`;
+          g += `<text x="${xa - 12 - tw / 2}" y="${ym + 3.5}" text-anchor="middle" font-size="10" font-family="ui-monospace,monospace"><tspan class="fill-slate-500 dark:fill-slate-400">${lab[0]} </tspan><tspan font-weight="700" fill="${numCol}">${lab[1]}</tspan></text>`;
         }
       }
       if (opts.dots) g += series.map((s, k) => `<circle class="jc-dot" data-k="${k}" r="3.5" fill="${s.color}" stroke="#fff" stroke-width="1.5" visibility="hidden"/>`).join('');
@@ -2542,7 +2545,7 @@
         </details>`);
       if (showForm) pzTradeCalc(false);
       const nav = pzState.nav;
-      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a }, { name: '成本', values: nav.map(n => n.cost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, endGap: d => (d >= 0 ? '獲利 +' : '虧損 ') + axisLabel(d) });
+      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a }, { name: '成本', values: nav.map(n => n.cost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, bandColors: [JN_COLORS.a, '#94a3b8'], endGap: d => ['未實現', (d >= 0 ? '+' : '') + axisLabel(d)] });
       else { const el = document.getElementById('pz_nav'); if (el) el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">資料累積中</div>'; }
       donutChart('pz_alloc', open.map(h => ({ name: h.name, code: h.code, val: h.value ?? h.cost, type: /^00/.test(h.code) ? 'etf' : 'stock' })));
     }
