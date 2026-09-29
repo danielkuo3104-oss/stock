@@ -1258,7 +1258,7 @@
             </div>
           </div>
           <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-2">${kpi}</div>
-          ${jnWriteBanner()}
+          ${journalState.divOpen ? '' : jnWriteBanner()}
         `)}
 
         ${jnCard(`
@@ -1880,49 +1880,92 @@
     }
 
     // ---------- 登記配息 ----------
+    function jnTodayIso() { return (typeof pfToday === 'function' ? pfToday() : new Date().toISOString().slice(0, 10)); }
+    function jnBlankDivForm(code) { return { code: code || '', amount: '', date: jnTodayIso(), note: '' }; }
     function jnOpenDividend(code) {
-      const today = (typeof pfToday === 'function' ? pfToday() : new Date().toISOString().slice(0, 10));
       journalState.divOpen = code === '' ? !journalState.divOpen : true;
-      journalState.divForm = { code: code || journalState.divForm.code || '', amount: '', date: today, note: '' };
+      journalState.divForm = jnBlankDivForm(code);
+      journalState.divFlash = null;
       renderJournal();
-      if (journalState.divOpen) setTimeout(() => { const el = document.getElementById('jnDivAmt'); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); el.focus(); } }, 50);
+      if (journalState.divOpen) setTimeout(() => { const el = document.getElementById(code ? 'jnDivAmt' : 'jnDivForm'); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (code) el.focus(); } }, 50);
+    }
+    function jnPickDivStock(code) { journalState.divForm.code = code; journalState.divFlash = null; renderJournal(); setTimeout(() => { const el = document.getElementById('jnDivAmt'); if (el) el.focus(); }, 30); }
+    // 各檔登記進度：最後登記到哪個配息日、今年登記幾筆
+    function jnDivProgress(holdings) {
+      const logs = jnDivLogs().filter(d => !d.status), year = jnTodayIso().slice(0, 4);
+      const codes = new Set(holdings.filter(h => h.shares > 0).map(h => h.code).concat(logs.map(d => d.code)));
+      return [...codes].map(code => {
+        const h = holdings.find(x => x.code === code) || {}, L = logs.filter(d => d.code === code);
+        const y = L.filter(d => (d.date || '').slice(0, 4) === year);
+        return { code, name: h.name || (L[0] && L[0].name) || code, active: h.shares > 0, value: h.value || 0, dividend: h.dividend, last: L[0] || null, yCount: y.length, ySum: y.reduce((a, d) => a + d.amount, 0) };
+      }).sort((a, b) => (b.last ? b.last.date : '') < (a.last ? a.last.date : '') ? -1 : ((b.last ? b.last.date : '') > (a.last ? a.last.date : '') ? 1 : b.value - a.value));
     }
     function jnDividendForm(holdings) {
       const f = journalState.divForm, list = [...holdings].sort((a, b) => (b.shares > 0) - (a.shares > 0) || (b.value || 0) - (a.value || 0));
       const h = list.find(x => x.code === f.code);
+      const prog = jnDivProgress(holdings);
+      const last = h ? jnDivLogs().find(d => d.code === h.code && !d.status) : null;
+      const dup = h && f.date ? jnDivLogs().find(d => d.code === h.code && d.date === f.date && !d.status) : null;
       const inp = 'w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs';
       const lab = (t, inner) => `<label class="block"><span class="block text-[10px] text-slate-500 mb-0.5">${t}</span>${inner}</label>`;
-      return `<div class="mb-3 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/50 dark:bg-brand-500/5 p-3 space-y-2">
-        <div class="text-xs font-bold text-slate-800 dark:text-slate-100"><i class="fa-solid fa-coins text-brand-500 mr-1"></i>登記配息 <span class="font-normal text-[10px] text-slate-500">金額會加到日誌該股的「總配息」，並記錄在日誌新增的「配息紀錄」分頁</span></div>
+      const flash = journalState.divFlash;
+      return `<div id="jnDivForm" class="mb-3 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/50 dark:bg-brand-500/5 p-3 space-y-3">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-100"><i class="fa-solid fa-coins text-brand-500 mr-1"></i>登記配息 <span class="font-normal text-[10px] text-slate-500">金額加到日誌該股「總配息」，同時記在日誌「配息紀錄」分頁</span></div>
+          <button onclick="journalState.divOpen=false; journalState.divFlash=null; renderJournal()" class="text-[11px] text-slate-400 hover:text-slate-600"><i class="fa-solid fa-xmark mr-1"></i>關閉</button>
+        </div>
+        ${jnWriteBanner()}
+        ${flash ? `<div class="flex items-center gap-2 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200/70 dark:border-emerald-500/20 rounded-lg px-3 py-2"><i class="fa-solid fa-circle-check"></i>${escHtml(flash)}<span class="font-normal text-slate-500 ml-auto">可以接著登記下一筆</span></div>` : ''}
+        <div>
+          <div class="text-[10px] font-bold text-slate-500 mb-1">各檔登記進度 <span class="font-normal">（點一下直接選這檔・依最後登記的配息日排序）</span></div>
+          <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-1.5 max-h-44 overflow-y-auto pr-1">
+            ${prog.map(p => `<button onclick="jnPickDivStock('${escHtml(p.code)}')" class="text-left rounded-lg border px-2 py-1 text-[10px] transition ${p.code === f.code ? 'border-brand-500 bg-white dark:bg-slate-900 ring-1 ring-brand-500' : 'border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60 hover:border-brand-400'} ${p.active ? '' : 'opacity-60'}">
+              <div class="flex items-center justify-between gap-1"><b class="truncate text-slate-800 dark:text-slate-100">${escHtml(p.name)}</b><span class="font-mono text-slate-400 shrink-0">${escHtml(p.code)}</span></div>
+              <div class="font-mono ${p.last ? 'text-slate-600 dark:text-slate-300' : 'text-amber-600 dark:text-amber-400'}">${p.last ? `登記到 ${escHtml(p.last.date)}・${jnFmt(p.last.amount)}` : '尚未登記'}</div>
+              <div class="text-slate-400">今年 ${p.yCount} 筆${p.ySum ? ' ' + jnFmt(p.ySum) + ' 元' : ''}</div></button>`).join('') || '<span class="text-[11px] text-slate-400">沒有持股</span>'}
+          </div>
+        </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          ${lab('股票', `<select onchange="journalState.divForm.code=this.value; renderJournal()" class="${inp}"><option value="">選擇股票</option>${list.map(x => `<option value="${escHtml(x.code)}" ${x.code === f.code ? 'selected' : ''}>${escHtml(x.name)} ${escHtml(x.code)}${x.shares > 0 ? '' : '（已出清）'}</option>`).join('')}</select>`)}
-          ${lab('實收金額（元）', `<input id="jnDivAmt" type="number" step="1" value="${escHtml(f.amount)}" oninput="journalState.divForm.amount=this.value" placeholder="例如 1250" class="${inp} font-mono">`)}
-          ${lab('發放日', `<input type="date" value="${escHtml(f.date)}" oninput="journalState.divForm.date=this.value" class="${inp}">`)}
+          ${lab('股票', `<select onchange="jnPickDivStock(this.value)" class="${inp}"><option value="">選擇股票</option>${list.map(x => `<option value="${escHtml(x.code)}" ${x.code === f.code ? 'selected' : ''}>${escHtml(x.name)} ${escHtml(x.code)}${x.shares > 0 ? '' : '（已出清）'}</option>`).join('')}</select>`)}
+          ${lab('實收金額（元）', `<input id="jnDivAmt" type="number" step="1" value="${escHtml(f.amount)}" oninput="journalState.divForm.amount=this.value" onkeydown="if(event.key==='Enter')jnSubmitDividend()" placeholder="例如 1250" class="${inp} font-mono">`)}
+          ${lab('發放日', `<input type="date" value="${escHtml(f.date)}" onchange="journalState.divForm.date=this.value; renderJournal()" class="${inp}">`)}
           ${lab('備註', `<input type="text" value="${escHtml(f.note)}" oninput="journalState.divForm.note=this.value" placeholder="例如 Q2 季配" maxlength="100" class="${inp}">`)}
         </div>
+        ${dup ? `<div class="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/20 rounded-lg px-3 py-1.5"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escHtml(h.name)} 在 ${escHtml(dup.date)} 已經登記過 ${jnFmt(dup.amount)} 元（${escHtml(dup.time)}），確定要再登記一筆嗎？</div>` : ''}
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-[10px] text-slate-500">${h ? `目前總配息 <b class="font-mono">${jnFmt(h.dividend)}</b>・持有 ${jnFmt(h.shares)} 股${(() => { const last = jnDivLogs().find(d => d.code === h.code && !d.status); return last ? `・<span class="text-brand-600 dark:text-brand-400">上次登記：配息日 ${escHtml(last.date)} 金額 <b class="font-mono">${jnFmt(last.amount)}</b>（${escHtml(last.time)} 登記）</span>` : '・網站上還沒有登記紀錄'; })()}` : ''}</span>
-          <div class="flex gap-2"><button onclick="journalState.divOpen=false; renderJournal()" class="px-3 py-1 rounded-lg text-[11px] border border-slate-300 dark:border-slate-700">取消</button>
-          <button onclick="jnSubmitDividend()" ${journalState.saving ? 'disabled' : ''} class="px-3 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50">${journalState.saving ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>寫入中' : '加總寫入'}</button></div>
+          <span class="text-[10px] text-slate-500">${h ? `目前總配息 <b class="font-mono">${jnFmt(h.dividend)}</b>・持有 ${jnFmt(h.shares)} 股・${last ? `<span class="text-brand-600 dark:text-brand-400">上次登記：配息日 <b>${escHtml(last.date)}</b> 金額 <b class="font-mono">${jnFmt(last.amount)}</b>（${escHtml(last.time)} 登記）</span>` : '<span class="text-amber-600 dark:text-amber-400">這檔還沒有登記紀錄</span>'}` : '先選擇股票'}</span>
+          <div class="flex items-center gap-2">
+            ${journalState.saving ? '<span class="text-[10px] text-slate-400">寫入日誌中，日誌重算可能需要數秒</span>' : ''}
+            <button onclick="jnSubmitDividend()" ${journalState.saving ? 'disabled' : ''} class="px-3 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50">${journalState.saving ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>寫入中' : '加總寫入'}</button>
+          </div>
         </div></div>`;
     }
     async function jnSubmitDividend() {
+      if (journalState.saving) return;
       const f = journalState.divForm, amt = Number(f.amount);
-      if (!f.code || !isFinite(amt) || !amt) { journalState.writeMsg = { ok: false, text: '請選擇股票並輸入配息金額' }; renderJournal(); return; }
+      if (!f.code || !isFinite(amt) || !amt) { journalState.divFlash = null; journalState.writeMsg = { ok: false, text: '請選擇股票並輸入配息金額' }; renderJournal(); return; }
       const h = (journalState.data.holdings || []).find(x => x.code === f.code);
-      if (!confirm(`確定登記 ${h ? h.name : f.code} 配息 ${jnFmt(amt)} 元？\n總配息 ${jnFmt(h && h.dividend)} → ${jnFmt(((h && h.dividend) || 0) + amt)}`)) return;
-      journalState.saving = true; renderJournal();
+      const dup = jnDivLogs().find(d => d.code === f.code && d.date === f.date && !d.status);
+      if (!confirm(`${dup ? '⚠ 這天已經登記過一筆 ' + jnFmt(dup.amount) + ' 元！\n\n' : ''}確定登記 ${h ? h.name : f.code} 配息 ${jnFmt(amt)} 元（${f.date}）？\n總配息 ${jnFmt(h && h.dividend)} → ${jnFmt(((h && h.dividend) || 0) + amt)}`)) return;
+      journalState.saving = true; journalState.divFlash = null; renderJournal();
       try {
-        const r = await journalPost({ action: 'addDividend', email: currentUser.email, token: currentUser.token, code: f.code, amount: amt, date: f.date, note: f.note }, 60000);
+        const r = await journalPost({ action: 'addDividend', email: currentUser.email, token: currentUser.token, code: f.code, amount: amt, date: f.date, note: f.note, force: !!dup }, 120000);
         if (r.success) {
           (journalState.data.holdings || []).forEach(x => { if (x.code === f.code) { x.dividend = r.after; if (x.totalPlDiv !== null && x.totalPlDiv !== undefined) x.totalPlDiv += amt; } });
           if (r.entry) journalState.data.dividends = [r.entry].concat(journalState.data.dividends || []);
+          journalState.divNewId = r.entry ? r.entry.id : null;
           journalState.divLogOpen = true;
-          journalState.divOpen = false;
-          journalState.writeMsg = { ok: true, text: r.message + '（淨值與報酬率會在日誌重新計算後更新）' };
+          journalState.divForm = jnBlankDivForm('');            // 完成 → 表單清空，接著填下一筆
+          journalState.divFlash = `已登記 ${h ? h.name : f.code} ${jnFmt(amt)} 元（配息日 ${f.date}），總配息 ${jnFmt(r.before)} → ${jnFmt(r.after)}`;
+          journalState.writeMsg = null;
+          if (typeof pzToast === 'function') pzToast('配息已寫入日誌');
         } else journalState.writeMsg = { ok: false, code: r.code, text: r.message || '寫入失敗' };
-      } catch (e) { journalState.writeMsg = { ok: false, text: '連線失敗：' + ((e && e.message) || e) }; }
+      } catch (e) {
+        const msg = (e && e.message) || String(e);
+        journalState.writeMsg = { ok: false, text: /沒有回應/.test(msg) ? '等候逾時：可能其實已經寫入，請先看下方「配息登記紀錄」或按右上角重新讀取確認，避免重複登記。' : '連線失敗：' + msg };
+      }
       journalState.saving = false; renderJournal();
+      if (journalState.divOpen) setTimeout(() => { const el = document.getElementById('jnDivForm'); if (el) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 30);
     }
 
     // ---------- 配息登記紀錄 ----------
@@ -1941,7 +1984,7 @@
             <thead class="bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr>
               <th class="py-1.5 px-2 text-left">配息日</th><th class="px-2 text-left">股票</th><th class="px-2 text-right">金額</th><th class="px-2 text-right hidden sm:table-cell">總配息</th><th class="px-2 text-left hidden md:table-cell">備註</th><th class="px-2 text-left hidden sm:table-cell">登記時間</th><th class="px-2"></th></tr></thead>
             <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
-              ${L.map(d => `<tr class="${d.status ? 'opacity-50' : ''}">
+              ${L.map(d => `<tr class="${d.status ? 'opacity-50' : ''} ${d.id === journalState.divNewId && !d.status ? 'bg-emerald-50 dark:bg-emerald-500/10' : ''}">
                 <td class="py-1.5 px-2 font-mono">${escHtml(d.date)}</td>
                 <td class="px-2"><b class="text-slate-800 dark:text-slate-100">${escHtml(d.name)}</b> <span class="font-mono text-slate-400">${escHtml(d.code)}</span></td>
                 <td class="px-2 text-right font-mono font-bold ${d.status ? 'line-through' : 'text-stockRed'}">${jnSigned(d.amount)}</td>
