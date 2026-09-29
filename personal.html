@@ -492,7 +492,8 @@
         const pctStr = row[5] ? row[5].trim() : '0.00%';
         const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
         const volume = parseFloat(row[43]) || 0;
-        const dataDate = pfMmddToIso(row[11] || '');
+        const stampIso = pfMmddToIso(row[11] || '');
+        const dataDate = (stampIso && !pfIsTradingDay(stampIso)) ? (pfPrevTradingDay(stampIso) || stampIso) : stampIso;   // 休市日執行 → 實際為前一交易日
 
         const tenDayHistory = [];
         for (let c = 46; c <= 55; c++) {
