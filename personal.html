@@ -124,13 +124,19 @@
     </section>
 
     <div id="memberView" class="space-y-4 sm:space-y-6 hidden">
+      <!-- 關注個股的處置／注意提醒 -->
+      <div id="watchAlertBanner" class="hidden"></div>
+
       <!-- 分頁切換 -->
       <div class="flex items-center justify-between gap-2">
-        <div class="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 flex text-xs sm:text-sm shadow-sm">
-          <button id="btnTab_watch" onclick="switchPersonalTab('watch')" class="px-3 sm:px-4 py-1.5 rounded-xl font-bold bg-brand-600 text-white transition"><i class="fa-solid fa-star mr-1"></i>關注清單</button>
-          <button id="btnTab_journal" onclick="switchPersonalTab('journal')" class="px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition"><i class="fa-solid fa-book mr-1"></i>投資日誌</button>
+        <div class="bg-white dark:bg-slate-900 p-1 rounded-2xl border border-slate-200 dark:border-slate-800 flex text-xs sm:text-sm shadow-sm overflow-x-auto max-w-full">
+          <button id="btnTab_watch" onclick="switchPersonalTab('watch')" class="px-3 sm:px-4 py-1.5 rounded-xl font-bold bg-brand-600 text-white transition whitespace-nowrap"><i class="fa-solid fa-star mr-1"></i>關注清單</button>
+          <button id="btnTab_journal" onclick="switchPersonalTab('journal')" class="px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition whitespace-nowrap"><i class="fa-solid fa-book mr-1"></i>投資日誌</button>
+          <button id="btnTab_alerts" onclick="switchPersonalTab('alerts')" class="px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition whitespace-nowrap"><i class="fa-solid fa-bell mr-1"></i>提醒</button>
+          <button id="btnTab_track" onclick="switchPersonalTab('track')" class="px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition whitespace-nowrap"><i class="fa-solid fa-thumbtack mr-1"></i>長期追蹤</button>
+          <button id="btnTab_notes" onclick="switchPersonalTab('notes')" class="px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition whitespace-nowrap"><i class="fa-solid fa-pen mr-1"></i>筆記</button>
         </div>
-        <span class="text-[10px] text-slate-400 hidden sm:inline"><i class="fa-solid fa-lock mr-1"></i>投資日誌僅本人可見</span>
+        <button onclick="openPzHelp()" class="shrink-0 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs text-slate-600 dark:text-slate-300 hover:border-brand-500 transition"><i class="fa-solid fa-circle-question mr-1 text-brand-500"></i><span class="hidden sm:inline">使用說明</span></button>
       </div>
 
       <div id="tabWatch" class="space-y-4 sm:space-y-6">
@@ -178,6 +184,9 @@
 
       <!-- 💡 投資日誌（需信箱 + 登入 token 驗證，資料只存在記憶體） -->
       <div id="tabJournal" class="hidden space-y-4 sm:space-y-6"></div>
+      <div id="tabAlerts" class="hidden space-y-4 sm:space-y-6"></div>
+      <div id="tabTrack" class="hidden space-y-4 sm:space-y-6"></div>
+      <div id="tabNotes" class="hidden space-y-4 sm:space-y-6"></div>
     </div>
   </main>
 
@@ -236,7 +245,7 @@
       userWatchlist = [...new Set(list.map(String))];
 
       document.getElementById('memberView').classList.remove('hidden');
-      if (location.hash === '#journal') setTimeout(() => switchPersonalTab('journal'), 0);
+      if (/^#(journal|alerts|track|notes)$/.test(location.hash)) setTimeout(() => switchPersonalTab(location.hash.slice(1)), 0);
       renderSummary();
       fetchStocks();
     }
@@ -419,6 +428,7 @@
         dataLoaded = true;
         await Promise.all([loadHighs(), loadDisposal()]);
         applyDisposal();
+        try { renderWatchAlerts(); } catch (e) {}
       } catch (e) {
         if (dataLoaded) return;   // 已有舊資料則保留畫面
         document.getElementById('dataTimestamp').textContent = '資料讀取失敗';
@@ -986,6 +996,7 @@
           到首頁查看族群權重與同族群個股 <i class="fa-solid fa-arrow-right ml-1"></i>
         </button>
         <p class="text-[9px] text-slate-400 text-center">公司業務與題材由 AI 輔助彙整；所有數據僅供參考，不構成投資建議。</p>`;
+      try { pzAfterDetail(id); } catch (e) { console.warn(e); }
       document.getElementById('stockDetailModal').classList.remove('hidden');
     }
 
@@ -1023,6 +1034,7 @@
 
 
 
+
     // =====================================================================
     // 💡 投資日誌（個人化分頁）
     //    - 資料由後端 getJournal 取得，需 email + 登入 token；只存在記憶體，不寫入瀏覽器儲存
@@ -1033,19 +1045,24 @@
     let journalState = { loaded: false, loading: false, data: null, error: null, range: 60, scope: 'total', tradeFilter: 'all', tradeQuery: '', tradeLimit: 30, openHolding: null };
     let personalTab = 'watch';
 
+    const PERSONAL_TABS = ['watch', 'journal', 'alerts', 'track', 'notes'];
     function switchPersonalTab(tab) {
+      if (!PERSONAL_TABS.includes(tab)) tab = 'watch';
       personalTab = tab;
-      const on = 'px-3 sm:px-4 py-1.5 rounded-xl font-bold bg-brand-600 text-white transition';
-      const off = 'px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition';
-      document.getElementById('btnTab_watch').className = tab === 'watch' ? on : off;
-      document.getElementById('btnTab_journal').className = tab === 'journal' ? on : off;
-      document.getElementById('tabWatch').classList.toggle('hidden', tab !== 'watch');
-      document.getElementById('tabJournal').classList.toggle('hidden', tab !== 'journal');
-      try { history.replaceState(null, '', tab === 'journal' ? '#journal' : location.pathname); } catch (e) {}
+      const on = 'px-3 sm:px-4 py-1.5 rounded-xl font-bold bg-brand-600 text-white transition whitespace-nowrap';
+      const off = 'px-3 sm:px-4 py-1.5 rounded-xl text-slate-500 hover:text-slate-800 dark:hover:text-slate-200 transition whitespace-nowrap';
+      const box = { watch: 'tabWatch', journal: 'tabJournal', alerts: 'tabAlerts', track: 'tabTrack', notes: 'tabNotes' };
+      PERSONAL_TABS.forEach(t => {
+        const b = document.getElementById('btnTab_' + t); if (b) b.className = t === tab ? on : off;
+        const c = document.getElementById(box[t]); if (c) c.classList.toggle('hidden', t !== tab);
+      });
+      try { history.replaceState(null, '', tab === 'watch' ? location.pathname : '#' + tab); } catch (e) {}
       if (tab === 'journal') {
         if (!journalState.loaded && !journalState.loading) loadJournal(false);
         else renderJournal();
-      }
+      } else if (tab === 'alerts') renderPzAlerts();
+      else if (tab === 'track') renderPzTrack();
+      else if (tab === 'notes') renderPzNotes();
     }
 
     async function journalPost(body, timeoutMs) {
@@ -1159,7 +1176,8 @@
             </div>`);
           return;
         }
-        if (err.code === 'NOLINK' || err.code === 'NOACCESS' || err.code === 'OWNER') {
+        if (err.code === 'NOLINK') { journalState.manual = true; renderManualJournal(); return; }   // 預設：手動記帳
+        if (err.code === 'NOACCESS' || err.code === 'OWNER') {
           box.innerHTML = jnCard(`
             <div class="space-y-4 max-w-2xl">
               <div>
@@ -1177,6 +1195,7 @@
                 <button onclick="linkJournal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition">驗證並連結</button>
               </div>
               <p id="journalLinkMsg" class="text-[11px] text-slate-500"></p>
+              <button onclick="unlinkJournal()" class="text-[11px] underline text-slate-500">取消連結，改用手動記帳</button>
             </div>`);
           return;
         }
@@ -1560,6 +1579,497 @@
       clearTimeout(jnResizeTimer);
       jnResizeTimer = setTimeout(() => { if (personalTab === 'journal' && journalState.data) renderJournalCharts(journalState.data); }, 200);
     });
+
+    // =====================================================================
+    // 💡 個人化擴充：處置／注意提醒、到價提醒、長期追蹤、投資筆記、手動投資日誌、使用說明
+    //    資料由後端「個人化.gs」保存（需信箱 + 登入 token），只能讀寫自己的資料
+    // =====================================================================
+    let pzState = { loaded: false, loading: false, error: '', tier: '', limits: { track: 3, alert: 5 }, settings: { emailAlerts: false }, alerts: [], tracks: [], history: {}, notes: [], trades: [], nav: [] };
+    let pzEditAlert = null, pzEditNote = null, pzEditTrade = null, pzTrackSel = '', pzNoteFilter = '';
+    const PZ_NOTE_TYPES = ['觀察', '買進理由', '賣出檢討', '心得', '事件'];
+    const pzInput = 'bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500';
+    const pzBtn = 'px-3 py-2 bg-brand-600 hover:bg-brand-500 text-white rounded-xl text-xs font-bold transition whitespace-nowrap';
+    const pzBtnGhost = 'px-2.5 py-1 rounded-lg border border-slate-200 dark:border-slate-700 text-[11px] text-slate-600 dark:text-slate-300 hover:border-brand-500 transition whitespace-nowrap';
+
+    async function pzPost(action, payload = {}, ms = 30000) {
+      if (!currentUser || !currentUser.token) throw new Error('請重新登入以取得驗證');
+      const r = await journalPost({ action, email: currentUser.email, token: currentUser.token, ...payload }, ms);
+      if (r && r.code === 'AUTH') throw new Error('登入已過期，請重新登入');
+      return r;
+    }
+    async function pzLoad(force) {
+      if (pzState.loading || (pzState.loaded && !force)) return;
+      pzState.loading = true;
+      try {
+        const r = await pzPost('getPersonal', {}, 40000);
+        if (r && r.success) { Object.assign(pzState, r, { loaded: true, error: '' }); }
+        else pzState.error = (r && r.message) || '讀取失敗';
+      } catch (e) { pzState.error = e.message || '連線失敗'; }
+      pzState.loading = false;
+      pzRenderActive();
+    }
+    function pzRenderActive() {
+      if (personalTab === 'alerts') renderPzAlerts();
+      else if (personalTab === 'track') renderPzTrack();
+      else if (personalTab === 'notes') renderPzNotes();
+      else if (personalTab === 'journal' && journalState.manual) renderManualJournal();
+    }
+    function pzNeedToken(boxId) {
+      if (currentUser && currentUser.token) return false;
+      document.getElementById(boxId).innerHTML = jnCard(`<div class="py-8 text-center space-y-3"><p class="text-xs text-slate-500">此功能需要登入驗證，請重新登入。</p><button onclick="logout()" class="${pzBtn}">重新登入</button></div>`);
+      return true;
+    }
+    function pzStatusHtml() {
+      if (pzState.loading && !pzState.loaded) return '<div class="py-10 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>讀取中…</div>';
+      if (pzState.error && !pzState.loaded) return `<div class="py-8 text-center space-y-2"><p class="text-xs text-amber-600"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escHtml(pzState.error)}</p><button onclick="pzLoad(true)" class="${pzBtnGhost}">重試</button><p class="text-[10px] text-slate-400">若持續失敗，可能是後端尚未部署新版本（個人化.gs）</p></div>`;
+      return '';
+    }
+    function pzName(code) { const s = stockMap.get(code); return s ? s.name : ''; }
+    function pzToast(msg, bad) {
+      let el = document.getElementById('pzToast');
+      if (!el) { el = document.createElement('div'); el.id = 'pzToast'; document.body.appendChild(el); }
+      el.className = `fixed left-1/2 -translate-x-1/2 bottom-5 z-[80] px-4 py-2 rounded-xl text-xs font-bold shadow-2xl ${bad ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white'}`;
+      el.textContent = msg; el.style.display = 'block';
+      clearTimeout(el._t); el._t = setTimeout(() => { el.style.display = 'none'; }, 2600);
+    }
+    function pzTierLine(kind, used) {
+      const lim = pzState.limits[kind];
+      return `<span class="text-[10px] text-slate-500 dark:text-slate-400">用量 <b class="font-mono ${used >= lim ? 'text-amber-600' : ''}">${used} / ${lim >= 9999 ? '∞' : lim}</b>（${escHtml(pzState.tier || currentUser.tier || '')}）</span>`;
+    }
+
+    // ---------- 未收錄股票：建議寄信給管理員（內容已填好）----------
+    function pzUnlistedHtml(code, boxId) {
+      if (!/^[0-9A-Z]{4,6}$/.test(code) || stockMap.has(code)) return '';
+      const body = `管理員您好：\n\n我想申請收錄以下股票：\n股票代號：${code}\n用途：個人化（投資日誌／提醒／追蹤）\n\n會員：${currentUser.name}（${currentUser.email}）`;
+      return `<div class="mt-2 rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 space-y-2 text-[11px]">
+        <div class="text-amber-700 dark:text-amber-400 font-bold"><i class="fa-solid fa-circle-info mr-1"></i>${escHtml(code)} 不在收錄清單：仍可記錄，但網頁無法顯示即時價格與標籤</div>
+        <textarea id="${boxId}_mail" rows="4" class="${pzInput} w-full">${escHtml(body)}</textarea>
+        <div class="flex items-center gap-2"><button onclick="pzSendRequest('${boxId}', '${escHtml(code)}')" class="${pzBtn}"><i class="fa-solid fa-paper-plane mr-1"></i>寄給管理員申請收錄</button><span id="${boxId}_msg" class="text-slate-500"></span></div>
+      </div>`;
+    }
+    async function pzSendRequest(boxId, code) {
+      const msg = document.getElementById(boxId + '_msg');
+      const body = (document.getElementById(boxId + '_mail') || {}).value || '';
+      msg.textContent = '寄送中…';
+      try {
+        const r = await journalPost({ action: 'sendContactEmail', subject: `收錄申請 ${code}`, body, userEmail: currentUser.email, userName: currentUser.name });
+        msg.textContent = r && r.success ? '已寄出，管理員收錄後即可顯示' : '寄送失敗：' + ((r && r.message) || '');
+      } catch (e) { msg.textContent = '寄送失敗：無法連線'; }
+    }
+    function pzCodeInput(id, value, onchange) {
+      return `<input id="${id}" list="pzCodeList" value="${escHtml(value || '')}" placeholder="代號，例 2330" oninput="this.value=this.value.toUpperCase().trim(); ${onchange || ''}" class="${pzInput} w-28 font-mono">`;
+    }
+    function pzCodeDatalist() {
+      const ids = [...new Set([...userWatchlist, ...Array.from(stockMap.keys())])];
+      return `<datalist id="pzCodeList">${ids.map(id => `<option value="${escHtml(id)}">${escHtml(pzName(id))}</option>`).join('')}</datalist>`;
+    }
+
+    // ---------- 關注清單的處置／注意提醒（頁首橫幅）----------
+    function renderWatchAlerts() {
+      const box = document.getElementById('watchAlertBanner');
+      if (!box) return;
+      const hits = userWatchlist.map(id => stockMap.get(id)).filter(s => s && (s.disposal || s.notice));
+      if (!hits.length) { box.innerHTML = ''; box.classList.add('hidden'); return; }
+      const item = s => {
+        const d = s.disposal, n = s.notice;
+        const txt = d ? `${d.state === 'active' ? (d.level >= 2 ? '再次處置中' : '處置中') : '即將處置'} ${pfShort(d.start)}～${pfShort(d.end)}` : `注意股（${pfShort(n.date)}）`;
+        return `<button onclick="openStockDetail('${escHtml(s.id)}')" class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg ${d ? 'bg-orange-100 dark:bg-orange-500/15 text-orange-800 dark:text-orange-300' : 'bg-yellow-100 dark:bg-yellow-400/10 text-yellow-800 dark:text-yellow-300'} text-[11px] font-bold"><span>${escHtml(s.name)}</span><span class="font-normal">${escHtml(txt)}</span></button>`;
+      };
+      box.classList.remove('hidden');
+      box.innerHTML = `<div class="flex flex-wrap items-center gap-2 rounded-2xl border border-orange-300/60 dark:border-orange-500/30 bg-white dark:bg-slate-900 px-3 py-2 shadow-sm">
+        <span class="text-xs font-black text-orange-700 dark:text-orange-400"><i class="fa-solid fa-bell mr-1"></i>你的關注有處置／注意公告</span>${hits.map(item).join('')}</div>`;
+    }
+
+    // ---------- 個股詳情：快捷操作 ----------
+    function pzAfterDetail(id) {
+      const body = document.getElementById('stockDetailBody');
+      if (!body || currentUser.role === 'guest') return;
+      const tracked = pzState.tracks.some(t => t.code === id);
+      const s = stockMap.get(id);
+      const d = s && s.disposal, n = s && s.notice;
+      body.insertAdjacentHTML('beforeend', `
+        ${d || n ? `<div class="rounded-xl border ${d ? 'border-orange-400/50 bg-orange-50 dark:bg-orange-500/10' : 'border-yellow-400/50 bg-yellow-50 dark:bg-yellow-400/10'} px-3 py-2 text-[11px] leading-relaxed">
+          <b class="${d ? 'text-orange-700 dark:text-orange-300' : 'text-yellow-700 dark:text-yellow-300'}">${d ? `${d.state === 'active' ? '處置中' : '即將處置'}・${escHtml(d.measure || '')}（${pfShort(d.start)}～${pfShort(d.end)}）` : `注意股・${pfShort(n.date)}`}</b>
+          ${d ? '<div class="text-slate-500">處置期間為分盤撮合，量縮屬正常現象，已暫停窒息量等量縮判斷。</div>' : (n.reason ? `<div class="text-slate-500">${escHtml(n.reason)}</div>` : '')}
+        </div>` : ''}
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button onclick="closeStockDetail(); pzGoAlert('${escHtml(id)}')" class="${pzBtnGhost}"><i class="fa-solid fa-bell mr-1 text-amber-500"></i>到價提醒</button>
+          <button id="pzTrackBtn" onclick="pzToggleTrack('${escHtml(id)}')" class="${pzBtnGhost}"><i class="fa-solid fa-thumbtack mr-1 ${tracked ? 'text-brand-500' : 'text-slate-400'}"></i>${tracked ? '已長期追蹤（點擊取消）' : '長期追蹤'}</button>
+          <button onclick="closeStockDetail(); pzGoNote('${escHtml(id)}')" class="${pzBtnGhost}"><i class="fa-solid fa-pen mr-1 text-emerald-500"></i>寫筆記</button>
+          <button onclick="closeStockDetail(); pzGoTrade('${escHtml(id)}')" class="${pzBtnGhost}"><i class="fa-solid fa-receipt mr-1 text-indigo-500"></i>記一筆交易</button>
+        </div>`);
+      if (!pzState.loaded) pzLoad(false).then(() => { const b = document.getElementById('pzTrackBtn'); if (b && pzState.tracks.some(t => t.code === id)) b.innerHTML = '<i class="fa-solid fa-thumbtack mr-1 text-brand-500"></i>已長期追蹤（點擊取消）'; });
+    }
+    function pzGoAlert(code) { pzEditAlert = { code, cond: 'gte', nearPct: 2 }; switchPersonalTab('alerts'); }
+    function pzGoNote(code) { pzEditNote = { code, type: '觀察' }; switchPersonalTab('notes'); }
+    function pzGoTrade(code) { pzEditTrade = { code, side: '買進' }; journalState.manualForm = true; switchPersonalTab('journal'); }
+    async function pzToggleTrack(code, fromTab) {
+      await pzLoad(false);
+      const on = !pzState.tracks.some(t => t.code === code);
+      try {
+        const r = await pzPost('setTrack', { code, name: pzName(code), on });
+        if (!r.success) { pzToast(r.message || '設定失敗', true); return; }
+        pzToast(on ? '已加入長期追蹤，每日收盤後記錄' : '已取消長期追蹤');
+        await pzLoad(true);
+        if (!fromTab && detailStockId === code) openStockDetail(code);
+      } catch (e) { pzToast(e.message, true); }
+    }
+
+    // =====================================================================
+    // 🔔 到價提醒
+    // =====================================================================
+    function renderPzAlerts() {
+      const box = document.getElementById('tabAlerts');
+      if (!box || pzNeedToken('tabAlerts')) return;
+      if (!pzState.loaded) { box.innerHTML = jnCard(pzStatusHtml() || ''); pzLoad(false); return; }
+      const f = pzEditAlert || { cond: 'gte', nearPct: 2 };
+      const s = f.code ? stockMap.get(f.code) : null;
+      const list = pzState.alerts.slice().sort((a, b) => a.code.localeCompare(b.code));
+      box.innerHTML = pzCodeDatalist() + jnCard(`
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-bell text-amber-500 mr-1.5"></i>到價提醒</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">盤中每 10 分鐘檢查；「即將到價」與「已到價」每天各寄一次。</p>
+          </div>
+          <label class="flex items-center gap-2 cursor-pointer select-none rounded-xl border ${pzState.settings.emailAlerts ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-700'} px-3 py-2">
+            <input type="checkbox" ${pzState.settings.emailAlerts ? 'checked' : ''} onchange="pzSetEmail(this.checked)" class="w-4 h-4 accent-emerald-600">
+            <span class="text-xs"><b>寄信提醒</b> 到 <span class="font-mono">${escHtml(currentUser.email)}</span><br><span class="text-[10px] text-slate-400">${pzState.settings.emailAlerts ? '已開啟，隨時可取消勾選關閉' : '勾選即表示同意系統寄送提醒信'}</span></span>
+          </label>
+        </div>
+        ${!pzState.settings.emailAlerts ? '<div class="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-xl px-3 py-2"><i class="fa-solid fa-circle-info mr-1"></i>尚未開啟寄信提醒：提醒仍會保存，但不會寄信。</div>' : ''}
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
+          <div class="text-xs font-bold text-slate-700 dark:text-slate-200">${f.id ? '編輯提醒' : '新增提醒'}</div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            ${pzCodeInput('pzA_code', f.code, "pzAlertCodeChanged()")}
+            <span id="pzA_name" class="text-slate-500 min-w-[4rem]">${escHtml(s ? s.name + ' 現價 ' + s.price : '')}</span>
+            <select id="pzA_cond" class="${pzInput}"><option value="gte" ${f.cond !== 'lte' ? 'selected' : ''}>漲到 ≥</option><option value="lte" ${f.cond === 'lte' ? 'selected' : ''}>跌到 ≤</option></select>
+            <input id="pzA_price" type="number" step="0.01" min="0" value="${f.price || ''}" placeholder="目標價" class="${pzInput} w-28 font-mono">
+            <span class="text-slate-500">提前</span><input id="pzA_near" type="number" step="0.5" min="0" max="20" value="${f.nearPct ?? 2}" class="${pzInput} w-16 font-mono"><span class="text-slate-500">% 通知即將到價</span>
+            <input id="pzA_note" value="${escHtml(f.note || '')}" placeholder="備註（選填）" class="${pzInput} flex-1 min-w-[8rem]">
+            <button onclick="pzSaveAlert()" class="${pzBtn}">${f.id ? '儲存' : '新增'}</button>
+            ${f.id || f.code ? `<button onclick="pzEditAlert=null; renderPzAlerts()" class="${pzBtnGhost}">取消</button>` : ''}
+          </div>
+          <div id="pzA_unlisted">${f.code ? pzUnlistedHtml(f.code, 'pzA_req') : ''}</div>
+          <div class="text-right">${pzTierLine('alert', list.length)}</div>
+        </div>
+        ${list.length ? `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-[10px] text-slate-500 border-b border-slate-200 dark:border-slate-800"><tr><th class="py-2 text-left">標的</th><th class="text-right">現價</th><th class="text-right">條件</th><th class="text-right">距離</th><th class="text-center">狀態</th><th></th></tr></thead><tbody>
+          ${list.map(a => {
+            const st = stockMap.get(a.code); const px = st ? st.price : null;
+            const dist = px ? (px / a.price - 1) * 100 : null;
+            const done = a.lastHit === pfToday() ? '<span class="text-emerald-600 font-bold">今日已到價</span>' : (a.lastNear === pfToday() ? '<span class="text-amber-600 font-bold">今日已提醒接近</span>' : (a.enabled ? '<span class="text-slate-500">監控中</span>' : '<span class="text-slate-400">已停用</span>'));
+            return `<tr class="border-b border-slate-100 dark:border-slate-800/60">
+              <td class="py-2"><b>${escHtml(a.name || pzName(a.code) || a.code)}</b> <span class="text-slate-400 font-mono text-[10px]">${escHtml(a.code)}</span>${a.note ? `<div class="text-[10px] text-slate-400">${escHtml(a.note)}</div>` : ''}</td>
+              <td class="text-right font-mono">${px ?? '--'}</td>
+              <td class="text-right font-mono">${a.cond === 'lte' ? '≤' : '≥'} ${a.price}${a.nearPct ? `<div class="text-[10px] text-slate-400">提前 ${a.nearPct}%</div>` : ''}</td>
+              <td class="text-right font-mono ${dist === null ? '' : (Math.abs(dist) <= (a.nearPct || 0) ? 'text-amber-600 font-bold' : 'text-slate-500')}">${dist === null ? '--' : (dist > 0 ? '+' : '') + dist.toFixed(2) + '%'}</td>
+              <td class="text-center text-[10px]">${done}</td>
+              <td class="text-right whitespace-nowrap">
+                <button onclick="pzToggleAlert('${a.id}')" class="${pzBtnGhost}">${a.enabled ? '停用' : '啟用'}</button>
+                <button onclick="pzEditAlert=Object.assign({}, pzState.alerts.find(x=>x.id==='${a.id}')); renderPzAlerts()" class="${pzBtnGhost}">編輯</button>
+                <button onclick="pzDelete('deleteAlert','${a.id}')" class="${pzBtnGhost} hover:!border-rose-500 hover:text-rose-600">刪除</button>
+              </td></tr>`;
+          }).join('')}</tbody></table></div>` : '<div class="py-6 text-center text-xs text-slate-400">尚未設定任何提醒；也可以在關注卡片的個股詳情中按「到價提醒」</div>'}
+        <p class="text-[10px] text-slate-400">現價為試算表最新收盤／即時資料；提醒以證交所即時行情判斷（約 20 秒延遲）。僅供參考，不構成投資建議。</p>`);
+    }
+    function pzAlertCodeChanged() {
+      const code = document.getElementById('pzA_code').value;
+      const s = stockMap.get(code);
+      document.getElementById('pzA_name').textContent = s ? `${s.name} 現價 ${s.price}` : '';
+      document.getElementById('pzA_unlisted').innerHTML = code.length >= 4 ? pzUnlistedHtml(code, 'pzA_req') : '';
+    }
+    async function pzSetEmail(on) {
+      try { const r = await pzPost('saveSettings', { emailAlerts: on }); if (r.success) { pzState.settings.emailAlerts = on; pzToast(on ? '已開啟寄信提醒' : '已關閉寄信提醒'); } else pzToast(r.message || '設定失敗', true); }
+      catch (e) { pzToast(e.message, true); }
+      renderPzAlerts();
+    }
+    async function pzSaveAlert() {
+      const code = document.getElementById('pzA_code').value.trim();
+      const price = parseFloat(document.getElementById('pzA_price').value);
+      if (!/^[0-9A-Z]{4,6}$/.test(code)) { pzToast('請輸入正確的股票代號', true); return; }
+      if (!(price > 0)) { pzToast('請輸入目標價', true); return; }
+      const payload = { id: pzEditAlert && pzEditAlert.id, code, name: pzName(code), cond: document.getElementById('pzA_cond').value, price, nearPct: parseFloat(document.getElementById('pzA_near').value) || 0, note: document.getElementById('pzA_note').value, enabled: pzEditAlert && pzEditAlert.id ? pzEditAlert.enabled !== false : true };
+      try {
+        const r = await pzPost('saveAlert', payload);
+        if (!r.success) { pzToast(r.message || '儲存失敗', true); return; }
+        pzToast(pzState.settings.emailAlerts ? '已儲存提醒' : '已儲存（記得開啟寄信提醒）');
+        pzEditAlert = null; await pzLoad(true);
+      } catch (e) { pzToast(e.message, true); }
+    }
+    async function pzToggleAlert(id) {
+      const a = pzState.alerts.find(x => x.id === id); if (!a) return;
+      try { const r = await pzPost('saveAlert', { ...a, enabled: !a.enabled }); if (!r.success) pzToast(r.message, true); await pzLoad(true); } catch (e) { pzToast(e.message, true); }
+    }
+    async function pzDelete(action, id) {
+      if (!confirm('確定刪除？')) return;
+      try { const r = await pzPost(action, { id }); if (!r.success) pzToast(r.message || '刪除失敗', true); await pzLoad(true); } catch (e) { pzToast(e.message, true); }
+    }
+
+    // =====================================================================
+    // 📌 長期追蹤
+    // =====================================================================
+    function renderPzTrack() {
+      const box = document.getElementById('tabTrack');
+      if (!box || pzNeedToken('tabTrack')) return;
+      if (!pzState.loaded) { box.innerHTML = jnCard(pzStatusHtml() || ''); pzLoad(false); return; }
+      const tracks = pzState.tracks;
+      if (!pzTrackSel || !tracks.some(t => t.code === pzTrackSel)) pzTrackSel = tracks[0] ? tracks[0].code : '';
+      const hist = pzState.history[pzTrackSel] || [];
+      const first = hist[0], last = hist[hist.length - 1];
+      const chg = first && last ? (last.close / first.close - 1) * 100 : null;
+      box.innerHTML = pzCodeDatalist() + jnCard(`
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-thumbtack text-brand-500 mr-1.5"></i>長期追蹤</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">每個交易日收盤後自動記錄收盤價、漲跌幅、成交量、最高與最低，從加入當天開始累積。</p>
+          </div>
+          <div class="flex items-center gap-2">${pzCodeInput('pzT_code', '', "document.getElementById('pzT_unlisted').innerHTML = this.value.length>=4 ? pzUnlistedHtml(this.value,'pzT_req') : ''")}<button onclick="pzAddTrack()" class="${pzBtn}">加入追蹤</button></div>
+        </div>
+        <div id="pzT_unlisted"></div>
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex flex-wrap gap-1.5">${tracks.map(t => `<button onclick="pzTrackSel='${t.code}'; renderPzTrack()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${t.code === pzTrackSel ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300'}">${escHtml(t.name || pzName(t.code) || t.code)} <span class="font-mono opacity-70">${escHtml(t.code)}</span></button>`).join('') || '<span class="text-xs text-slate-400">尚未追蹤任何股票</span>'}</div>
+          ${pzTierLine('track', tracks.length)}
+        </div>
+        ${pzTrackSel ? `
+          <div class="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-500">
+            <span>自 ${escHtml((tracks.find(t => t.code === pzTrackSel) || {}).since || '--')} 開始追蹤・已記錄 <b>${hist.length}</b> 天${chg !== null ? `・期間漲跌 <b class="${chg > 0 ? 'text-stockRed' : (chg < 0 ? 'text-stockGreen' : '')}">${chg > 0 ? '+' : ''}${chg.toFixed(2)}%</b>` : ''}</span>
+            <button onclick="if(confirm('取消追蹤？已記錄的歷史仍會保留在後端')) pzToggleTrack('${pzTrackSel}', true)" class="${pzBtnGhost}">取消追蹤</button>
+          </div>
+          ${hist.length >= 2 ? `<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${chartBox('pz_track_px', '收盤價與最高／最低')}${chartBox('pz_track_vol', '成交量（張）')}</div>` : '<div class="py-6 text-center text-xs text-slate-400">資料累積中：收盤後會自動記錄，至少兩天後顯示走勢圖</div>'}
+          ${hist.length ? `<div class="max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800"><table class="w-full text-xs font-mono"><thead class="sticky top-0 bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr><th class="py-1.5 px-2 text-left">日期</th><th class="text-right px-2">收盤</th><th class="text-right px-2">漲跌幅</th><th class="text-right px-2">成交量</th><th class="text-right px-2">最高</th><th class="text-right px-2">最低</th></tr></thead><tbody>
+            ${hist.slice().reverse().map(h => `<tr class="border-t border-slate-100 dark:border-slate-800/60"><td class="py-1 px-2">${h.date}</td><td class="text-right px-2">${h.close}</td><td class="text-right px-2 ${h.pct > 0 ? 'text-stockRed' : (h.pct < 0 ? 'text-stockGreen' : '')}">${isNaN(h.pct) ? '--' : (h.pct > 0 ? '+' : '') + h.pct.toFixed(2) + '%'}</td><td class="text-right px-2">${isNaN(h.vol) ? '--' : h.vol.toLocaleString()}</td><td class="text-right px-2">${isNaN(h.high) ? '--' : h.high}</td><td class="text-right px-2">${isNaN(h.low) ? '--' : h.low}</td></tr>`).join('')}
+          </tbody></table></div>` : ''}` : ''}`);
+      if (hist.length >= 2) {
+        const dates = hist.map(h => h.date);
+        lineChart('pz_track_px', dates, [
+          { name: '收盤', values: hist.map(h => h.close), color: JN_COLORS.a, area: true },
+          { name: '最高', values: hist.map(h => isNaN(h.high) ? null : h.high), color: '#ef4444', dash: true },
+          { name: '最低', values: hist.map(h => isNaN(h.low) ? null : h.low), color: '#22c55e', dash: true }
+        ], v => Number(v).toLocaleString());
+        barChart('pz_track_vol', dates, hist.map(h => isNaN(h.vol) ? 0 : h.vol), v => Number(v).toLocaleString() + ' 張');
+        const lg = document.getElementById('pz_track_vol_legend'); if (lg) lg.innerHTML = '';
+      }
+    }
+    async function pzAddTrack() {
+      const code = document.getElementById('pzT_code').value.trim();
+      if (!/^[0-9A-Z]{4,6}$/.test(code)) { pzToast('請輸入正確的股票代號', true); return; }
+      pzTrackSel = code;
+      await pzToggleTrack(code, true);
+    }
+
+    // =====================================================================
+    // 📝 投資筆記
+    // =====================================================================
+    function renderPzNotes() {
+      const box = document.getElementById('tabNotes');
+      if (!box || pzNeedToken('tabNotes')) return;
+      if (!pzState.loaded) { box.innerHTML = jnCard(pzStatusHtml() || ''); pzLoad(false); return; }
+      const f = pzEditNote || { type: '觀察' };
+      const q = pzNoteFilter.toLowerCase();
+      const list = pzState.notes.filter(n => !q || [n.code, n.name, n.type, n.content].join(' ').toLowerCase().includes(q))
+        .sort((a, b) => (b.date + b.created).localeCompare(a.date + a.created));
+      const typeCol = t => ({ '買進理由': 'bg-red-500/10 text-red-600', '賣出檢討': 'bg-emerald-500/10 text-emerald-600', '心得': 'bg-indigo-500/10 text-indigo-600', '事件': 'bg-amber-500/10 text-amber-600' }[t] || 'bg-slate-500/10 text-slate-600 dark:text-slate-300');
+      box.innerHTML = pzCodeDatalist() + jnCard(`
+        <div>
+          <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-pen text-emerald-500 mr-1.5"></i>投資筆記</h3>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">記下觀察、買進理由與賣出檢討，之後回頭看最有價值。可不指定股票（例如大盤心得）。</p>
+        </div>
+        <div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
+          <div class="flex flex-wrap items-center gap-2">
+            <input id="pzN_date" type="date" value="${escHtml(f.date || pfToday())}" class="${pzInput}">
+            ${pzCodeInput('pzN_code', f.code, "document.getElementById('pzN_unlisted').innerHTML = this.value.length>=4 ? pzUnlistedHtml(this.value,'pzN_req') : ''")}
+            <select id="pzN_type" class="${pzInput}">${PZ_NOTE_TYPES.map(t => `<option ${t === f.type ? 'selected' : ''}>${t}</option>`).join('')}</select>
+          </div>
+          <textarea id="pzN_content" rows="3" maxlength="2000" placeholder="例：法說會提到 AI 伺服器訂單能見度到明年；若回測月線可分批布局" class="${pzInput} w-full">${escHtml(f.content || '')}</textarea>
+          <div id="pzN_unlisted">${f.code ? pzUnlistedHtml(f.code, 'pzN_req') : ''}</div>
+          <div class="flex gap-2"><button onclick="pzSaveNote()" class="${pzBtn}">${f.id ? '儲存修改' : '新增筆記'}</button>${f.id || f.code ? `<button onclick="pzEditNote=null; renderPzNotes()" class="${pzBtnGhost}">取消</button>` : ''}</div>
+        </div>
+        <div class="flex items-center justify-between gap-2"><input value="${escHtml(pzNoteFilter)}" oninput="pzNoteFilter=this.value; clearTimeout(window._pzNf); window._pzNf=setTimeout(renderPzNotes, 300)" placeholder="搜尋筆記 / 代號 / 類型" class="${pzInput} w-full sm:w-64"><span class="text-[10px] text-slate-400 shrink-0">共 ${pzState.notes.length} 則</span></div>
+        <div class="space-y-2">${list.map(n => `
+          <div class="rounded-xl border border-slate-200 dark:border-slate-800 p-3">
+            <div class="flex items-center justify-between gap-2 text-[11px]">
+              <div class="flex items-center gap-2 min-w-0"><span class="font-mono text-slate-500">${escHtml(n.date)}</span><span class="px-1.5 py-0.5 rounded font-bold ${typeCol(n.type)}">${escHtml(n.type)}</span>${n.code ? `<b class="truncate">${escHtml(n.name || pzName(n.code) || '')} <span class="font-mono text-slate-400">${escHtml(n.code)}</span></b>` : ''}</div>
+              <div class="shrink-0"><button onclick="pzEditNote=Object.assign({}, pzState.notes.find(x=>x.id==='${n.id}')); renderPzNotes(); window.scrollTo({top:0,behavior:'smooth'})" class="${pzBtnGhost}">編輯</button> <button onclick="pzDelete('deleteNote','${n.id}')" class="${pzBtnGhost}">刪除</button></div>
+            </div>
+            <div class="mt-1.5 text-xs text-slate-700 dark:text-slate-200 whitespace-pre-wrap">${escHtml(n.content)}</div>
+          </div>`).join('') || '<div class="py-6 text-center text-xs text-slate-400">還沒有筆記</div>'}</div>`);
+    }
+    async function pzSaveNote() {
+      const content = document.getElementById('pzN_content').value.trim();
+      const code = document.getElementById('pzN_code').value.trim();
+      if (!content) { pzToast('請輸入內容', true); return; }
+      if (code && !/^[0-9A-Z]{4,6}$/.test(code)) { pzToast('代號格式不正確', true); return; }
+      try {
+        const r = await pzPost('saveNote', { id: pzEditNote && pzEditNote.id, date: document.getElementById('pzN_date').value, code, name: pzName(code), type: document.getElementById('pzN_type').value, content });
+        if (!r.success) { pzToast(r.message || '儲存失敗', true); return; }
+        pzToast('已儲存筆記'); pzEditNote = null; await pzLoad(true);
+      } catch (e) { pzToast(e.message, true); }
+    }
+
+    // =====================================================================
+    // 📒 手動投資日誌（預設；有自己的試算表可改用連結）
+    // =====================================================================
+    function pzFee(amount) { return Math.max(20, Math.round(amount * 0.001425)); }
+    function pzTax(code, amount) { return Math.round(amount * (/^00/.test(code) ? 0.001 : 0.003)); }
+    function pzPortfolio() {
+      const pos = {}; let realized = 0;
+      pzState.trades.slice().sort((a, b) => a.date < b.date ? -1 : (a.date > b.date ? 1 : 0)).forEach(t => {
+        const p = pos[t.code] = pos[t.code] || { code: t.code, name: t.name || pzName(t.code), shares: 0, cost: 0, realized: 0, buys: 0 };
+        if (t.side === '賣出') {
+          const q = Math.min(t.shares, p.shares), avg = p.shares > 0 ? p.cost / p.shares : 0;
+          const r = t.price * q - t.fee - t.tax - avg * q;
+          p.realized += r; realized += r; p.cost -= avg * q; p.shares -= q;
+        } else { p.shares += t.shares; p.cost += t.shares * t.price + t.fee; p.buys++; }
+      });
+      const holdings = Object.values(pos).map(p => {
+        const s = stockMap.get(p.code);
+        const px = s ? s.price : null;
+        const value = px !== null && p.shares > 0 ? px * p.shares : null;
+        return { ...p, name: p.name || (s && s.name) || p.code, price: px, value, unreal: value !== null ? value - p.cost : null, avg: p.shares > 0 ? p.cost / p.shares : 0, listed: !!s, dayPct: s ? s.pctNum : null };
+      });
+      return { holdings, realized };
+    }
+    function renderManualJournal() {
+      const box = document.getElementById('tabJournal');
+      if (!box || pzNeedToken('tabJournal')) return;
+      if (!pzState.loaded) { box.innerHTML = jnCard(pzStatusHtml() || '<div class="py-10 text-center text-xs text-slate-400">讀取中…</div>'); pzLoad(false); return; }
+      const { holdings, realized } = pzPortfolio();
+      const open = holdings.filter(h => h.shares > 0).sort((a, b) => (b.value ?? b.cost) - (a.value ?? a.cost));
+      const closed = holdings.filter(h => h.shares <= 0 && h.buys > 0);
+      const value = open.reduce((a, h) => a + (h.value ?? h.cost), 0), cost = open.reduce((a, h) => a + h.cost, 0);
+      const unreal = value - cost;
+      const unlisted = open.filter(h => !h.listed);
+      const f = pzEditTrade || { side: '買進', date: pfToday() };
+      const showForm = journalState.manualForm || !!pzEditTrade || !pzState.trades.length;
+      const tile = (l, v, sub, cls = '') => `<div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 sm:p-3 min-w-0"><div class="text-[10px] sm:text-[11px] text-slate-500">${l}</div><div class="text-sm sm:text-lg font-black font-mono truncate ${cls}">${v}</div>${sub ? `<div class="text-[10px] text-slate-400 truncate">${sub}</div>` : ''}</div>`;
+      box.innerHTML = pzCodeDatalist() + jnCard(`
+        <div class="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-book-open text-brand-500"></i>我的投資日誌<span class="text-[10px] font-normal px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-500">手動記帳</span></h3>
+            <p class="text-[11px] text-slate-500 mt-1">平均成本法計算；現價來自收錄清單。每日收盤後自動記錄一次淨值，累積成走勢圖。</p>
+          </div>
+          <button onclick="journalState.manualForm=!journalState.manualForm; pzEditTrade=null; renderManualJournal()" class="${pzBtn}"><i class="fa-solid fa-plus mr-1"></i>記一筆交易</button>
+        </div>
+        ${showForm ? `<div class="rounded-2xl border border-brand-500/30 bg-brand-500/5 p-3 space-y-2">
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <input id="pzJ_date" type="date" value="${escHtml(f.date || pfToday())}" class="${pzInput}">
+            ${pzCodeInput('pzJ_code', f.code, "pzTradeCalc(true)")}
+            <span id="pzJ_name" class="text-slate-500 min-w-[3rem]">${escHtml(f.code ? pzName(f.code) : '')}</span>
+            <select id="pzJ_side" onchange="pzTradeCalc(true)" class="${pzInput}"><option ${f.side !== '賣出' ? 'selected' : ''}>買進</option><option ${f.side === '賣出' ? 'selected' : ''}>賣出</option></select>
+            <input id="pzJ_shares" type="number" min="1" step="1" value="${f.shares || ''}" oninput="pzTradeCalc(true)" placeholder="股數（1張=1000）" class="${pzInput} w-32 font-mono">
+            <input id="pzJ_price" type="number" min="0" step="0.01" value="${f.price || ''}" oninput="pzTradeCalc(true)" placeholder="成交價" class="${pzInput} w-24 font-mono">
+            <span class="text-slate-500">手續費</span><input id="pzJ_fee" type="number" min="0" step="1" value="${f.fee ?? ''}" oninput="this.dataset.manual=1" class="${pzInput} w-20 font-mono">
+            <span class="text-slate-500">交易稅</span><input id="pzJ_tax" type="number" min="0" step="1" value="${f.tax ?? ''}" oninput="this.dataset.manual=1" class="${pzInput} w-20 font-mono">
+          </div>
+          <div class="flex flex-wrap items-center gap-2 text-xs">
+            <input id="pzJ_reason" value="${escHtml(f.reason || '')}" placeholder="買賣理由（例：逢低布局、停損、達目標價）" class="${pzInput} flex-1 min-w-[12rem]">
+            <input id="pzJ_note" value="${escHtml(f.note || '')}" placeholder="備註（選填）" class="${pzInput} flex-1 min-w-[8rem]">
+            <span id="pzJ_amt" class="text-slate-500 font-mono"></span>
+            <button onclick="pzSaveTrade()" class="${pzBtn}">${f.id ? '儲存修改' : '新增'}</button>
+            <button onclick="journalState.manualForm=false; pzEditTrade=null; renderManualJournal()" class="${pzBtnGhost}">收起</button>
+          </div>
+          <div id="pzJ_unlisted">${f.code ? pzUnlistedHtml(f.code, 'pzJ_req') : ''}</div>
+          <p class="text-[10px] text-slate-400">手續費預設 0.1425%（最低 20 元）、證交稅 0.3%（ETF 0.1%）；有券商折扣可直接改數字。</p>
+        </div>` : ''}
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          ${tile('持股市值', jnFmt(value), `${open.length} 檔持股${unlisted.length ? '・' + unlisted.length + ' 檔以成本計' : ''}`)}
+          ${tile('持股成本', jnFmt(cost))}
+          ${tile('未實現損益', jnSigned(unreal), cost ? jnPct(unreal / cost * 100) : '', jnCol(unreal))}
+          ${tile('已實現損益', jnSigned(realized), `${pzState.trades.length} 筆交易`, jnCol(realized))}
+        </div>
+        ${unlisted.length ? `<div class="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 rounded-xl px-3 py-2"><i class="fa-solid fa-circle-info mr-1"></i>${unlisted.map(h => escHtml(h.code)).join('、')} 不在收錄清單，市值暫以成本計算。可在記帳表單輸入該代號後寄信申請收錄。</div>` : ''}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+          ${chartBox('pz_nav', '資產淨值與成本', pzState.nav.length < 2 ? '每日收盤後自動記錄，累積兩天以上顯示走勢' : '')}
+          ${chartBox('pz_alloc', '持股配置', '', true)}
+        </div>
+        ${open.length ? `<div class="overflow-x-auto"><table class="w-full text-xs"><thead class="text-[10px] text-slate-500 border-b border-slate-200 dark:border-slate-800"><tr><th class="py-2 text-left">標的</th><th class="text-right">股數</th><th class="text-right">均價</th><th class="text-right">現價</th><th class="text-right">未實現</th><th class="text-right">已實現</th></tr></thead><tbody>
+          ${open.map(h => `<tr class="border-b border-slate-100 dark:border-slate-800/60 ${h.listed ? 'cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60' : ''}" ${h.listed ? `onclick="openStockDetail('${escHtml(h.code)}')"` : ''}>
+            <td class="py-2"><b>${escHtml(h.name)}</b> <span class="font-mono text-[10px] text-slate-400">${escHtml(h.code)}</span>${h.listed ? '' : ' <span class="text-[9px] text-amber-600">未收錄</span>'}</td>
+            <td class="text-right font-mono">${jnFmt(h.shares)}</td><td class="text-right font-mono">${jnFmt(h.avg, 2)}</td>
+            <td class="text-right font-mono ${h.dayPct > 0 ? 'text-stockRed' : (h.dayPct < 0 ? 'text-stockGreen' : '')}">${h.price ?? '--'}</td>
+            <td class="text-right font-mono ${jnCol(h.unreal)}">${h.unreal === null ? '--' : jnSigned(h.unreal)}<div class="text-[10px]">${h.unreal === null ? '' : jnPct(h.unreal / h.cost * 100)}</div></td>
+            <td class="text-right font-mono ${jnCol(h.realized)}">${h.realized ? jnSigned(h.realized) : '--'}</td></tr>`).join('')}
+        </tbody></table></div>` : ''}
+        ${closed.length ? `<details class="text-xs"><summary class="cursor-pointer text-slate-500">已出清（${closed.length} 檔）</summary><div class="mt-2 space-y-1">${closed.map(h => `<div class="flex justify-between"><span>${escHtml(h.name)} <span class="font-mono text-slate-400">${escHtml(h.code)}</span></span><span class="font-mono ${jnCol(h.realized)}">${jnSigned(h.realized)}</span></div>`).join('')}</div></details>` : ''}
+        <div>
+          <div class="text-xs font-bold text-slate-700 dark:text-slate-200 mb-1.5">交易紀錄</div>
+          <div class="max-h-[360px] overflow-y-auto space-y-1">${pzState.trades.slice().sort((a, b) => b.date.localeCompare(a.date)).map(t => `
+            <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] py-1.5 border-b border-slate-100 dark:border-slate-800/60">
+              <span class="font-mono text-slate-500">${escHtml(t.date)}</span>
+              <span class="px-1.5 rounded font-bold ${t.side === '賣出' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-red-500/10 text-red-600'}">${escHtml(t.side)}</span>
+              <b>${escHtml(t.name || pzName(t.code) || t.code)}</b><span class="font-mono text-slate-400">${escHtml(t.code)}</span>
+              <span class="font-mono">${jnFmt(t.shares)} 股 @ ${t.price}</span><span class="text-slate-400 font-mono">費 ${t.fee}${t.tax ? '・稅 ' + t.tax : ''}</span>
+              ${t.reason ? `<span class="px-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">${escHtml(t.reason)}</span>` : ''}
+              <span class="ml-auto whitespace-nowrap"><button onclick="pzEditTrade=Object.assign({}, pzState.trades.find(x=>x.id==='${t.id}')); renderManualJournal(); window.scrollTo({top:0,behavior:'smooth'})" class="${pzBtnGhost}">編輯</button> <button onclick="pzDelete('deleteTrade','${t.id}')" class="${pzBtnGhost}">刪除</button></span>
+            </div>`).join('') || '<div class="py-6 text-center text-xs text-slate-400">還沒有交易紀錄，按「記一筆交易」開始</div>'}</div>
+        </div>
+        <details class="rounded-xl border border-slate-200 dark:border-slate-800 px-3 py-2 text-xs">
+          <summary class="cursor-pointer text-slate-500"><i class="fa-solid fa-link mr-1"></i>已經有自己的投資日誌試算表？改用連結</summary>
+          <div class="mt-2 space-y-2 text-slate-600 dark:text-slate-300">
+            <ol class="list-decimal pl-5 space-y-1 text-[11px]"><li>試算表「共用」給 <code class="font-mono">${ADMIN_SHARE_EMAIL}</code>（檢視者）</li><li>「資料中心」S2 填你的登入信箱 <code class="font-mono">${escHtml(currentUser.email)}</code></li><li>貼上試算表編輯網址後連結；連結後日誌改讀試算表，手動紀錄仍保留</li></ol>
+            <div class="flex flex-col sm:flex-row gap-2"><input id="journalUrlInput" type="url" placeholder="https://docs.google.com/spreadsheets/d/…/edit" class="${pzInput} flex-1"><button onclick="linkJournal()" class="${pzBtn}">驗證並連結</button></div>
+            <p id="journalLinkMsg" class="text-[11px] text-slate-500"></p>
+          </div>
+        </details>`);
+      if (showForm) pzTradeCalc(false);
+      const nav = pzState.nav;
+      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a, area: true }, { name: '成本', values: nav.map(n => n.cost), color: JN_COLORS.muted, dash: true }], v => jnFmt(v));
+      else { const el = document.getElementById('pz_nav'); if (el) el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">資料累積中</div>'; }
+      donutChart('pz_alloc', open.map(h => ({ name: h.name, code: h.code, val: h.value ?? h.cost, type: /^00/.test(h.code) ? 'etf' : 'stock' })));
+    }
+    function pzTradeCalc(fromInput) {
+      const code = (document.getElementById('pzJ_code') || {}).value || '';
+      const side = document.getElementById('pzJ_side').value;
+      const sh = parseFloat(document.getElementById('pzJ_shares').value), px = parseFloat(document.getElementById('pzJ_price').value);
+      const nm = document.getElementById('pzJ_name'); if (nm) nm.textContent = pzName(code);
+      const un = document.getElementById('pzJ_unlisted'); if (un && fromInput) un.innerHTML = code.length >= 4 ? pzUnlistedHtml(code, 'pzJ_req') : '';
+      const amt = sh > 0 && px > 0 ? sh * px : 0;
+      const feeEl = document.getElementById('pzJ_fee'), taxEl = document.getElementById('pzJ_tax');
+      if (amt && !feeEl.dataset.manual && !(pzEditTrade && pzEditTrade.id && !fromInput)) feeEl.value = pzFee(amt);
+      if (amt && !taxEl.dataset.manual && !(pzEditTrade && pzEditTrade.id && !fromInput)) taxEl.value = side === '賣出' ? pzTax(code, amt) : 0;
+      const a = document.getElementById('pzJ_amt'); if (a) a.textContent = amt ? `成交金額 ${jnFmt(amt)}` : '';
+    }
+    async function pzSaveTrade() {
+      const g = id => document.getElementById(id).value;
+      const code = g('pzJ_code').trim();
+      if (!/^[0-9A-Z]{4,6}$/.test(code)) { pzToast('請輸入正確的股票代號', true); return; }
+      const shares = parseInt(g('pzJ_shares'), 10), price = parseFloat(g('pzJ_price'));
+      if (!(shares > 0) || !(price > 0)) { pzToast('請輸入股數與價格', true); return; }
+      if (g('pzJ_side') === '賣出') {
+        const held = (pzPortfolio().holdings.find(h => h.code === code) || { shares: 0 }).shares + (pzEditTrade && pzEditTrade.id && pzEditTrade.side === '賣出' ? pzEditTrade.shares : 0);
+        if (shares > held && !confirm(`目前紀錄持有 ${held} 股，賣出 ${shares} 股超過持股，仍要儲存嗎？`)) return;
+      }
+      try {
+        const r = await pzPost('saveTrade', { id: pzEditTrade && pzEditTrade.id, date: g('pzJ_date'), code, name: pzName(code), side: g('pzJ_side'), shares, price, fee: parseFloat(g('pzJ_fee')) || 0, tax: parseFloat(g('pzJ_tax')) || 0, reason: g('pzJ_reason'), note: g('pzJ_note') });
+        if (!r.success) { pzToast(r.message || '儲存失敗', true); return; }
+        pzToast('已記錄'); pzEditTrade = null; journalState.manualForm = false; await pzLoad(true);
+      } catch (e) { pzToast(e.message, true); }
+    }
+
+    // =====================================================================
+    // ❓ 使用說明
+    // =====================================================================
+    function openPzHelp() {
+      let m = document.getElementById('pzHelpModal');
+      if (!m) {
+        m = document.createElement('div');
+        m.id = 'pzHelpModal';
+        m.className = 'fixed inset-0 z-[70] bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4';
+        m.onclick = e => { if (e.target === m) m.remove(); };
+        document.body.appendChild(m);
+      }
+      const L = pzState.limits || { track: 3, alert: 5 };
+      const sec = (icon, title, items) => `<div class="space-y-1.5"><h4 class="text-sm font-black text-slate-900 dark:text-slate-100"><i class="fa-solid ${icon} mr-1.5"></i>${title}</h4><ul class="list-disc pl-5 space-y-1 text-xs text-slate-600 dark:text-slate-300">${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+      m.innerHTML = `<div class="w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[88vh] overflow-y-auto p-5 sm:p-6 space-y-5">
+        <div class="flex items-center justify-between"><h3 class="text-base font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-circle-question text-brand-500 mr-1.5"></i>個人化使用說明</h3><button onclick="document.getElementById('pzHelpModal').remove()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button></div>
+        ${sec('fa-star text-amber-400', '關注清單', ['在首頁清單或個股詳情點 ⭐ 加入；卡片會顯示漲跌、十日走勢、量能與新高標籤。', '關注的股票若被列為<b>處置股</b>（橘色）或<b>注意股</b>（淡黃）會在頁首提醒；兩者都是時以處置為準。', '處置期間是分盤撮合、成交量自然變小，系統會暫停「窒息量／量縮」判斷避免誤判。'])}
+        ${sec('fa-bell text-amber-500', '到價提醒', ['到「提醒」分頁輸入代號、條件（漲到 ≥／跌到 ≤）與目標價；可設定「提前 N%」先通知即將到價。', `需勾選「寄信提醒」才會寄信到你的登入信箱，<b>隨時可以取消勾選關閉</b>；也可單獨停用某一筆。`, '盤中（09:00–13:40）每 10 分鐘檢查一次，「即將到價」與「已到價」每天各最多寄一封。', `用量上限：初級韭菜 5 筆、資深韭菜 20 筆、萬年韭皇無上限（你目前 ${L.alert >= 9999 ? '無上限' : L.alert + ' 筆'}）。`])}
+        ${sec('fa-thumbtack text-brand-500', '長期追蹤', ['在個股詳情按「長期追蹤」或到「長期追蹤」分頁輸入代號。', '每個交易日收盤後自動記錄收盤價、漲跌幅、成交量、最高與最低，存在後端，換裝置也看得到。', '從加入當天開始累積，至少兩天後顯示走勢圖；取消追蹤不會刪除已記錄的歷史。', `用量上限：初級韭菜 3 檔、資深韭菜 10 檔、萬年韭皇無上限（你目前 ${L.track >= 9999 ? '無上限' : L.track + ' 檔'}）。`])}
+        ${sec('fa-pen text-emerald-500', '投資筆記', ['記下觀察、買進理由、賣出檢討、心得或重大事件；可指定股票，也可以只寫大盤心得。', '可搜尋、編輯、刪除；建議買進時寫下理由與停損條件，賣出後回頭檢討。'])}
+        ${sec('fa-book-open text-indigo-500', '投資日誌', ['<b>預設為手動記帳</b>：按「記一筆交易」輸入日期、代號、買賣、股數、價格；手續費與交易稅會自動試算，可依券商折扣修改。', '以平均成本法計算持股、未實現與已實現損益；每日收盤後自動記錄一次資產淨值，累積成走勢圖。', '已經有自己的投資日誌試算表，可在頁面下方「改用連結」，連結後改讀你的試算表。', '只有你本人登入時看得到你的日誌。'])}
+        ${sec('fa-envelope text-rose-500', '股票沒有收錄？', ['輸入不在收錄清單的代號時，會出現已填好內容的申請信，按「寄給管理員申請收錄」即可。', '未收錄的股票仍可記帳、設提醒與長期追蹤（後端直接查證交所），只是網頁上無法顯示即時價格與標籤，日誌市值暫以成本計算。'])}
+        <p class="text-[10px] text-slate-400">所有資料僅供個人紀錄參考，不構成投資建議。</p>
+      </div>`;
+    }
   </script>
 </body>
 </html>
