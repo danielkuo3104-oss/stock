@@ -468,6 +468,8 @@
         highMap = map;
       } catch (e) { console.warn('高點追蹤讀取失敗', e); }
     }
+    // 高點追蹤與該檔報價同一天才顯示新高標籤
+    function highSynced(s, h) { return !!(s && h && s.dataDate && pfNormDate(h.date) === s.dataDate); }
     function highBadgeHtml(h) {
       if (!h || !h.status) return '';
       const st = h.status.indexOf('達成新高') === 0 ? 'bg-amber-500 text-white font-black'
@@ -718,7 +720,7 @@
         const cumCol = s.cumPct > 0 ? 'text-stockRed' : (s.cumPct < 0 ? 'text-stockGreen' : 'text-slate-400');
         const priceBox = s.isLimitUp ? 'bg-limitUp text-white px-1.5 rounded' : (s.isLimitDown ? 'bg-limitDown text-white px-1.5 rounded' : col);
         const hi = highMap[s.id];
-        const badges = highBadgeHtml(hi) + s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
+        const badges = (highSynced(s, hi) ? highBadgeHtml(hi) : '') + s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`).join('');
         return `
           <div onclick="openStockDetail('${escHtml(id)}')" class="cursor-pointer p-4 rounded-2xl border ${cardTone} hover:shadow-lg hover:border-brand-500/60 transition space-y-2.5 min-w-0">
             <div class="flex items-start justify-between gap-2">
@@ -808,7 +810,7 @@
         const breakPct = hi.broke && cur && hi.oldHigh ? (cur / hi.oldHigh - 1) * 100 : null;
         highHtml = `
           <div class="space-y-2">
-            <div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">新高狀態</span><div class="flex items-center gap-1.5">${highBadgeHtml(hi) || '<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-200/70 dark:bg-slate-800 text-slate-500">未突破</span>'}${hi.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${hi.streak} 日</span>` : ''}</div></div>
+            <div class="flex items-center justify-between gap-2"><span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">新高狀態</span><div class="flex items-center gap-1.5">${highSynced(s, hi) ? (highBadgeHtml(hi) || '<span class="px-1.5 py-0.5 rounded text-[10px] bg-slate-200/70 dark:bg-slate-800 text-slate-500">未突破</span>') : `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400" title="高點追蹤與報價日期不同，暫不判斷">高點資料 ${escHtml(pfShort(pfNormDate(hi.date)))}・未同步</span>`}${highSynced(s, hi) && hi.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${hi.streak} 日</span>` : ''}</div></div>
             <div class="grid grid-cols-3 gap-2">
               ${wtile('追蹤區間前高', fmtNum(hi.prevHigh), fmtHD(hi.prevDate) + (hi.broke ? ' <span class="text-amber-500">今日創高</span>' : ''))}
               ${wtile('距前高', `<span class="${colOf(gap)}">${gap > 0 ? '+' : ''}${isNaN(gap) ? '--' : gap.toFixed(2) + '%'}</span>`, diff !== null ? `${diff > 0 ? '+' : ''}${diff.toFixed(2)} 元` : '')}
@@ -875,7 +877,7 @@
               <span class="text-sm font-mono text-slate-500 dark:text-slate-400">${escHtml(s.id)}</span>
             </div>
             <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">${escHtml(s.groups.join('、') || '—')}</div>
-            <div class="flex flex-wrap gap-1 mt-2">${highBadgeHtml(hi)}${s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[10px] ${b.color}">${b.text}</span>`).join('')}</div>
+            <div class="flex flex-wrap gap-1 mt-2">${highSynced(s, hi) ? highBadgeHtml(hi) : ''}${s.badges.map(b => `<span class="px-1.5 py-0.5 rounded text-[10px] ${b.color}">${b.text}</span>`).join('')}</div>
           </div>
           <button onclick="closeStockDetail()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl"><i class="fa-solid fa-xmark"></i></button>
         </div>
