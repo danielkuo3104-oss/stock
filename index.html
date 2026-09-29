@@ -80,7 +80,14 @@
 
     /* 大盤量能圖 hover */
     .vol-hit { fill: transparent; cursor: pointer; }
+
+    /* 💡 簡易 / 專業模式 */
+    html.mode-simple .pro-only { display: none !important; }
+    .simple-only { display: none !important; }
+    html.mode-simple .simple-only { display: flex !important; }
+    html.mode-simple #mainMarketSection > div:first-child { border-bottom-width: 0; padding-bottom: 0; }
   </style>
+  <script>try { if (localStorage.getItem('sp_view_mode') === 'simple') document.documentElement.classList.add('mode-simple'); } catch (e) {}</script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
 
@@ -486,6 +493,7 @@
             </button>
             <h3 id="modalStockName" class="text-xl sm:text-2xl font-black text-slate-900 dark:text-slate-100">--</h3>
             <span id="modalStockId" class="text-sm font-mono text-slate-500 dark:text-slate-400">--</span>
+            <span id="modalStockDate"></span>
           </div>
           <div id="modalGroupsBadges" class="flex flex-wrap gap-1.5 mt-2"></div>
           <div id="modalFeatureBadges" class="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60"></div>
@@ -712,6 +720,23 @@
     </div>
   </div>
 
+  <!-- 💡 資料狀態面板 -->
+  <div id="dataStatusModal" class="hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4" onclick="if(event.target===this)closeDataStatus()">
+    <div class="w-full sm:max-w-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[85vh] flex flex-col">
+      <div class="flex items-center justify-between px-5 pt-4 pb-2">
+        <h3 class="text-sm font-black text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-signal text-brand-500"></i>資料狀態</h3>
+        <div class="flex items-center gap-2">
+          <button onclick="handleRefresh()" class="px-2.5 py-1 rounded-lg bg-brand-600 hover:bg-brand-500 text-white text-[11px] font-bold"><i class="fa-solid fa-rotate-right mr-1"></i>全部刷新</button>
+          <button onclick="closeDataStatus()" class="w-7 h-7 rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i class="fa-solid fa-xmark"></i></button>
+        </div>
+      </div>
+      <div id="dataStatusBody" class="px-5 pb-5 overflow-y-auto"></div>
+    </div>
+  </div>
+
+  <!-- 刷新結果提示 -->
+  <div id="refreshToast" class="fixed left-1/2 -translate-x-1/2 bottom-5 z-[70] max-w-[92vw] px-3.5 py-2 rounded-xl bg-slate-900/95 text-slate-100 text-[11px] shadow-2xl border border-slate-700 transition-all duration-300 opacity-0 translate-y-4 pointer-events-none"></div>
+
   <!-- 系統免責宣告 Toast -->
   <div id="toastDisclaimer" class="fixed bottom-5 right-5 z-40 max-w-[90vw] sm:max-w-sm bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 p-4 rounded-2xl shadow-2xl flex items-start space-x-3 transition transform translate-y-28 opacity-0">
     <i class="fa-solid fa-circle-exclamation text-brand-500 text-lg mt-0.5"></i>
@@ -747,7 +772,7 @@
 
           <nav class="hidden md:flex items-center space-x-6 text-sm">
             <a href="javascript:void(0)" onclick="navigateTo('home')" id="navHome" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-house text-xs"></i><span>首頁</span></a>
-            <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSector" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
+            <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSector" data-pro="1" class="pro-only text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
             <a href="javascript:void(0)" onclick="goPersonalPage()" id="navUserCenter" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>個人化</span></a>
             <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-regular fa-envelope text-xs"></i><span>聯絡管理員</span></a>
           </nav>
@@ -757,7 +782,11 @@
               <i class="fa-solid fa-terminal"></i>
               <span class="hidden sm:inline">控制台</span>
             </button>
-            <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="手動刷新資料">
+            <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 text-[10px] sm:text-xs font-bold shrink-0" title="簡易：只看加權與個股　專業：全部功能">
+              <button id="btnMode_simple" onclick="setViewMode('simple')" class="px-1.5 sm:px-2 py-1 rounded-lg transition"><span class="sm:hidden">簡</span><span class="hidden sm:inline">簡易</span></button>
+              <button id="btnMode_pro" onclick="setViewMode('pro')" class="px-1.5 sm:px-2 py-1 rounded-lg transition"><span class="sm:hidden">專</span><span class="hidden sm:inline">專業</span></button>
+            </div>
+            <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="全部刷新（即時報價＋所有試算表）">
               <i id="refreshIcon" class="fa-solid fa-rotate-right"></i>
             </button>
             <button onclick="toggleTheme()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="切換深/淺色模式">
@@ -776,7 +805,7 @@
 
         <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
           <a href="javascript:void(0)" onclick="navigateTo('home')" id="navHomeMobile" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
-          <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSectorMobile" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
+          <a href="javascript:void(0)" onclick="navigateTo('sector')" id="navSectorMobile" class="pro-only text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
           <a href="javascript:void(0)" onclick="goPersonalPage()" id="navUserCenterMobile" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>個人化</span></a>
           <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center"><i class="fa-regular fa-envelope text-lg"></i></a>
         </div>
@@ -818,6 +847,10 @@
 
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
+      <div class="simple-only items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 bg-brand-500/5 border border-brand-500/20 rounded-xl px-3 py-2">
+        <span><i class="fa-solid fa-feather text-brand-500 mr-1.5"></i>簡易模式：只顯示加權指數與個股清單</span>
+        <button onclick="setViewMode('pro')" class="text-brand-600 dark:text-brand-500 font-bold whitespace-nowrap">切換專業模式 →</button>
+      </div>
 
       <!-- 大盤指數儀表板 -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
@@ -844,6 +877,7 @@
               <i class="fa-solid fa-coins text-[10px]"></i>
               <span class="text-slate-500 dark:text-slate-400 sm:text-slate-400">成交</span>
               <span id="marketVolume" class="text-sm sm:text-base">--</span>
+              <span id="volumeFresh"></span>
             </div>
             <div class="h-4 w-px bg-slate-200 dark:bg-slate-800 hidden sm:block"></div>
             <div class="flex flex-col items-start space-y-1.5 text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 w-full sm:w-auto">
@@ -857,14 +891,15 @@
           </div>
         </div>
 
-        <div id="futuresStrip" class="hidden"></div>
-        <div id="indexHighStrip" class="hidden"></div>
+        <div class="pro-only"><div id="futuresStrip" class="hidden"></div></div>
+        <div class="pro-only"><div id="indexHighStrip" class="hidden"></div></div>
 
-        <div class="space-y-2">
+        <div class="space-y-2 pro-only">
           <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between text-[11px] sm:text-xs gap-y-2">
             <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center space-x-1.5">
               <i class="fa-solid fa-chart-column text-brand-500"></i>
               <span>多空結構分佈 (不含平盤)</span>
+              <span id="breadthFresh"></span>
             </span>
             <div class="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] sm:text-[11px]">
               <span class="flex items-center space-x-1"><span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-limitUp"></span><span>漲停 <strong id="countLimitUp" class="text-red-500">0</strong></span></span>
@@ -883,7 +918,7 @@
         </div>
 
         <!-- 💡 加權日K線 + 成交量（內嵌於加權指數卡，可收合） -->
-        <div id="volModule" class="pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
+        <div id="volModule" class="pro-only pt-3 sm:pt-4 border-t border-slate-100 dark:border-slate-800 space-y-2">
           <div class="flex items-center justify-between gap-2">
             <button onclick="toggleCollapse('kline')" class="flex items-center gap-2 min-w-0 text-[11px] sm:text-xs text-left">
               <i id="collapseIcon_kline" class="fa-solid fa-chevron-right text-[10px] text-slate-400 transition-transform w-3"></i>
@@ -916,7 +951,7 @@
       </section>
 
       <!-- 💡 市場情報：依時間自動顯示盤前快報或盤後總結 -->
-      <section id="marketIntelSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-3 sm:space-y-4">
+      <section id="marketIntelSection" class="pro-only bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-3 sm:space-y-4">
         <div class="min-w-0">
           <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <i id="intelModeIcon" class="fa-solid fa-earth-asia text-brand-500"></i>
@@ -931,13 +966,14 @@
       </section>
 
       <!-- 今日熱門 Top 10 方塊 -->
-      <section id="hotSection">
+      <section id="hotSection" class="pro-only">
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-3 gap-y-1">
           <div class="flex items-center space-x-2">
             <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center space-x-1.5">
               <i class="fa-solid fa-fire text-amber-500"></i>
               <span>熱門焦點 (Top 10 成交排行)</span>
             </h2>
+            <span id="hotFresh"></span>
             <div class="relative group">
               <button class="w-4 h-4 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-500 hover:text-brand-500 flex items-center justify-center text-[10px] transition">
                 <i class="fa-solid fa-info"></i>
@@ -955,7 +991,7 @@
       </section>
 
       <!-- 💡 高點雷達（可收合） -->
-      <section id="highRadarSection" class="hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
+      <section id="highRadarSection" class="pro-only hidden bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-5 shadow-xl space-y-3">
         <button onclick="toggleCollapse('highRadar')" class="w-full flex flex-wrap items-center justify-between gap-2 text-left">
           <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
             <i id="collapseIcon_highRadar" class="fa-solid fa-chevron-right text-[10px] text-slate-400 transition-transform w-3"></i>
@@ -973,9 +1009,10 @@
           <div>
             <div class="flex items-center space-x-2">
               <h2 id="sectionTitleText" class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100">族群選股列表</h2>
-              <button onclick="openBadgeGuideModal()" class="text-slate-400 hover:text-brand-500 transition text-xs sm:text-sm flex items-center" title="查看標籤詳細說明">
+              <button onclick="openBadgeGuideModal()" class="pro-only text-slate-400 hover:text-brand-500 transition text-xs sm:text-sm flex items-center" title="查看標籤詳細說明">
                 <i class="fa-solid fa-circle-info"></i>
               </button>
+              <span id="groupFresh"></span>
             </div>
             <p id="sectionSubtitleText" class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 mt-0.5">點擊卡片瀏覽成分股題材，探索產業鏈動能</p>
           </div>
@@ -986,7 +1023,7 @@
         </div>
 
         <!-- 標籤快速過濾列 -->
-        <div id="tagFilterSection">
+        <div id="tagFilterSection" class="pro-only">
           <div class="block sm:hidden">
             <button onclick="toggleMobileTagDrawer()" class="w-full py-2 px-3 bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 flex items-center justify-between">
               <span class="flex items-center space-x-1.5">
@@ -1037,8 +1074,8 @@
                       <th class="py-2.5 px-3 text-right">當日漲跌</th>
                       <th class="py-2.5 px-3 text-right">漲跌幅</th>
                       <th class="py-2.5 px-3 text-right hidden sm:table-cell">成交量 (張)</th>
-                      <th class="py-2.5 px-3 text-right hidden md:table-cell">市值 (億)</th>
-                      <th class="py-2.5 px-3 text-center hidden sm:table-cell">動態特徵</th>
+                      <th class="pro-only py-2.5 px-3 text-right hidden md:table-cell">市值 (億)</th>
+                      <th class="pro-only py-2.5 px-3 text-center hidden sm:table-cell">動態特徵</th>
                     </tr>
                   </thead>
                   <tbody id="stockTableBody" class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono"></tbody>
@@ -1169,6 +1206,7 @@
 
     window.addEventListener('DOMContentLoaded', () => {
       initTheme();
+      updateModeButtons();
       preloadMembersFromSheet();
       preloadHolidays();
       loadWatchlist();
@@ -1214,6 +1252,9 @@
 
       document.getElementById('modalStockName').textContent = stock.name;
       document.getElementById('modalStockId').textContent = stock.id;
+      // 個股自己的資料日（執行戳記），與加權日期分開標示
+      const md = document.getElementById('modalStockDate');
+      if (md) md.innerHTML = stock.dataDate ? freshBadgeHtml(stock.dataDate, false, '報價') : '<span class="text-[9px] text-slate-400">報價日期不明</span>';
 
       const isUp = stock.change > 0 || (stock.pctNum && stock.pctNum > 0);
       const isDown = stock.change < 0 || (stock.pctNum && stock.pctNum < 0);
@@ -1353,7 +1394,41 @@
         hintText.textContent = '提示：點擊任一族群查看成分股、統計與熱力圖';
       }
 
+      // 族群選股在簡易模式隱藏：保留 pro-only
+      navSector.classList.add('pro-only');
+      if (navSectorMobile) navSectorMobile.classList.add('pro-only');
       applyFilters();
+    }
+
+    // =====================================================================
+    // 💡 簡易 / 專業模式（記在瀏覽器）
+    //   簡易：加權指數（價格、漲跌、成交、開高低）＋個股清單
+    //   專業：全部模組
+    // =====================================================================
+    function isSimpleMode() { return document.documentElement.classList.contains('mode-simple'); }
+    function updateModeButtons() {
+      const simple = isSimpleMode();
+      const on = 'bg-white dark:bg-slate-950 text-brand-600 dark:text-brand-500 shadow-sm';
+      const off = 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
+      const a = document.getElementById('btnMode_simple'), b = document.getElementById('btnMode_pro');
+      if (a) a.className = 'px-1.5 sm:px-2 py-1 rounded-lg transition ' + (simple ? on : off);
+      if (b) b.className = 'px-1.5 sm:px-2 py-1 rounded-lg transition ' + (simple ? off : on);
+    }
+    function setViewMode(mode) {
+      const simple = mode === 'simple';
+      document.documentElement.classList.toggle('mode-simple', simple);
+      try { localStorage.setItem('sp_view_mode', simple ? 'simple' : 'pro'); } catch (e) {}
+      updateModeButtons();
+      if (simple) {
+        if (currentTagFilter !== 'ALL') setTagFilter('ALL');   // 標籤列被隱藏，避免留下看不見的過濾條件
+        if (currentTab === 'sector') navigateTo('home');
+      } else {
+        // 專業模式的圖表在隱藏時寬度為 0，切回後重繪
+        requestAnimationFrame(() => {
+          try { if (currentTab === 'home') { renderHighRadar(); if (marketVolumeSeries.length) renderVolumeChart(); } } catch (e) {}
+          try { renderFuturesStrip(); } catch (e) {}
+        });
+      }
     }
 
     function openBadgeGuideModal() {
@@ -1393,19 +1468,49 @@
       }, { passive: true });
     }
 
+    // 💡 全部刷新：強制重抓即時報價（略過後端快取）＋重新下載所有試算表，完成後回報各資料日期
+    let refreshInFlight = false;
     async function handleRefresh() {
-      const icon = document.getElementById('refreshIcon');
-      if (icon) icon.classList.add('fa-spin');
+      if (refreshInFlight) return;
+      refreshInFlight = true;
+      const icons = [document.getElementById('refreshIcon')];
+      icons.forEach(ic => ic && ic.classList.add('fa-spin'));
+      showRefreshToast('<i class="fa-solid fa-rotate-right fa-spin mr-1.5"></i>全部刷新中…', 0);
+      let stocksOk = true;
       try {
-        await Promise.all([fetchAndParseCsv(), loadMarketIntel()]);
-        await loadHighs();
-      } catch(e) {
-        console.warn("手動刷新失敗", e);
+        const r = await Promise.allSettled([pollLive(true), fetchAndParseCsv(), loadMarketIntel()]);
+        stocksOk = r[1].status === 'fulfilled' && r[1].value !== false;
+        await Promise.allSettled([loadHighs()]);
+        try { if (liveState.ok) applyLiveIndex(); } catch (e) {}
+        try { renderMarketStatusBadge(); } catch (e) {}
+      } catch (e) {
+        console.warn('全部刷新失敗', e);
       } finally {
-        if (icon) {
-          setTimeout(() => { icon.classList.remove('fa-spin'); }, 600);
-        }
+        const now = new Date(Date.now() + 8 * 3600e3).toISOString().slice(11, 19);
+        lastRefreshAt = now;
+        icons.forEach(ic => ic && setTimeout(() => ic.classList.remove('fa-spin'), 400));
+        refreshInFlight = false;
+        // 回報：每個資料源的日期，讓使用者知道哪些真的是今天
+        try {
+          const rows = collectDataStatus().filter(x => ['index', 'stocks', 'futures', 'intel'].includes(x.key));
+          const col = lv => ({ today: 'text-emerald-400', latest: 'text-sky-300', stale: 'text-amber-300', unknown: 'text-slate-400' }[lv]);
+          const parts = rows.map(x => `<span class="${col(x.f.lv)}">${escHtml(x.label)} ${x.live ? '即時 ' + escHtml(x.time || '') : (x.date ? shortDate(x.date) : '--')}${x.live ? '' : ' ' + escHtml(x.f.text)}</span>`);
+          const fails = [];
+          if (!liveState.ok && LIVE_API_URL) fails.push('即時報價');
+          if (!stocksOk) fails.push('個股試算表');
+          showRefreshToast(`<b>已全部刷新 ${now}</b>　${parts.join('・')}${fails.length ? `　<span class="text-rose-300">（${fails.join('、')}失敗，保留舊資料）</span>` : ''}`, 5000);
+          if (!document.getElementById('dataStatusModal')?.classList.contains('hidden')) openDataStatus();
+        } catch (e) {}
       }
+    }
+    let refreshToastTimer = null;
+    function showRefreshToast(html, ms) {
+      const el = document.getElementById('refreshToast');
+      if (!el) return;
+      el.innerHTML = html;
+      el.classList.remove('opacity-0', 'translate-y-4');
+      clearTimeout(refreshToastTimer);
+      if (ms) refreshToastTimer = setTimeout(() => el.classList.add('opacity-0', 'translate-y-4'), ms);
     }
 
     function openContactModal() {
@@ -1744,6 +1849,9 @@
           body: JSON.stringify({ action: 'login', email, password: pass })
         });
         const rawText = await res.text();
+        if (!res.ok || /accounts\.google\.com|ServiceLogin/.test(rawText)) {
+          throw new Error('BACKEND_HTML:HTTP ' + res.status + '（' + (res.status === 404 ? '找不到此部署：網址失效或部署已封存' : '需要 Google 登入：存取權不是「所有人」') + '）');
+        }
         let result;
         try { result = JSON.parse(rawText); }
         catch (pe) {
@@ -1972,6 +2080,7 @@
       try {
         const text = await fetchCsvText(CSV_STOCKS_URL, 15000);
         parseCsvData(text, isSilent);
+        return true;
       } catch (e) {
         console.warn('個股資料讀取失敗', e);
         // 保留畫面上既有資料，只提示失敗，不中斷程式
@@ -1990,6 +2099,7 @@
         if (countEl) countEl.innerHTML = '<span class="text-amber-600 dark:text-amber-400 font-bold"><i class="fa-solid fa-triangle-exclamation"></i> 個股資料暫時無法取得，請稍後按右上角刷新</span>';
         const hot = document.getElementById('hotCardsContainer');
         if (hot && parsedStocks.length === 0) hot.innerHTML = '<div class="col-span-full py-6 text-center text-xs text-slate-400">暫無熱門資料</div>';
+        return false;
       }
     }
 
@@ -2040,7 +2150,8 @@
 
       const now = new Date();
       const timeStr = String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
-      document.getElementById('dataTimestamp').textContent = at2Date ? `${at2Date} ${timeStr}` : `即時資料 (${timeStr})`;
+      lastLoadTime = timeStr;
+      document.getElementById('dataTimestamp').textContent = `讀取 ${timeStr}`;   // 資料日期由 renderMarketStatusBadge 補上
 
       renderAnnouncements();
       checkSystemIntegrity(at2Date, arHeaderDate, ahHeaderDate);
@@ -2068,48 +2179,15 @@
     }
 
     function checkSystemIntegrity(at2, arHeader, ahHeader) {
-      const today = customSimulatedDate ? new Date(customSimulatedDate) : new Date();
-      const todayStr = `${today.getFullYear()}/${String(today.getMonth()+1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
-      const todayMMDD = `${String(today.getMonth()+1).padStart(2, '0')}/${String(today.getDate()).padStart(2, '0')}`;
-      const dayOfWeek = today.getDay();
-
-      const badge = document.getElementById('marketStatusBadge');
-      const dot = document.getElementById('marketStatusDot');
-      const dateNotice = document.getElementById('dateNotice');
-
-      let holidayMatch = holidaysList.find(h => h.date === todayStr || h.date.includes(todayMMDD));
-      const isWeekend = (dayOfWeek === 0 || dayOfWeek === 6);
-      const isMarketHoliday = !!holidayMatch || isWeekend;
-
-      if (isMarketHoliday) {
-        const holidayName = holidayMatch ? holidayMatch.name : "週末休市";
-        badge.textContent = (isWeekend && !holidayMatch) ? "週末休市" : "本日休市";
-        badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-amber-500/10 text-amber-500 font-bold border border-amber-500/20 whitespace-nowrap inline-flex items-center shrink-0";
-        dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-amber-500 animate-pulse shrink-0";
-
-        const holidayMsg = `【休市公告】本日台股休市（${holidayName}），盤面維持前一交易日收盤行情。`;
-        const fullAnnouncement = originalAnnouncements.length > 0 ? `${holidayMsg} ★ ${originalAnnouncements.join(' ★ ')}` : holidayMsg;
-        document.getElementById('marqueeContainer').textContent = fullAnnouncement;
-        dateNotice.textContent = `提示：今日為台股休市日（${holidayName}）。`;
-        dateNotice.classList.remove('hidden');
-      } else {
-        const isTodayData = at2.includes(todayStr) || at2.includes(todayMMDD);
-        if (isTodayData) {
-          badge.textContent = "當日資訊";
-          badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20 whitespace-nowrap inline-flex items-center shrink-0";
-          dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0";
-          dateNotice.classList.add('hidden');
-        } else {
-          badge.textContent = "非當日資訊";
-          badge.className = "text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-slate-500/10 text-slate-400 font-bold border border-slate-500/20 whitespace-nowrap inline-flex items-center shrink-0";
-          dot.className = "w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-slate-400 shrink-0";
-          dateNotice.textContent = "提示：當前資料並非本日股市資料（可能尚未刷新）。";
-          dateNotice.classList.remove('hidden');
-        }
-        if (originalAnnouncements.length > 0) {
-          document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
-        }
+      // 狀態徽章改由 renderMarketStatusBadge() 綜合「加權」與「個股」各自的日期判斷
+      const st = getTodayMarketState();
+      if (st.closed) {
+        const holidayMsg = `【休市公告】本日台股休市（${st.reason}），盤面維持最近交易日行情。`;
+        document.getElementById('marqueeContainer').textContent = originalAnnouncements.length > 0 ? `${holidayMsg} ★ ${originalAnnouncements.join(' ★ ')}` : holidayMsg;
+      } else if (originalAnnouncements.length > 0) {
+        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
       }
+      renderMarketStatusBadge();
     }
 
     function updateAdminStatusIndicator(isMaint) {
@@ -2295,6 +2373,7 @@
         const note1 = row[12] ? row[12].trim() : '';
         const note2 = row[13] ? row[13].trim() : '';
         const volume = parseFloat(row[43]) || 0;
+        const dataDate = mmddToIso(row[11] || '');   // L 欄「執行戳記」：該列個股資料的日期
 
         let mainGroup = rawGroup;
         let subGroup = "";
@@ -2413,7 +2492,7 @@
             const stock = {
               group: mainGroup, subGroup, rawGroup, id, name, price, change, pctStr, pctNum,
               cap, weight, contribution, groupChange: sharedGroupChange,
-              note1, note2, volume, badges,
+              note1, note2, volume, badges, dataDate,
               avgVol10: Math.round(avgVol10),
               turnover: volume * 1000 * price,
               isLimitUp, isLimitDown,
@@ -2434,6 +2513,7 @@
           delete groupMap[key];
         }
       });
+      try { computeStockDataInfo(); renderMarketStatusBadge(); } catch (e) { console.warn('資料狀態計算失敗', e); }
 
       attachHighBadges();
       renderHotCards(Array.from(stockMap.values()));
@@ -2955,6 +3035,7 @@ function getDynamicColorTier(rawPct) {
               <div class="flex items-center space-x-1.5 font-sans">
                 <span class="font-bold text-slate-900 dark:text-slate-100 text-xs sm:text-sm">${stock.name}</span>
                 <span class="text-[10px] text-slate-400 font-mono">${stock.id}</span>
+                ${(stock.dataDate && stockDataInfo.newest && stock.dataDate < stockDataInfo.newest) ? `<span class="px-1 rounded text-[9px] font-bold font-mono bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="這檔的報價停在 ${stock.dataDate}，比其他個股舊">${shortDate(stock.dataDate)}</span>` : ''}
               </div>
             </td>
             <td class="py-2.5 px-3 text-right font-black ${priceColor} text-xs sm:text-sm">
@@ -2969,10 +3050,10 @@ function getDynamicColorTier(rawPct) {
             <td class="py-2.5 px-3 text-right text-slate-600 dark:text-slate-300 text-xs hidden sm:table-cell">
               ${stock.volume.toLocaleString()}
             </td>
-            <td class="py-2.5 px-3 text-right text-slate-500 dark:text-slate-400 text-xs hidden md:table-cell">
+            <td class="pro-only py-2.5 px-3 text-right text-slate-500 dark:text-slate-400 text-xs hidden md:table-cell">
               ${stock.cap.toFixed(1)}
             </td>
-            <td class="py-2.5 px-3 text-center hidden sm:table-cell font-sans">
+            <td class="pro-only py-2.5 px-3 text-center hidden sm:table-cell font-sans">
               <div class="flex flex-wrap gap-1 justify-center items-center">
                 ${badgesHtml || '<span class="text-slate-300 dark:text-slate-600 text-[10px]">-</span>'}
               </div>
@@ -3604,6 +3685,9 @@ function getDynamicColorTier(rawPct) {
     let volRangeInitialized = false;
     let preMarketItems = null;     // null = 無法取得
     let intelCurrentMode = '';
+    let intelDataDate = '';
+    let lastLoadTime = '';
+    let lastRefreshAt = '';
     let indexCloseRef = null;   // { close, date }：加權收盤，用於計算期現貨價差
 
     // 依資料時間判斷台指期盤別（日盤 08:45–13:45；夜盤 15:00–次日 05:00）
@@ -3650,15 +3734,16 @@ function getDynamicColorTier(rawPct) {
       return active ? 30e3 : 5 * 60e3;
     }
 
-    async function pollLive() {
+    async function pollLive(force) {
       clearTimeout(liveState.timer);
       if (!LIVE_API_URL) return;
+      force = force === true;
       try {
         const ctl = new AbortController();
         const timer = setTimeout(() => ctl.abort(), 10000);
         let j;
         try {
-          const res = await fetch(LIVE_API_URL + (LIVE_API_URL.includes('?') ? '&' : '?') + 'action=live&_t=' + Date.now(), { signal: ctl.signal });
+          const res = await fetch(LIVE_API_URL + (LIVE_API_URL.includes('?') ? '&' : '?') + 'action=live' + (force ? '&force=1' : '') + '&_t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
           j = await res.json();
         } finally { clearTimeout(timer); }
         if (!j || !j.ok || (!j.taiex && !(j.futures && j.futures.length))) throw new Error('no data');
@@ -3673,6 +3758,7 @@ function getDynamicColorTier(rawPct) {
         renderFuturesStrip();
       } catch (e) { console.warn('即時資料套用失敗', e); }
       renderLiveBadge();
+      try { renderMarketStatusBadge(); } catch (e) {}
       if (!document.hidden) liveState.timer = setTimeout(pollLive, nextLiveDelay());
     }
 
@@ -3720,17 +3806,7 @@ function getDynamicColorTier(rawPct) {
       if (tx.low) colorizeMarketItem('marketLow', tx.low, tx.prevClose);
       indexCloseRef = { close: tx.price, date: liveDate, live: true };
 
-      // 狀態徽章：今日盤中 / 今日收盤
-      const st = getTodayMarketState();
-      const badge = document.getElementById('marketStatusBadge');
-      const dot = document.getElementById('marketStatusDot');
-      if (!st.closed && liveDate === st.today && badge && dot) {
-        const { min } = taipeiNowParts();
-        const inSession = min >= 9 * 60 && min < 13 * 60 + 30 && minutesAgo(tx.time) < 10;
-        badge.textContent = inSession ? '盤中即時' : '今日收盤';
-        badge.className = 'text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full bg-emerald-500/10 text-emerald-500 font-bold border border-emerald-500/20 whitespace-nowrap inline-flex items-center shrink-0';
-        dot.className = `w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 shrink-0 ${inSession ? 'animate-pulse' : ''}`;
-      }
+      renderMarketStatusBadge();
     }
 
     // 台指期資料：優先即時，失敗時用試算表（盤前快報）
@@ -3783,7 +3859,8 @@ function getDynamicColorTier(rawPct) {
       }
       const others = fd.items.filter(it => it !== main && it.price > 0).map(it => `
         <span class="font-mono"><span class="text-slate-500 dark:text-slate-400 font-sans">${escHtml(it.name)}</span> <strong class="text-slate-800 dark:text-slate-200">${fmtP(it.price)}</strong> <span class="${signColorClass(it.pct)}">${it.pct === null || it.pct === undefined ? '' : (it.pct > 0 ? '+' : '') + Number(it.pct).toFixed(2) + '%'}</span></span>`).join('');
-      const note = freshNoteText(dataDate);
+      const futExpectToday = !getTodayMarketState().closed && taipeiMinutesNow() >= 8 * 60 + 45;   // 日盤開盤後，期貨就該是今天
+      const note = freshNoteText(dataDate, futExpectToday);
       const srcHtml = fd.source === 'live'
         ? '<span class="text-emerald-600 dark:text-emerald-400">即時・Yahoo</span>'
         : `<span class="${LIVE_API_URL ? 'text-amber-600 dark:text-amber-400' : ''}">${LIVE_API_URL ? '試算表備援' : '試算表'}</span>`;
@@ -3791,7 +3868,7 @@ function getDynamicColorTier(rawPct) {
         <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-[11px] sm:text-xs bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2">
           <span class="font-bold text-slate-700 dark:text-slate-300 flex items-center gap-1.5"><i class="fa-solid ${sess.night ? 'fa-moon text-indigo-400' : 'fa-sun text-amber-500'}"></i>台指期</span>
           <span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${sess.night ? 'bg-indigo-500/10 text-indigo-500 dark:text-indigo-300 border border-indigo-500/30' : 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'}">${sess.label}</span>
-          ${freshBadgeHtml(dataDate)}
+          ${freshBadgeHtml(dataDate, futExpectToday)}
           <span class="font-mono"><strong class="text-sm ${col}">${fmtP(main.price)}</strong> <span class="${col}">${sgn(main.chg)} (${main.pct > 0 ? '+' : ''}${Number(main.pct ?? 0).toFixed(2)}%)</span></span>
           ${basisHtml}
           <span class="hidden md:inline-flex items-center gap-4">${others}</span>
@@ -3890,25 +3967,247 @@ function getDynamicColorTier(rawPct) {
       return { today, closed: false, reason: '' };
     }
     function shortDate(d) { return d ? d.slice(5).replace('-', '/') : '--'; }
-    function freshBadgeHtml(dataDate) {
-      const st = getTodayMarketState();
-      if (!dataDate) return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400">日期未知</span>`;
-      if (dataDate === st.today) return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">當日</span>`;
-      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">非當日</span>`;
+    // =====================================================================
+    // 💡 資料新鮮度（各資料源獨立判斷，避免「加權是今天、個股卻是昨天」的誤判）
+    //   today  ：資料日 = 今天
+    //   latest ：資料日 = 最近一個「應該已有資料」的交易日（例如盤中看昨日收盤、週末看週五）→ 正常
+    //   stale  ：比應有的日期還舊（尚未更新 / 抓取失敗）
+    // =====================================================================
+    const FRESH_CUTOFF_MIN = 14 * 60 + 30;   // 交易日 14:30 後，收盤類資料應該已是當日
+    function isTradingDay(iso) {
+      if (!iso) return false;
+      const wd = new Date(iso + 'T12:00:00+08:00').getUTCDay();
+      if (wd === 0 || wd === 6) return false;
+      return !(holidaysList || []).some(h => normDate(h.date) === iso);
     }
-    function freshNoteText(dataDate) {
-      const st = getTodayMarketState();
-      if (dataDate && dataDate === st.today) return '';
-      if (st.closed) return `今日休市（${st.reason}），顯示最近一次資料`;
-      return '今日資料尚未更新，顯示最近一次資料';
+    function prevTradingDay(iso) {
+      let t = Date.parse(iso + 'T12:00:00+08:00');
+      for (let i = 0; i < 20; i++) {
+        t -= 86400e3;
+        const d = new Date(t + 8 * 3600e3).toISOString().slice(0, 10);
+        if (isTradingDay(d)) return d;
+      }
+      return '';
     }
+    // 收盤類資料「此刻應該已有」的最新交易日；expectToday=true 用於盤前資料（交易日早上就該是今天）
+    function expectedDataDate(expectToday) {
+      const st = getTodayMarketState();
+      if (st.closed) return prevTradingDay(st.today);
+      if (expectToday || taipeiMinutesNow() >= FRESH_CUTOFF_MIN) return st.today;
+      return prevTradingDay(st.today);
+    }
+    function freshLevel(dataDate, expectToday) {
+      if (!dataDate) return 'unknown';
+      const st = getTodayMarketState();
+      if (dataDate === st.today) return 'today';
+      const exp = expectedDataDate(expectToday);
+      if (dataDate >= exp) return 'latest';
+      return 'stale';
+    }
+    function tradingDaysBetween(from, to) {   // from < to，回傳相差幾個交易日
+      let n = 0, d = to;
+      for (let i = 0; i < 30 && d && d > from; i++) { d = prevTradingDay(d); n++; }
+      return n;
+    }
+    function freshLabel(dataDate, expectToday) {
+      const lv = freshLevel(dataDate, expectToday);
+      const st = getTodayMarketState();
+      if (lv === 'unknown') return { lv, text: '日期未知', note: '無法判斷資料日期' };
+      if (lv === 'today') return { lv, text: '當日', note: '' };
+      if (lv === 'latest') return { lv, text: st.closed ? '最近交易日' : '前一交易日', note: st.closed ? `今日休市（${st.reason}），顯示最近交易日資料` : '今日收盤資料尚未產生，顯示前一交易日（正常）' };
+      const lag = tradingDaysBetween(dataDate, expectedDataDate(expectToday));
+      return { lv, text: lag > 1 ? `落後 ${lag} 日` : '非當日', note: `資料停在 ${shortDate(dataDate)}，尚未更新${lag > 1 ? `（落後 ${lag} 個交易日）` : ''}` };
+    }
+    const FRESH_CLS = {
+      today: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20',
+      latest: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20',
+      stale: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30',
+      unknown: 'bg-slate-200/70 dark:bg-slate-800 text-slate-500 dark:text-slate-400'
+    };
+    function freshBadgeHtml(dataDate, expectToday, prefix) {
+      const f = freshLabel(dataDate, expectToday);
+      const txt = (prefix ? prefix + ' ' : '') + (f.lv === 'today' || f.lv === 'unknown' ? f.text : `${shortDate(dataDate)} ${f.text}`);
+      return `<span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold whitespace-nowrap ${FRESH_CLS[f.lv]}" title="${escHtml(f.note || '資料日 ' + dataDate)}">${escHtml(txt)}</span>`;
+    }
+    function freshNoteText(dataDate, expectToday) { return freshLabel(dataDate, expectToday).note; }
+
+    // 西元年補齊：'09/25' → 最接近今天且不在未來的日期
+    function mmddToIso(txt) {
+      const full = normDate(txt);
+      if (full) return full;
+      const m = String(txt || '').match(/(\d{1,2})\/(\d{1,2})/);
+      if (!m) return '';
+      const today = taipeiTodayStr();
+      let y = parseInt(today.slice(0, 4), 10);
+      let iso = `${y}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+      if (iso > today) iso = `${y - 1}-${m[1].padStart(2, '0')}-${m[2].padStart(2, '0')}`;
+      return iso;
+    }
+
+    // ---------- 各資料源狀態彙整 ----------
+    let stockDataInfo = { date: '', total: 0, stale: [], dates: {} };
+    function computeStockDataInfo() {
+      const dates = {};
+      parsedStocks.forEach(s => { if (s.dataDate) dates[s.dataDate] = (dates[s.dataDate] || 0) + 1; });
+      const keys = Object.keys(dates).sort();
+      // 以「數量最多」為主要資料日；同數量取較新
+      let main = '';
+      keys.forEach(k => { if (!main || dates[k] > dates[main] || (dates[k] === dates[main] && k > main)) main = k; });
+      const newest = keys[keys.length - 1] || '';
+      const stale = parsedStocks.filter(s => s.dataDate && s.dataDate < newest);
+      stockDataInfo = { date: main, newest, total: parsedStocks.length, stale, dates, noDate: parsedStocks.filter(s => !s.dataDate).length };
+    }
+    function sheetIndexDate() { return normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || ''); }
+    function liveIndexInfo() {
+      const tx = liveState.ok && liveState.data && liveState.data.taiex;
+      if (!tx || !(tx.price > 0)) return null;
+      const d = normDate(tx.time);
+      const sd = sheetIndexDate();
+      if (sd && d && d < sd) return null;
+      return { date: d, time: tx.time, fresh: minutesAgo(tx.time) < 10 };
+    }
+    function collectDataStatus() {
+      const rows = [];
+      const li = liveIndexInfo();
+      const sd = sheetIndexDate();
+      rows.push(li
+        ? { key: 'index', label: '加權指數', src: 'Yahoo 即時（約 20 秒快取）', date: li.date, time: li.time.slice(11, 16), live: li.fresh }
+        : { key: 'index', label: '加權指數', src: '試算表' + (liveState.fails ? '（即時中斷，備援）' : ''), date: sd });
+      rows.push({ key: 'breadth', label: '成交金額・漲跌家數', src: '試算表', date: sd });
+      const si = stockDataInfo;
+      rows.push({ key: 'stocks', label: '個股報價', src: `試算表（${si.total} 檔）`, date: si.date,
+        extra: si.stale.length ? `${si.stale.length} 檔停在較舊日期：${si.stale.slice(0, 6).map(s => s.name + ' ' + shortDate(s.dataDate)).join('、')}${si.stale.length > 6 ? '…' : ''}` : (si.noDate ? `${si.noDate} 檔無時間戳記` : '') });
+      const hist = mmddToIso((rawCsvGrid[0] && rawCsvGrid[0][43]) || '');
+      rows.push({ key: 'hist', label: '近 10 日漲跌・量', src: '試算表', date: hist });
+      const fu = (typeof getFuturesData === 'function') ? getFuturesData() : { items: [] };
+      const f0 = fu.items && fu.items[0];
+      if (f0) rows.push({ key: 'futures', label: '台指期', src: fu.source === 'live' ? 'Yahoo 即時' : '試算表（盤前快報）', date: normDate(f0.time), time: String(f0.time || '').slice(11, 16), live: fu.source === 'live' && minutesAgo(f0.time) < 10, expectToday: !getTodayMarketState().closed && taipeiMinutesNow() >= 8 * 60 + 45 });
+      if (intelDataDate || intelCurrentMode) rows.push({ key: 'intel', label: intelCurrentMode === 'pre' ? '盤前快報' : '盤後總結', src: '試算表', date: intelDataDate, expectToday: intelCurrentMode === 'pre' });
+      if (marketVolumeSeries.length) rows.push({ key: 'kline', label: '日K線・量能', src: '試算表', date: marketVolumeSeries[marketVolumeSeries.length - 1].date });
+      if (highsStatus === 'ok') rows.push({ key: 'highs', label: '高點追蹤', src: '試算表', date: highsDataDate });
+      rows.forEach(r => { r.f = freshLabel(r.date, r.expectToday); });
+      return rows;
+    }
+
+    // ---------- 頂部狀態徽章（綜合加權＋個股，兩者日期不同時明確標示）----------
+    function renderMarketStatusBadge() {
+      const badge = document.getElementById('marketStatusBadge');
+      const dot = document.getElementById('marketStatusDot');
+      if (!badge || !dot) return;
+      const st = getTodayMarketState();
+      const li = liveIndexInfo();
+      const idxDate = li ? li.date : sheetIndexDate();
+      const stkDate = stockDataInfo.date || idxDate;
+      const idxF = freshLabel(idxDate), stkF = freshLabel(stkDate);
+      const base = 'cursor-pointer text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center gap-1 shrink-0 ';
+      const C = {
+        green: ['bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'bg-emerald-500'],
+        sky: ['bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20', 'bg-sky-500'],
+        amber: ['bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30', 'bg-amber-500'],
+        gray: ['bg-slate-500/10 text-slate-400 border-slate-500/20', 'bg-slate-400']
+      };
+      let text, tone, pulse = false;
+      const inSession = !st.closed && taipeiMinutesNow() >= 9 * 60 && taipeiMinutesNow() < 13 * 60 + 30;
+      if (!idxDate && !stkDate) { text = '資料無法取得'; tone = 'gray'; }
+      else if (st.closed) {
+        text = st.reason === '週末' ? '週末休市' : '本日休市';
+        tone = (idxF.lv === 'stale' || stkF.lv === 'stale') ? 'amber' : 'sky';
+        if (idxF.lv === 'stale' || stkF.lv === 'stale') text += '・資料未更新';
+      } else if (idxDate === stkDate) {
+        if (idxF.lv === 'today') { text = (li && li.fresh && inSession) ? '盤中即時' : '當日資訊'; tone = 'green'; pulse = !!(li && li.fresh && inSession); }
+        else if (idxF.lv === 'latest') { text = `前一交易日 ${shortDate(idxDate)}`; tone = 'sky'; }
+        else { text = `非當日 ${shortDate(idxDate)}`; tone = 'amber'; }
+      } else {
+        // 加權與個股日期不一致 → 兩個都寫出來，避免把個股當成今天
+        const idxTxt = idxF.lv === 'today' ? (li && li.fresh && inSession ? '加權即時' : '加權當日') : `加權 ${shortDate(idxDate)}`;
+        const stkTxt = stkF.lv === 'today' ? '個股當日' : `個股 ${shortDate(stkDate)}`;
+        text = `${idxTxt}・${stkTxt}`;
+        tone = (idxF.lv === 'stale' || stkF.lv === 'stale') ? 'amber' : 'sky';
+        pulse = !!(li && li.fresh && inSession);
+      }
+      badge.innerHTML = `${escHtml(text)}<i class="fa-solid fa-circle-info text-[9px] opacity-60"></i>`;
+      badge.className = base + C[tone][0];
+      badge.onclick = openDataStatus;
+      badge.title = '點擊查看各資料來源的更新時間';
+      dot.className = `w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 ${C[tone][1]} ${pulse ? 'animate-pulse' : ''}`;
+
+      // 右下提示
+      const dn = document.getElementById('dateNotice');
+      if (dn) {
+        const msgs = [];
+        if (st.closed) msgs.push(`今日台股休市（${st.reason}）。`);
+        if (idxF.lv === 'stale') msgs.push(`加權資料停在 ${shortDate(idxDate)}。`);
+        if (stkF.lv === 'stale') msgs.push(`個股資料停在 ${shortDate(stkDate)}，漲跌與排行不是今日盤面。`);
+        else if (stkDate && idxDate && stkDate !== idxDate) msgs.push(`加權為 ${shortDate(idxDate)}、個股為 ${shortDate(stkDate)}，兩者日期不同。`);
+        dn.textContent = msgs.length ? '提示：' + msgs.join('') : '';
+        dn.classList.toggle('hidden', !msgs.length);
+      }
+      renderFreshChips();
+
+      // 頂部「更新」：分別寫出加權與個股的資料日，不再把試算表日期接上現在時間
+      const ts = document.getElementById('dataTimestamp');
+      if (ts && (idxDate || stkDate)) {
+        const idxPart = li ? `加權 ${li.fresh ? '即時 ' : ''}${li.time.slice(5, 16).replace('-', '/')}` : `加權 ${shortDate(idxDate)}`;
+        const stkPart = (stkDate && (stkDate !== idxDate || li)) ? `・個股 ${shortDate(stkDate)}` : '';
+        ts.textContent = `${idxPart}${stkPart}${lastLoadTime ? '・讀取 ' + lastLoadTime.slice(0, 5) : ''}`;
+        ts.title = '加權、個股各自的資料日期；「讀取」為本頁最後下載試算表的時間';
+      }
+    }
+
+    // 區塊內的小標籤：標示該區塊實際使用哪一天的資料
+    function renderFreshChips() {
+      const sd = sheetIndexDate();
+      const li = liveIndexInfo();
+      const stk = stockDataInfo.date;
+      const set = (id, html) => { const el = document.getElementById(id); if (el) el.innerHTML = html; };
+      set('breadthFresh', sd ? freshBadgeHtml(sd, false, '家數') : '');
+      set('hotFresh', stk ? freshBadgeHtml(stk, false, '個股') : '');
+      set('groupFresh', stk ? freshBadgeHtml(stk, false, '個股') : '');
+      // 成交金額：加權為即時但成交金額仍是試算表日期時，特別註記
+      set('volumeFresh', (li && sd && li.date !== sd) ? `<span class="text-[9px] font-sans font-bold text-amber-600 dark:text-amber-400" title="成交金額來自試算表，日期與即時加權不同">(${shortDate(sd)})</span>` : '');
+    }
+
+    // ---------- 資料狀態面板 ----------
+    function openDataStatus() {
+      const rows = collectDataStatus();
+      const icon = lv => ({ today: 'fa-circle-check text-emerald-500', latest: 'fa-circle-minus text-sky-500', stale: 'fa-triangle-exclamation text-amber-500', unknown: 'fa-circle-question text-slate-400' }[lv]);
+      const html = rows.map(r => `
+        <div class="flex items-start gap-2.5 py-2 border-b border-slate-100 dark:border-slate-800 last:border-0">
+          <i class="fa-solid ${icon(r.f.lv)} text-sm mt-0.5 w-4 text-center"></i>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-slate-800 dark:text-slate-100">${escHtml(r.label)}</span>
+              <span class="flex items-center gap-1.5 shrink-0">
+                ${r.live ? '<span class="text-[9px] font-bold text-emerald-500"><span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse mr-0.5"></span>即時</span>' : ''}
+                <span class="text-[11px] font-mono text-slate-600 dark:text-slate-300">${r.date ? shortDate(r.date) : '--'}${r.time ? ' ' + escHtml(r.time) : ''}</span>
+                <span class="inline-flex px-1.5 py-0.5 rounded text-[9px] font-bold ${FRESH_CLS[r.f.lv]}">${escHtml(r.f.text)}</span>
+              </span>
+            </div>
+            <div class="text-[10px] text-slate-400 mt-0.5">${escHtml(r.src)}${r.f.note ? '・' + escHtml(r.f.note) : ''}</div>
+            ${r.extra ? `<div class="text-[10px] text-amber-600 dark:text-amber-400 mt-0.5">${escHtml(r.extra)}</div>` : ''}
+          </div>
+        </div>`).join('');
+      const st = getTodayMarketState();
+      const box = document.getElementById('dataStatusBody');
+      if (box) box.innerHTML = `
+        <div class="text-[10px] text-slate-500 dark:text-slate-400 mb-2">現在 ${taipeiTodayStr().slice(5).replace('-', '/')} ${String(Math.floor(taipeiMinutesNow() / 60)).padStart(2, '0')}:${String(taipeiMinutesNow() % 60).padStart(2, '0')}（台北）・${st.closed ? '今日休市：' + escHtml(st.reason) : '交易日'}${lastRefreshAt ? '・上次全部刷新 ' + lastRefreshAt : ''}</div>
+        ${html}
+        <div class="mt-3 text-[10px] text-slate-400 leading-relaxed">
+          <span class="inline-flex px-1 rounded ${FRESH_CLS.today}">當日</span> 今天的資料　
+          <span class="inline-flex px-1 rounded ${FRESH_CLS.latest}">前一交易日</span> 今日收盤資料尚未產生（14:30 前）或休市，屬正常　
+          <span class="inline-flex px-1 rounded ${FRESH_CLS.stale}">非當日</span> 比應有日期舊，可能尚未更新<br>
+          試算表發布的資料 Google 端約有 5 分鐘快取；「全部刷新」會強制重抓即時報價並重新下載所有試算表。
+        </div>`;
+      document.getElementById('dataStatusModal')?.classList.remove('hidden');
+    }
+    function closeDataStatus() { document.getElementById('dataStatusModal')?.classList.add('hidden'); }
 
     // ---------- 安全抓取 ----------
     async function fetchCsvText(url, timeoutMs = 12000) {
       const ctl = typeof AbortController !== 'undefined' ? new AbortController() : null;
       const timer = ctl ? setTimeout(() => ctl.abort(), timeoutMs) : null;
       try {
-        const res = await fetch(url + '&_t=' + Date.now(), ctl ? { signal: ctl.signal } : {});
+        const res = await fetch(url + '&_t=' + Date.now(), ctl ? { signal: ctl.signal, cache: 'no-store' } : { cache: 'no-store' });
         if (!res.ok) throw new Error('HTTP ' + res.status);
         const text = await res.text();
         if (!text || /^\s*<(!doctype|html)/i.test(text)) throw new Error('非 CSV 內容');
@@ -3985,11 +4284,12 @@ function getDynamicColorTier(rawPct) {
         timeText = `交易日 ${shortDate(dataDate)}${d.updated ? ' · 更新 ' + d.updated.replace(/^\d{4}-/, '').replace('-', '/') : ''}`;
         renderPostMarket(d);
       }
-      const note = freshNoteText(dataDate);
+      intelDataDate = dataDate;
+      const note = freshNoteText(dataDate, mode === 'pre');
       const fbNote = fallback ? (mode === 'post' ? '盤前資料暫無，改顯示盤後總結' : '盤後資料暫無，改顯示盤前快報') : '';
       safeSetHtml('intelMeta', `
         <span class="font-mono">${escHtml(timeText)}</span>
-        ${freshBadgeHtml(dataDate)}
+        ${freshBadgeHtml(dataDate, mode === 'pre')}
         ${note ? `<span class="text-slate-400">${escHtml(note)}</span>` : ''}
         ${fbNote ? `<span class="text-amber-600 dark:text-amber-400">${escHtml(fbNote)}</span>` : ''}`);
     }
