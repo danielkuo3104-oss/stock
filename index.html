@@ -5255,7 +5255,8 @@ function getDynamicColorTier(rawPct) {
         { kind: 'touched', label: '本日曾破新高', items: list.filter(h => highKind(h.status) === 'touched').sort((a, b) => b.gap - a.gap) },
         { kind: 'near', label: '即將破新高', items: list.filter(h => highKind(h.status) === 'near').sort((a, b) => b.gap - a.gap) }
       ];
-      if (badge) badge.innerHTML = freshBadgeHtml(highsDataDate);
+      if (badge) badge.innerHTML = freshBadgeHtml(highsDataDate) + ((stockDataInfo.date && highsDataDate && highsDataDate !== stockDataInfo.date)
+        ? ` <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30" title="高點追蹤為 ${highsDataDate}，個股報價為 ${stockDataInfo.date}，狀態以高點追蹤當日收盤判斷">個股為 ${shortDate(stockDataInfo.date)}</span>` : '');
       if (counts) counts.innerHTML = groups.map(g => `<span class="px-1.5 py-0.5 rounded ${HIGH_BADGE_STYLE[g.kind]}">${g.label.replace('本日', '')} ${g.items.length}</span>`).join('');
       if (!body) return;
 
