@@ -506,6 +506,7 @@
             <span id="modalStockDate"></span>
           </div>
           <div id="modalGroupsBadges" class="flex flex-wrap gap-1.5 mt-2"></div>
+          <div id="modalDisposalInfo" class="hidden mt-2"></div>
           <div id="modalFeatureBadges" class="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-slate-100 dark:border-slate-800/60"></div>
         </div>
         <button onclick="closeStockModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl self-start">
@@ -1061,6 +1062,7 @@
             <button onclick="setTagFilter('持續量增')" id="btnTag_持續量增" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-cyan-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量增</button>
             <button onclick="setTagFilter('持續量縮')" id="btnTag_持續量縮" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-sky-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">持續量縮</button>
             <button onclick="setTagFilter('十日震盪整理')" id="btnTag_十日震盪整理" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-teal-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">十日震盪整理</button>
+            <button onclick="setTagFilter('處置')" id="btnTag_處置" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-rose-600 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">處置</button>
             <button onclick="setTagFilter('窒息量')" id="btnTag_窒息量" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-slate-400 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">窒息量</button>
             <span class="w-px h-4 bg-slate-200 dark:bg-slate-700 mx-0.5"></span>
             <button onclick="setTagFilter('達成新高')" id="btnTag_達成新高" class="px-2.5 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-amber-500 whitespace-nowrap transition border border-slate-200 dark:border-slate-700">達成新高</button>
@@ -1304,6 +1306,7 @@
         </div>
       `).join('');
 
+      try { renderModalDisposal(stock); } catch (e) {}
       document.getElementById('modalFeatureBadges').innerHTML = (stock.badges || []).map(b => `<span class="px-2 py-0.5 rounded text-[10px] ${b.color}">${b.text}</span>`).join(' ');
 
       const peerGroup = groupMap[stock.rawGroup];
@@ -1490,7 +1493,7 @@
       try {
         const r = await Promise.allSettled([pollLive(true), fetchAndParseCsv(), loadMarketIntel()]);
         stocksOk = r[1].status === 'fulfilled' && r[1].value !== false;
-        await Promise.allSettled([loadHighs()]);
+        await Promise.allSettled([loadHighs(), loadDisposal()]);
         try { if (liveState.ok) applyLiveIndex(); } catch (e) {}
         try { renderMarketStatusBadge(); } catch (e) {}
       } catch (e) {
@@ -2091,6 +2094,7 @@
       loadMarketIntel();
       await fetchAndParseCsv();
       loadHighs();
+      loadDisposal();
       startLivePolling();
       pollAdminMaintenanceStatus();
       handleInitialHash();
@@ -2544,6 +2548,7 @@
       try { computeStockDataInfo(); renderMarketStatusBadge(); } catch (e) { console.warn('資料狀態計算失敗', e); }
 
       attachHighBadges();
+      attachDisposalBadges();
       renderHotCards(Array.from(stockMap.values()));
       applyFilters();
       // 個股資料就緒後重繪盤後權值股，讓其可點擊開啟個股詳情
@@ -3095,7 +3100,7 @@ function getDynamicColorTier(rawPct) {
       const q = (document.getElementById('stockFilterInput')?.value || '').trim().toLowerCase();
       filteredStocks = parsedStocks.filter(s => {
         const matchesQuery = s.id.toLowerCase().includes(q) || s.name.toLowerCase().includes(q) || s.rawGroup.toLowerCase().includes(q);
-        const matchesTag = (currentTab === 'sector') ? true : ((currentTagFilter === 'ALL') || (s.badges && s.badges.some(b => b.text === currentTagFilter || (currentTagFilter === '達成新高' && b.text.indexOf('達成新高') === 0))));
+        const matchesTag = (currentTab === 'sector') ? true : ((currentTagFilter === 'ALL') || (s.badges && s.badges.some(b => b.text === currentTagFilter || (currentTagFilter === '達成新高' && b.text.indexOf('達成新高') === 0) || (currentTagFilter === '處置' && b.dsp))));
         return matchesQuery && matchesTag;
       });
 
@@ -4118,6 +4123,12 @@ function getDynamicColorTier(rawPct) {
       if (intelDataDate || intelCurrentMode) rows.push({ key: 'intel', label: intelCurrentMode === 'pre' ? '盤前快報' : '盤後總結', src: '試算表', date: intelDataDate, expectToday: intelCurrentMode === 'pre' });
       if (marketVolumeSeries.length) rows.push({ key: 'kline', label: '日K線・量能', src: '試算表', date: marketVolumeSeries[marketVolumeSeries.length - 1].date });
       if (highsStatus === 'ok') rows.push({ key: 'highs', label: '高點追蹤', src: '試算表', date: highsDataDate });
+      if (disposalStatus !== 'none') {
+        const n = Object.values(disposalMap).filter(d => d.state === 'active').length;
+        rows.push({ key: 'disposal', label: '處置股公告', src: disposalStatus === 'ok' ? `證交所／櫃買公告・處置中 ${n} 檔` : '暫時無法取得',
+          date: disposalMeta ? normDate(disposalMeta.updated) : '', time: disposalMeta ? String(disposalMeta.updated || '').slice(11, 16) : '', expectToday: true,
+          extra: disposalMeta && disposalMeta.sources && String(disposalMeta.sources.tpex || '').indexOf('ok') !== 0 ? '上櫃處置公告目前抓不到（櫃買可能擋 Google 主機），上櫃股的處置標記可能不完整' : '' });
+      }
       rows.forEach(r => { r.f = freshLabel(r.date, r.expectToday); });
       return rows;
     }
@@ -5063,6 +5074,73 @@ function getDynamicColorTier(rawPct) {
       });
     }
 
+    // =====================================================================
+    // 💡 處置股：資料來自後端 action=disposal（證交所／櫃買公告）
+    //   處置期間成交改為分盤撮合，量能自然萎縮 → 不顯示窒息量、量縮類標籤，避免誤判
+    // =====================================================================
+    let disposalMap = {};          // code → { level, measure, start, end, reason, state: 'active' | 'upcoming' }
+    let disposalStatus = 'none';   // none | ok | error
+    let disposalMeta = null;
+    const DISPOSAL_VOL_BADGES = ['窒息量', '量縮價跌', '量縮價漲', '持續量縮'];
+    async function loadDisposal() {
+      if (!LIVE_API_URL) return;
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 15000);
+        let j;
+        try {
+          const res = await fetch(LIVE_API_URL + (LIVE_API_URL.includes('?') ? '&' : '?') + 'action=disposal&_t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
+          j = await res.json();
+        } finally { clearTimeout(timer); }
+        if (!j || !j.ok || !Array.isArray(j.items)) throw new Error('no data');
+        const today = taipeiTodayStr();
+        const map = {};
+        j.items.forEach(it => {
+          if (!it.code || !it.end || it.end < today) return;            // 已結束
+          const state = it.start <= today ? 'active' : 'upcoming';
+          const cur = map[it.code];
+          const rank = x => (x.state === 'active' ? 10 : 0) + (x.level || 1);
+          const cand = { ...it, state };
+          if (!cur || rank(cand) > rank(cur)) map[it.code] = cand;
+        });
+        disposalMap = map; disposalStatus = 'ok'; disposalMeta = { updated: j.updated, sources: j.sources };
+      } catch (e) {
+        disposalStatus = 'error';
+      }
+      try {
+        if (parsedStocks.length) { attachDisposalBadges(); applyFilters(); renderHotCards(parsedStocks); }
+        if (currentModalStockId) { const st = parsedStocks.find(x => x.id === String(currentModalStockId)); if (st) renderModalDisposal(st); }
+      } catch (e) { console.warn('處置股套用失敗', e); }
+    }
+    function attachDisposalBadges() {
+      parsedStocks.forEach(s => {
+        s.badges = (s.badges || []).filter(b => !b.dsp);
+        const d = disposalMap[s.id];
+        s.disposal = d || null;
+        if (!d) return;
+        if (d.state === 'active') {
+          s.badges = s.badges.filter(b => !DISPOSAL_VOL_BADGES.includes(b.text));   // 分盤撮合造成的量縮不是窒息量
+          s.badges.unshift({ text: d.level >= 2 ? '再次處置' : '處置', dsp: true,
+            color: d.level >= 2 ? 'bg-rose-700 text-white border border-rose-500 font-black' : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/40 font-bold' });
+        } else {
+          s.badges.unshift({ text: '即將處置', dsp: true, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold' });
+        }
+      });
+    }
+    function renderModalDisposal(stock) {
+      const el = document.getElementById('modalDisposalInfo');
+      if (!el) return;
+      const d = stock.disposal;
+      if (!d) { el.classList.add('hidden'); el.innerHTML = ''; return; }
+      const how = d.level >= 2 ? '約每 20 分鐘撮合一次，買賣須預收款券' : '約每 5 分鐘撮合一次';
+      el.classList.remove('hidden');
+      el.innerHTML = `<div class="rounded-xl border ${d.state === 'active' ? 'border-rose-500/30 bg-rose-500/5' : 'border-amber-500/30 bg-amber-500/5'} px-3 py-2 text-[11px] leading-relaxed">
+        <div class="font-bold ${d.state === 'active' ? 'text-rose-600 dark:text-rose-400' : 'text-amber-600 dark:text-amber-400'}"><i class="fa-solid fa-gavel mr-1"></i>${d.state === 'active' ? '處置中' : '即將處置'}・${escHtml(d.measure || '')}</div>
+        <div class="text-slate-600 dark:text-slate-300">期間 ${shortDate(d.start)} ～ ${shortDate(d.end)}（${how}）${d.reason ? '・原因：' + escHtml(d.reason) : ''}</div>
+        ${d.state === 'active' ? '<div class="text-slate-400">處置期間成交量受撮合限制而萎縮，已暫停「窒息量／量縮」類標籤判斷。</div>' : ''}
+      </div>`;
+    }
+
     function applyHighInfo() {
       try {
         attachHighBadges();
@@ -5171,7 +5249,7 @@ function getDynamicColorTier(rawPct) {
           <div class="space-y-2">
             <div class="flex items-center justify-between gap-2 flex-wrap">
               <span class="text-[11px] font-bold text-slate-600 dark:text-slate-300">新高狀態</span>
-              <div class="flex items-center gap-1.5">${highStatusBadgeHtml(h)}${h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
+              <div class="flex items-center gap-1.5">${stock.highSynced === false ? `<span class="px-1.5 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-600 dark:text-amber-400" title="高點追蹤與報價日期不同，暫不判斷">高點資料 ${shortDate(h.date)}・未同步</span>` : highStatusBadgeHtml(h)}${stock.highSynced !== false && h.streak >= 2 ? `<span class="text-[10px] text-amber-600 dark:text-amber-400 font-bold">連續 ${h.streak} 日</span>` : ''}</div>
             </div>
             <div class="grid grid-cols-3 gap-2">
               ${tile('追蹤區間前高', fmtPt(v.curHigh), escHtml(fmtHighDate(v.curDate, true)) + (v.broke ? ' <span class="text-amber-500">今日創高</span>' : ''))}
