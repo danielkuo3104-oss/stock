@@ -83,8 +83,8 @@
 
     /* 💡 簡易 / 專業模式 */
     html.mode-simple .pro-only { display: none !important; }
-    .simple-only { display: none !important; }
-    html.mode-simple .simple-only { display: flex !important; }
+    .simple-only-inline { display: none; }
+    html.mode-simple .simple-only-inline { display: inline; }
     html.mode-simple #mainMarketSection > div:first-child { border-bottom-width: 0; padding-bottom: 0; }
   </style>
   <script>try { if (localStorage.getItem('sp_view_mode') === 'simple') document.documentElement.classList.add('mode-simple'); } catch (e) {}</script>
@@ -756,8 +756,8 @@
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
     <div class="sticky top-0 z-40 w-full shadow-sm">
       <header id="mainHeader" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
-          <div class="flex items-center space-x-2 sm:space-x-3">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-x-4">
+          <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20 shrink-0">
               <i class="fa-solid fa-chart-line text-white text-base sm:text-lg"></i>
             </div>
@@ -777,15 +777,11 @@
             <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-regular fa-envelope text-xs"></i><span>聯絡管理員</span></a>
           </nav>
 
-          <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0">
+          <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0 md:justify-self-end">
             <button id="btnAdminConsole" onclick="openAdminPanel()" class="px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition text-[10px] sm:text-xs font-bold items-center space-x-1 hidden">
               <i class="fa-solid fa-terminal"></i>
               <span class="hidden sm:inline">控制台</span>
             </button>
-            <div class="flex items-center bg-slate-100 dark:bg-slate-800 rounded-xl p-0.5 text-[10px] sm:text-xs font-bold shrink-0" title="簡易：只看加權與個股　專業：全部功能">
-              <button id="btnMode_simple" onclick="setViewMode('simple')" class="px-1.5 sm:px-2 py-1 rounded-lg transition"><span class="sm:hidden">簡</span><span class="hidden sm:inline">簡易</span></button>
-              <button id="btnMode_pro" onclick="setViewMode('pro')" class="px-1.5 sm:px-2 py-1 rounded-lg transition"><span class="sm:hidden">專</span><span class="hidden sm:inline">專業</span></button>
-            </div>
             <button onclick="handleRefresh()" class="p-1.5 sm:p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition text-[10px] sm:text-xs" title="全部刷新（即時報價＋所有試算表）">
               <i id="refreshIcon" class="fa-solid fa-rotate-right"></i>
             </button>
@@ -847,16 +843,21 @@
 
     <!-- 主要資料流容器 -->
     <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-4 lg:p-8 space-y-4 sm:space-y-6">
-      <div class="simple-only items-center justify-between gap-2 text-[11px] text-slate-500 dark:text-slate-400 bg-brand-500/5 border border-brand-500/20 rounded-xl px-3 py-2">
-        <span><i class="fa-solid fa-feather text-brand-500 mr-1.5"></i>簡易模式：只顯示加權指數與個股清單</span>
-        <button onclick="setViewMode('pro')" class="text-brand-600 dark:text-brand-500 font-bold whitespace-nowrap">切換專業模式 →</button>
+      <div class="flex items-center justify-between gap-2 -mb-1 sm:-mb-2">
+        <span class="text-[11px] text-slate-500 dark:text-slate-400 min-w-0 truncate">
+          <span class="simple-only-inline"><i class="fa-solid fa-feather text-brand-500 mr-1"></i>簡易模式：只顯示加權指數與個股清單</span>
+        </span>
+        <div class="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-0.5 text-[11px] font-bold shrink-0 shadow-sm" title="簡易：只看加權與個股　專業：全部功能">
+          <button id="btnMode_simple" onclick="setViewMode('simple')" class="px-2.5 py-1 rounded-lg transition"><i class="fa-solid fa-feather mr-1"></i>簡易</button>
+          <button id="btnMode_pro" onclick="setViewMode('pro')" class="px-2.5 py-1 rounded-lg transition"><i class="fa-solid fa-chart-line mr-1"></i>專業</button>
+        </div>
       </div>
 
       <!-- 大盤指數儀表板 -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
         <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between pb-4 border-b border-slate-100 dark:border-slate-800 gap-4">
-          <div class="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-6">
-            <div class="flex items-center space-x-2 sm:space-x-3 shrink-0">
+          <div class="flex flex-col sm:flex-row sm:flex-wrap sm:items-center gap-x-6 gap-y-2 min-w-0 flex-1">
+            <div class="flex flex-wrap items-center gap-2 sm:gap-x-3 min-w-0">
               <div id="marketStatusDot" class="w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full bg-emerald-500 animate-pulse shrink-0"></div>
               <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-slate-100 shrink-0">加權指數</h2>
               <span id="marketStatusBadge" class="text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center shrink-0">當日資訊</span>
@@ -872,7 +873,7 @@
             </div>
           </div>
 
-          <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 text-xs font-mono mt-2 lg:mt-0">
+          <div class="flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 text-xs font-mono mt-2 lg:mt-0 shrink-0">
             <div class="flex items-center space-x-1 text-amber-500 font-bold bg-amber-50 dark:bg-amber-500/10 px-2 py-1 rounded sm:bg-transparent sm:p-0 shrink-0">
               <i class="fa-solid fa-coins text-[10px]"></i>
               <span class="text-slate-500 dark:text-slate-400 sm:text-slate-400">成交</span>
@@ -1411,8 +1412,8 @@
       const on = 'bg-white dark:bg-slate-950 text-brand-600 dark:text-brand-500 shadow-sm';
       const off = 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200';
       const a = document.getElementById('btnMode_simple'), b = document.getElementById('btnMode_pro');
-      if (a) a.className = 'px-1.5 sm:px-2 py-1 rounded-lg transition ' + (simple ? on : off);
-      if (b) b.className = 'px-1.5 sm:px-2 py-1 rounded-lg transition ' + (simple ? off : on);
+      if (a) a.className = 'px-2.5 py-1 rounded-lg transition ' + (simple ? 'bg-brand-600 text-white shadow-sm' : off);
+      if (b) b.className = 'px-2.5 py-1 rounded-lg transition ' + (simple ? off : 'bg-brand-600 text-white shadow-sm');
     }
     function setViewMode(mode) {
       const simple = mode === 'simple';
@@ -1659,7 +1660,7 @@
       try {
         const res = await fetch(BACKEND_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'setMemberTier', email, tier, admin: ADMIN_EMAIL })
+          body: JSON.stringify({ action: 'setMemberTier', email, tier, admin: ADMIN_EMAIL, token: (currentUser && currentUser.token) || '' })
         });
         const result = await res.json();
         if (result.success) {
@@ -1678,7 +1679,7 @@
         }
       } catch(e) {
         msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
-        msgBox.textContent = "更新異常，請檢查網路連線。";
+        msgBox.textContent = "更新失敗：無法連線後端或後端尚未部署新版本。";
       }
     }
 
@@ -1696,7 +1697,7 @@
       try {
         const res = await fetch(BACKEND_API_URL, {
           method: 'POST',
-          body: JSON.stringify({ action: 'postAnnouncement', content: msg, admin: ADMIN_EMAIL })
+          body: JSON.stringify({ action: 'postAnnouncement', content: msg, admin: ADMIN_EMAIL, token: (currentUser && currentUser.token) || '' })
         });
         const result = await res.json();
         if (result.success) {
@@ -1710,10 +1711,8 @@
           msgBox.textContent = "發布失敗：" + (result.message || '未知錯誤');
         }
       } catch(e) {
-        originalAnnouncements.unshift(msg);
-        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
-        msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
-        msgBox.textContent = "已完成前台即時推播顯示！";
+        msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
+        msgBox.textContent = "發布失敗：無法連線後端（未寫入試算表）";
       }
     }
 
@@ -1735,6 +1734,8 @@
           };
         }).filter(h => h.date);
       } catch (e) {}
+      // 休市表比個股晚到時，重新判斷一次日期狀態
+      try { if (parsedStocks.length) { computeStockDataInfo(); renderMarketStatusBadge(); } } catch (e) {}
     }
 
     function loadWatchlist() {
@@ -2219,7 +2220,7 @@
       const prevClose = closePrice - changeVal;
 
       document.getElementById('marketPrevClose').textContent = prevClose.toFixed(2);
-      indexCloseRef = { close: closePrice, date: normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || '') };
+      indexCloseRef = { close: closePrice, date: sheetIndexDate() };
       document.getElementById('marketIndex').textContent = closePrice.toFixed(2);
 
       const isUp = changeVal > 0;
@@ -2373,7 +2374,7 @@
         const note1 = row[12] ? row[12].trim() : '';
         const note2 = row[13] ? row[13].trim() : '';
         const volume = parseFloat(row[43]) || 0;
-        const dataDate = mmddToIso(row[11] || '');   // L 欄「執行戳記」：該列個股資料的日期
+        const stampDate = mmddToIso(row[11] || '');   // L 欄「執行戳記」：程式執行日（休市日執行時，資料其實是前一交易日）
 
         let mainGroup = rawGroup;
         let subGroup = "";
@@ -2492,7 +2493,7 @@
             const stock = {
               group: mainGroup, subGroup, rawGroup, id, name, price, change, pctStr, pctNum,
               cap, weight, contribution, groupChange: sharedGroupChange,
-              note1, note2, volume, badges, dataDate,
+              note1, note2, volume, badges, stampDate, dataDate: stampDate,
               avgVol10: Math.round(avgVol10),
               turnover: volume * 1000 * price,
               isLimitUp, isLimitDown,
@@ -3787,7 +3788,7 @@ function getDynamicColorTier(rawPct) {
     function applyLiveIndex() {
       const tx = liveState.ok && liveState.data && liveState.data.taiex;
       if (!tx || !(tx.price > 0)) return;
-      const sheetDate = normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || '');
+      const sheetDate = sheetIndexDate();
       const liveDate = normDate(tx.time);
       if (sheetDate && liveDate && liveDate < sheetDate) return;   // 即時資料比試算表舊就不覆蓋
       const col = tx.change > 0 ? 'text-stockRed' : (tx.change < 0 ? 'text-stockGreen' : 'text-slate-400');
@@ -4046,7 +4047,13 @@ function getDynamicColorTier(rawPct) {
 
     // ---------- 各資料源狀態彙整 ----------
     let stockDataInfo = { date: '', total: 0, stale: [], dates: {} };
+    // 執行戳記若落在休市日（例如假日跑了程式），實際行情是之前最近的交易日
+    function effectiveTradeDate(iso) {
+      if (!iso) return '';
+      return isTradingDay(iso) ? iso : (prevTradingDay(iso) || iso);
+    }
     function computeStockDataInfo() {
+      parsedStocks.forEach(s => { s.dataDate = effectiveTradeDate(s.stampDate); });
       const dates = {};
       parsedStocks.forEach(s => { if (s.dataDate) dates[s.dataDate] = (dates[s.dataDate] || 0) + 1; });
       const keys = Object.keys(dates).sort();
@@ -4057,7 +4064,8 @@ function getDynamicColorTier(rawPct) {
       const stale = parsedStocks.filter(s => s.dataDate && s.dataDate < newest);
       stockDataInfo = { date: main, newest, total: parsedStocks.length, stale, dates, noDate: parsedStocks.filter(s => !s.dataDate).length };
     }
-    function sheetIndexDate() { return normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || ''); }
+    // AT2「更新日期」是程式執行日；若落在休市日，實際行情為前一交易日
+    function sheetIndexDate() { return effectiveTradeDate(normDate((rawCsvGrid[1] && rawCsvGrid[1][45]) || '')); }
     function liveIndexInfo() {
       const tx = liveState.ok && liveState.data && liveState.data.taiex;
       if (!tx || !(tx.price > 0)) return null;
@@ -4099,37 +4107,36 @@ function getDynamicColorTier(rawPct) {
       const idxDate = li ? li.date : sheetIndexDate();
       const stkDate = stockDataInfo.date || idxDate;
       const idxF = freshLabel(idxDate), stkF = freshLabel(stkDate);
-      const base = 'cursor-pointer text-[10px] sm:text-xs px-2 py-0.5 sm:px-2.5 sm:py-0.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center gap-1 shrink-0 ';
       const C = {
         green: ['bg-emerald-500/10 text-emerald-500 border-emerald-500/20', 'bg-emerald-500'],
         sky: ['bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20', 'bg-sky-500'],
         amber: ['bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30', 'bg-amber-500'],
         gray: ['bg-slate-500/10 text-slate-400 border-slate-500/20', 'bg-slate-400']
       };
-      let text, tone, pulse = false;
-      const inSession = !st.closed && taipeiMinutesNow() >= 9 * 60 && taipeiMinutesNow() < 13 * 60 + 30;
-      if (!idxDate && !stkDate) { text = '資料無法取得'; tone = 'gray'; }
-      else if (st.closed) {
-        text = st.reason === '週末' ? '週末休市' : '本日休市';
-        tone = (idxF.lv === 'stale' || stkF.lv === 'stale') ? 'amber' : 'sky';
-        if (idxF.lv === 'stale' || stkF.lv === 'stale') text += '・資料未更新';
-      } else if (idxDate === stkDate) {
-        if (idxF.lv === 'today') { text = (li && li.fresh && inSession) ? '盤中即時' : '當日資訊'; tone = 'green'; pulse = !!(li && li.fresh && inSession); }
-        else if (idxF.lv === 'latest') { text = `前一交易日 ${shortDate(idxDate)}`; tone = 'sky'; }
-        else { text = `非當日 ${shortDate(idxDate)}`; tone = 'amber'; }
-      } else {
-        // 加權與個股日期不一致 → 兩個都寫出來，避免把個股當成今天
-        const idxTxt = idxF.lv === 'today' ? (li && li.fresh && inSession ? '加權即時' : '加權當日') : `加權 ${shortDate(idxDate)}`;
-        const stkTxt = stkF.lv === 'today' ? '個股當日' : `個股 ${shortDate(stkDate)}`;
-        text = `${idxTxt}・${stkTxt}`;
-        tone = (idxF.lv === 'stale' || stkF.lv === 'stale') ? 'amber' : 'sky';
-        pulse = !!(li && li.fresh && inSession);
+      const nowMin = taipeiMinutesNow();
+      const inSession = !st.closed && nowMin >= 9 * 60 && nowMin < 13 * 60 + 30;
+      const toneOf = f => ({ today: 'green', latest: 'sky', stale: 'amber', unknown: 'gray' }[f.lv]);
+      // 加權自己的狀態
+      let idxText, idxTone = toneOf(idxF), pulse = false;
+      if (!idxDate) { idxText = '資料無法取得'; idxTone = 'gray'; }
+      else if (idxF.lv === 'today') {
+        if (li && li.fresh && inSession) { idxText = '盤中即時'; pulse = true; }
+        else idxText = nowMin >= 13 * 60 + 30 ? '今日收盤' : '當日';
+      } else if (st.closed) { idxText = `${st.reason === '週末' ? '週末休市' : '本日休市'}・${shortDate(idxDate)}`; }
+      else if (idxF.lv === 'latest') idxText = `前一交易日 ${shortDate(idxDate)}`;
+      else idxText = `非當日 ${shortDate(idxDate)}`;
+      // 個股日期不同時，另一顆標籤（各自顏色，不互相影響）
+      const pill = (txt, tone, extra = '') => `<span class="px-2 py-0.5 sm:px-2.5 rounded-full font-bold border whitespace-nowrap inline-flex items-center gap-1 ${C[tone][0]} ${extra}">${txt}</span>`;
+      let html = pill(escHtml(idxText), idxTone);
+      if (stkDate && stkDate !== idxDate) {
+        const stkText = stkF.lv === 'today' ? '個股 當日' : `個股 ${shortDate(stkDate)}${stkF.lv === 'stale' ? ' 非當日' : ''}`;
+        html += pill(escHtml(stkText), toneOf(stkF));
       }
-      badge.innerHTML = `${escHtml(text)}<i class="fa-solid fa-circle-info text-[9px] opacity-60"></i>`;
-      badge.className = base + C[tone][0];
+      badge.innerHTML = html + '<i class="fa-solid fa-circle-info text-[10px] text-slate-400"></i>';
+      badge.className = 'cursor-pointer text-[10px] sm:text-xs inline-flex flex-wrap items-center gap-1 shrink-0';
       badge.onclick = openDataStatus;
       badge.title = '點擊查看各資料來源的更新時間';
-      dot.className = `w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 ${C[tone][1]} ${pulse ? 'animate-pulse' : ''}`;
+      dot.className = `w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full shrink-0 ${C[idxTone][1]} ${pulse ? 'animate-pulse' : ''}`;
 
       // 右下提示
       const dn = document.getElementById('dateNotice');
@@ -5262,7 +5269,8 @@ function getDynamicColorTier(rawPct) {
           body: JSON.stringify({
             action: 'setMaintenance',
             status: isMaint ? "維護中" : "", // 傳入 status 供 GAS 寫入 AS11
-            admin: ADMIN_EMAIL
+            admin: ADMIN_EMAIL,
+            token: (currentUser && currentUser.token) || ''
           })
         });
         const result = await res.json();
