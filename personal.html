@@ -1267,7 +1267,7 @@
             ${seg('range', journalState.range, [[20, '20日'], [60, '60日'], [120, '120日'], [0, '全期']], 'setJournalRange')}
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            ${chartBox('jc_nav', '資產淨值與成本', '通道：淨值高於成本為獲利（紅），低於成本為虧損（綠）')}
+            ${chartBox('jc_nav', '資產淨值與成本', '兩線之間的色帶＝未實現損益：紅色獲利、綠色虧損')}
             ${chartBox('jc_roi', '累計報酬率（含息 vs 不含息）')}
             ${chartBox('jc_bench', '策略績效 vs 加權指數', '以每日損益 ÷ 前日淨值串接的時間加權報酬，區間起點歸零')}
             ${chartBox('jc_daily', '每日損益變動')}
@@ -1287,6 +1287,7 @@
           ${journalState.divOpen ? jnDividendForm(holdings) : ''}
           ${holdingsTable(active, cur ? cur.tv : null)}
           ${jnRealizedHtml(RZ)}
+          ${jnDividendLogHtml(J)}
         `)}
 
         ${jnCard(jnReasonCard(J))}
@@ -1355,6 +1356,7 @@
               <div>配息 <b>${jnFmt(h.dividend)}</b> <button onclick="event.stopPropagation(); jnOpenDividend('${escHtml(h.code)}')" class="ml-1 px-1.5 rounded bg-brand-600/10 text-brand-600 dark:text-brand-400 font-sans font-bold">＋登記</button></div><div>含息總損益 <b class="${jnCol(h.totalPlDiv)}">${jnSigned(h.totalPlDiv)}</b></div>
               <div>已了結 <b class="${jnCol(h.realized)}">${jnSigned(h.realized)}</b></div>
             </div>
+            ${(() => { const L = jnDivLogs().filter(d => d.code === h.code); return L.length ? `<div class="mb-2 text-[10px] text-slate-500 flex flex-wrap gap-x-3 gap-y-0.5"><span class="font-bold">配息登記：</span>${L.slice(0, 6).map(d => `<span class="${d.status ? 'line-through opacity-50' : ''}">${escHtml(d.date)} <b class="font-mono">${jnFmt(d.amount)}</b></span>`).join('')}${L.length > 6 ? `<span>…共 ${L.length} 筆</span>` : ''}</div>` : ''; })()}
             ${tradeRowsHtml(trades, true)}</td></tr>` : ''}`;
       }).join('');
       return `<div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
@@ -1409,9 +1411,9 @@
 
       // 1) 資產淨值與成本：通道圖（兩線之間填色）
       lineChart('jc_nav', dates, [
-        { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a },
-        { name: '庫存成本', values: H.map(h => h.tCost), color: JN_COLORS.muted, dash: true }
-      ], v => jnFmt(v), false, { band: [0, 1], extraTip: i => { const d = ok(H[i].tv) && ok(H[i].tCost) ? H[i].tv - H[i].tCost : null; return `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(d)}</b></div>`; } });
+        { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a, width: 2.2 },
+        { name: '庫存成本', values: H.map(h => h.tCost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }
+      ], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, endGap: d => (d >= 0 ? '獲利 +' : '虧損 ') + axisLabel(d), extraTip: i => { const d = ok(H[i].tv) && ok(H[i].tCost) ? H[i].tv - H[i].tCost : null; return `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(d)}</b></div>`; } });
       const profit = ok(L.tPl) ? L.tPl : (ok(L.tv) && ok(L.tCost) ? L.tv - L.tCost : null);
       const profit0 = ok(F.tPl) ? F.tPl : (ok(F.tv) && ok(F.tCost) ? F.tv - F.tCost : null);
       setChartNote('jc_nav', [
@@ -1548,28 +1550,48 @@
       const padL = 44, padR = 6, padT = 8, padB = 18;
       const vals = series.flatMap(s => s.values).filter(v => v !== null && v !== undefined && !isNaN(v));
       if (!vals.length) { el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">暫無資料</div>'; return; }
-      const { lo, hi, ticks } = niceTicks(Math.min(...vals, (pctMode || opts.zero) ? 0 : Infinity), Math.max(...vals, opts.zero ? 0 : -Infinity));
+      let vMin = Math.min(...vals, (pctMode || opts.zero) ? 0 : Infinity), vMax = Math.max(...vals, opts.zero ? 0 : -Infinity);
+      if (opts.tight) { const pad = (vMax - vMin) * 0.06; vMin -= pad; vMax += pad; }
+      const { lo, hi, ticks } = niceTicks(vMin, vMax, opts.tight ? 6 : 4);
       const n = dates.length;
       const x = i => padL + (n <= 1 ? 0 : i / (n - 1)) * (W - padL - padR);
       const y = v => padT + (1 - (v - lo) / (hi - lo || 1)) * (Hh - padT - padB);
       let g = ticks.map(t => `<line x1="${padL}" x2="${W - padR}" y1="${y(t)}" y2="${y(t)}" stroke="currentColor" stroke-opacity="${t === 0 && (pctMode || opts.zero) ? 0.35 : 0.1}"/><text x="${padL - 5}" y="${y(t) + 3}" text-anchor="end" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${axisLabel(t, pctMode)}</text>`).join('');
-      if (opts.band) g += bandPaths(series[opts.band[0]].values, opts.band[1] === null ? null : series[opts.band[1]].values, x, y, opts.bandColors || ['#ef4444', '#22c55e']);
+      const bc = opts.bandColors || ['#ef4444', '#22c55e'];
+      if (opts.band) {
+        if (opts.gradient) g += `<defs><linearGradient id="${id}_gp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${bc[0]}" stop-opacity="0.26"/><stop offset="1" stop-color="${bc[0]}" stop-opacity="0.03"/></linearGradient><linearGradient id="${id}_gn" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="${bc[1]}" stop-opacity="0.26"/><stop offset="1" stop-color="${bc[1]}" stop-opacity="0.03"/></linearGradient></defs>`;
+        g += bandPaths(series[opts.band[0]].values, opts.band[1] === null ? null : series[opts.band[1]].values, x, y, opts.gradient ? [`url(#${id}_gp)`, `url(#${id}_gn)`] : bc, opts.gradient ? 1 : 0.2);
+      }
       series.forEach(s => {
         const pts = s.values.map((v, i) => (v === null || v === undefined || isNaN(v)) ? null : [x(i), y(v)]).filter(Boolean);
         if (pts.length < 2) return;
         if (s.area) g += `<polygon points="${pts.map(p => p.join(',')).join(' ')} ${pts[pts.length - 1][0]},${Hh - padB} ${pts[0][0]},${Hh - padB}" fill="${s.color}" fill-opacity="0.1"/>`;
-        g += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" ${s.dash ? 'stroke-dasharray="5 3"' : ''}/>`;
+        g += `<polyline points="${pts.map(p => p[0].toFixed(1) + ',' + p[1].toFixed(1)).join(' ')}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" stroke-linejoin="round" stroke-linecap="round" ${s.dash ? 'stroke-dasharray="' + (s.dashArray || '5 3') + '"' : ''}/>`;
       });
+      // 通道右端：標出目前兩線差距
+      if (opts.endGap && opts.band) {
+        const A = series[opts.band[0]].values, B = series[opts.band[1]].values;
+        let iL = n - 1; while (iL >= 0 && !(A[iL] !== null && B[iL] !== null && !isNaN(A[iL]) && !isNaN(B[iL]))) iL--;
+        if (iL > 0) {
+          const d = A[iL] - B[iL], xa = x(iL), ya = y(A[iL]), yb = y(B[iL]), col = d >= 0 ? bc[0] : bc[1];
+          const label = opts.endGap(d), tw = [...label].reduce((w, ch) => w + (/[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 10.5 : 6.2), 0) + 14, ym = (ya + yb) / 2;
+          g += `<line x1="${xa - 3}" x2="${xa - 3}" y1="${ya}" y2="${yb}" stroke="${col}" stroke-width="1.5"/><line x1="${xa - 6}" x2="${xa}" y1="${ya}" y2="${ya}" stroke="${col}" stroke-width="1.5"/><line x1="${xa - 6}" x2="${xa}" y1="${yb}" y2="${yb}" stroke="${col}" stroke-width="1.5"/>`;
+          g += `<rect x="${xa - 10 - tw}" y="${ym - 9}" width="${tw}" height="18" rx="9" fill="${col}"/><text x="${xa - 10 - tw / 2}" y="${ym + 3.5}" text-anchor="middle" font-size="10" font-weight="700" fill="#fff" font-family="ui-monospace,monospace">${label}</text>`;
+        }
+      }
+      if (opts.dots) g += series.map((s, k) => `<circle class="jc-dot" data-k="${k}" r="3.5" fill="${s.color}" stroke="#fff" stroke-width="1.5" visibility="hidden"/>`).join('');
       const li = [0, Math.floor((n - 1) / 2), n - 1].filter((v, i, a) => a.indexOf(v) === i);
       g += li.map((i, k) => `<text x="${x(i)}" y="${Hh - 4}" text-anchor="${k === 0 ? 'start' : (i === n - 1 ? 'end' : 'middle')}" font-size="9" fill="currentColor" fill-opacity="0.75" font-family="ui-monospace,monospace">${dates[i].slice(5).replace('-', '/')}</text>`).join('');
       g += `<line class="jc-cross" x1="0" x2="0" y1="${padT}" y2="${Hh - padB}" stroke="currentColor" stroke-opacity="0.4" stroke-dasharray="2 2" visibility="hidden"/>`;
       g += `<rect x="${padL}" y="${padT}" width="${W - padL - padR}" height="${Hh - padT - padB}" fill="transparent"/>`;
       el.innerHTML = `<svg width="${W}" height="${Hh}" class="block text-slate-500 dark:text-slate-400">${g}</svg><div class="jc-tip hidden absolute top-1 z-10 pointer-events-none bg-slate-900/95 text-slate-100 text-[10px] font-mono rounded-lg px-2 py-1.5 shadow-xl border border-slate-700 whitespace-nowrap"></div>`;
-      attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div>` + series.map(s => `<div><span style="color:${s.color}">●</span> ${s.name} <b>${s.values[i] === null || s.values[i] === undefined ? '--' : fmt(s.values[i])}</b></div>`).join('') + (opts.extraTip ? opts.extraTip(i) : ''), padL, W - padR);
+      attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div>` + series.map(s => `<div><span style="color:${s.color}">●</span> ${s.name} <b>${s.values[i] === null || s.values[i] === undefined ? '--' : fmt(s.values[i])}</b></div>`).join('') + (opts.extraTip ? opts.extraTip(i) : ''), padL, W - padR, opts.dots ? i => {
+        el.querySelectorAll('.jc-dot').forEach(c => { const v = series[+c.dataset.k].values[i]; if (v === null || v === undefined || isNaN(v)) { c.setAttribute('visibility', 'hidden'); return; } c.setAttribute('cx', x(i)); c.setAttribute('cy', y(v)); c.setAttribute('visibility', 'visible'); });
+      } : null);
     }
 
     // 通道填色：a 在 b 之上 → 正色，之下 → 負色；交叉處切開。b 為 null 時以 0 為基準
-    function bandPaths(A, B, x, y, colors) {
+    function bandPaths(A, B, x, y, colors, opacity) {
       const ok = v => v !== null && v !== undefined && !isNaN(v);
       const runs = []; let run = null;
       const flush = () => { if (run && run.pts.length >= 2) runs.push(run); run = null; };
@@ -1589,7 +1611,7 @@
       flush();
       return runs.map(r => {
         const up = r.pts.map(p => `${p[0].toFixed(1)},${y(p[1]).toFixed(1)}`), dn = r.pts.slice().reverse().map(p => `${p[0].toFixed(1)},${y(p[2]).toFixed(1)}`);
-        return `<polygon points="${up.concat(dn).join(' ')}" fill="${r.sign > 0 ? colors[0] : colors[1]}" fill-opacity="0.2"/>`;
+        return `<polygon points="${up.concat(dn).join(' ')}" fill="${r.sign > 0 ? colors[0] : colors[1]}" fill-opacity="${opacity === undefined ? 0.2 : opacity}"/>`;
       }).join('');
     }
 
@@ -1619,7 +1641,7 @@
       attachHover(el, n, x, i => `<div class="font-bold text-slate-300 mb-0.5">${dates[i]}</div><div>當日損益 <b class="${values[i] >= 0 ? 'text-red-400' : 'text-green-400'}">${fmt(values[i])}</b></div>`, padL, W - padR);
     }
 
-    function attachHover(el, n, xFn, html, x0, x1) {
+    function attachHover(el, n, xFn, html, x0, x1, onIdx) {
       const svg = el.querySelector('svg'), tip = el.querySelector('.jc-tip'), cross = el.querySelector('.jc-cross');
       const move = ev => {
         const r = svg.getBoundingClientRect();
@@ -1630,13 +1652,14 @@
         const cx = xFn(best);
         cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible');
         tip.innerHTML = html(best); tip.classList.remove('hidden');
+        if (onIdx) onIdx(best);
         const tw = tip.offsetWidth; let left = cx + 10; if (left + tw > r.width) left = cx - tw - 10;
         tip.style.left = Math.max(0, left) + 'px';
       };
       svg.addEventListener('mousemove', move);
       svg.addEventListener('touchstart', move, { passive: true });
       svg.addEventListener('touchmove', move, { passive: true });
-      svg.addEventListener('mouseleave', () => { tip.classList.add('hidden'); cross.setAttribute('visibility', 'hidden'); });
+      svg.addEventListener('mouseleave', () => { tip.classList.add('hidden'); cross.setAttribute('visibility', 'hidden'); el.querySelectorAll('.jc-dot').forEach(c => c.setAttribute('visibility', 'hidden')); });
     }
 
     function donutChart(id, items, opts) {
@@ -1875,7 +1898,7 @@
           ${lab('備註', `<input type="text" value="${escHtml(f.note)}" oninput="journalState.divForm.note=this.value" placeholder="例如 Q2 季配" maxlength="100" class="${inp}">`)}
         </div>
         <div class="flex flex-wrap items-center justify-between gap-2">
-          <span class="text-[10px] text-slate-500">${h ? `目前總配息 <b class="font-mono">${jnFmt(h.dividend)}</b>・持有 ${jnFmt(h.shares)} 股` : ''}</span>
+          <span class="text-[10px] text-slate-500">${h ? `目前總配息 <b class="font-mono">${jnFmt(h.dividend)}</b>・持有 ${jnFmt(h.shares)} 股${(() => { const last = jnDivLogs().find(d => d.code === h.code && !d.status); return last ? `・<span class="text-brand-600 dark:text-brand-400">上次登記：配息日 ${escHtml(last.date)} 金額 <b class="font-mono">${jnFmt(last.amount)}</b>（${escHtml(last.time)} 登記）</span>` : '・網站上還沒有登記紀錄'; })()}` : ''}</span>
           <div class="flex gap-2"><button onclick="journalState.divOpen=false; renderJournal()" class="px-3 py-1 rounded-lg text-[11px] border border-slate-300 dark:border-slate-700">取消</button>
           <button onclick="jnSubmitDividend()" ${journalState.saving ? 'disabled' : ''} class="px-3 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50">${journalState.saving ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>寫入中' : '加總寫入'}</button></div>
         </div></div>`;
@@ -1890,9 +1913,55 @@
         const r = await journalPost({ action: 'addDividend', email: currentUser.email, token: currentUser.token, code: f.code, amount: amt, date: f.date, note: f.note }, 60000);
         if (r.success) {
           (journalState.data.holdings || []).forEach(x => { if (x.code === f.code) { x.dividend = r.after; if (x.totalPlDiv !== null && x.totalPlDiv !== undefined) x.totalPlDiv += amt; } });
+          if (r.entry) journalState.data.dividends = [r.entry].concat(journalState.data.dividends || []);
+          journalState.divLogOpen = true;
           journalState.divOpen = false;
           journalState.writeMsg = { ok: true, text: r.message + '（淨值與報酬率會在日誌重新計算後更新）' };
         } else journalState.writeMsg = { ok: false, code: r.code, text: r.message || '寫入失敗' };
+      } catch (e) { journalState.writeMsg = { ok: false, text: '連線失敗：' + ((e && e.message) || e) }; }
+      journalState.saving = false; renderJournal();
+    }
+
+    // ---------- 配息登記紀錄 ----------
+    function jnDivLogs() { return (journalState.data && journalState.data.dividends) || []; }
+    function jnDividendLogHtml(J) {
+      const L = jnDivLogs();
+      if (!L.length) return '';
+      const live = L.filter(d => !d.status);
+      const year = new Date().getFullYear() + '';
+      const ytd = live.filter(d => (d.date || d.time).slice(0, 4) === year).reduce((a, d) => a + d.amount, 0);
+      const latestPerCode = {}; live.forEach(d => { if (!latestPerCode[d.code]) latestPerCode[d.code] = d.id; });
+      return `<details class="mt-3" ${journalState.divLogOpen ? 'open' : ''} ontoggle="journalState.divLogOpen=this.open">
+        <summary class="cursor-pointer text-xs font-bold text-slate-600 dark:text-slate-300 select-none">配息登記紀錄 <span class="font-normal text-slate-400">・${live.length} 筆・今年登記 <b class="font-mono text-stockRed">${jnFmt(ytd)}</b> 元・最近一次 ${escHtml(live[0] ? live[0].date + ' ' + live[0].name : '--')}</span></summary>
+        <div class="mt-2 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-[11px] whitespace-nowrap">
+            <thead class="bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr>
+              <th class="py-1.5 px-2 text-left">配息日</th><th class="px-2 text-left">股票</th><th class="px-2 text-right">金額</th><th class="px-2 text-right hidden sm:table-cell">總配息</th><th class="px-2 text-left hidden md:table-cell">備註</th><th class="px-2 text-left hidden sm:table-cell">登記時間</th><th class="px-2"></th></tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60">
+              ${L.map(d => `<tr class="${d.status ? 'opacity-50' : ''}">
+                <td class="py-1.5 px-2 font-mono">${escHtml(d.date)}</td>
+                <td class="px-2"><b class="text-slate-800 dark:text-slate-100">${escHtml(d.name)}</b> <span class="font-mono text-slate-400">${escHtml(d.code)}</span></td>
+                <td class="px-2 text-right font-mono font-bold ${d.status ? 'line-through' : 'text-stockRed'}">${jnSigned(d.amount)}</td>
+                <td class="px-2 text-right font-mono text-slate-500 hidden sm:table-cell">${jnFmt(d.before)} → ${jnFmt(d.after)}</td>
+                <td class="px-2 text-slate-500 hidden md:table-cell max-w-[14rem] truncate">${escHtml(d.note)}</td>
+                <td class="px-2 font-mono text-slate-400 hidden sm:table-cell">${escHtml(d.time)}</td>
+                <td class="px-2 text-right">${d.status ? `<span class="text-[10px] text-slate-400">已撤銷</span>` : (latestPerCode[d.code] === d.id ? `<button onclick="jnUndoDividend(${d.id})" class="text-[10px] text-slate-400 hover:text-rose-500">撤銷</button>` : '')}</td>
+              </tr>`).join('')}
+            </tbody></table></div>
+        <p class="mt-1 text-[10px] text-slate-400">紀錄同步存在你日誌的「配息紀錄」分頁。只能撤銷每檔最新一筆（避免總配息對不上）。</p>
+      </details>`;
+    }
+    async function jnUndoDividend(id) {
+      const d = jnDivLogs().find(x => x.id === id); if (!d) return;
+      if (!confirm(`撤銷 ${d.name} ${d.date} 的配息 ${jnFmt(d.amount)} 元？\n總配息會從 ${jnFmt(d.after)} 扣回 ${jnFmt(d.before)}`)) return;
+      journalState.saving = true; renderJournal();
+      try {
+        const r = await journalPost({ action: 'undoDividend', email: currentUser.email, token: currentUser.token, id }, 60000);
+        if (r.success) {
+          d.status = '已撤銷';
+          (journalState.data.holdings || []).forEach(x => { if (x.code === d.code) { x.dividend = r.after; if (x.totalPlDiv !== null && x.totalPlDiv !== undefined) x.totalPlDiv -= d.amount; } });
+          journalState.writeMsg = { ok: true, text: r.message };
+        } else journalState.writeMsg = { ok: false, code: r.code, text: r.message || '撤銷失敗' };
       } catch (e) { journalState.writeMsg = { ok: false, text: '連線失敗：' + ((e && e.message) || e) }; }
       journalState.saving = false; renderJournal();
     }
@@ -2473,7 +2542,7 @@
         </details>`);
       if (showForm) pzTradeCalc(false);
       const nav = pzState.nav;
-      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a }, { name: '成本', values: nav.map(n => n.cost), color: JN_COLORS.muted, dash: true }], v => jnFmt(v), false, { band: [0, 1] });
+      if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a }, { name: '成本', values: nav.map(n => n.cost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, endGap: d => (d >= 0 ? '獲利 +' : '虧損 ') + axisLabel(d) });
       else { const el = document.getElementById('pz_nav'); if (el) el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">資料累積中</div>'; }
       donutChart('pz_alloc', open.map(h => ({ name: h.name, code: h.code, val: h.value ?? h.cost, type: /^00/.test(h.code) ? 'etf' : 'stock' })));
     }
