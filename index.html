@@ -3051,12 +3051,18 @@ function getDynamicColorTier(rawPct) {
         const formattedChange = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
         const formattedPct = (stock.change > 0 && !stock.pctStr.startsWith('+')) ? `+${stock.pctStr}` : stock.pctStr;
 
+        // 處置（含即將處置）＝橘底；注意股＝淡黃底；兩者皆是時依處置
+        const rowTone = stock.disposal
+          ? 'bg-orange-100/80 dark:bg-orange-500/15 hover:bg-orange-100 dark:hover:bg-orange-500/25'
+          : (stock.notice ? 'bg-yellow-50 dark:bg-yellow-400/10 hover:bg-yellow-100 dark:hover:bg-yellow-400/20' : 'hover:bg-slate-50 dark:hover:bg-slate-900/60');
+        const rowTip = stock.disposal ? `title="${stock.disposal.state === 'active' ? '處置中' : '即將處置'}：${escHtml(stock.disposal.measure || '')} ${shortDate(stock.disposal.start)}～${shortDate(stock.disposal.end)}"`
+          : (stock.notice ? `title="注意股：${escHtml(stock.notice.reason || '')}"` : '');
         const badgesHtml = (stock.badges || []).map(b =>
           `<span class="px-1.5 py-0.5 rounded text-[9px] whitespace-nowrap ${b.color}">${b.text}</span>`
         ).join(' ');
 
         return `
-          <tr onclick="openStockModal('${stock.id}')" class="cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/60 transition duration-150">
+          <tr onclick="openStockModal('${stock.id}')" class="cursor-pointer transition duration-150 ${rowTone}" ${rowTip}>
             <td class="py-2.5 px-3 text-center" onclick="event.stopPropagation(); handleStarClick('${stock.id}')">
               <button class="${starColor} text-xs transition-colors">
                 <i class="${starIcon}"></i>
@@ -5103,10 +5109,10 @@ function getDynamicColorTier(rawPct) {
       (arr || []).forEach(rec => {
         const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim();
         const codeKey = keys.find(k => /^(Code|SecuritiesCompanyCode|StockCode|SecuritiesCode)$/i.test(k));
-        const periodKey = keys.find(k => /\d{2,3}\/\d{1,2}\/\d{1,2}\s*[～~\-－至]\s*\d{2,3}\/\d{1,2}\/\d{1,2}/.test(val(k)));
+        const periodKey = keys.find(k => /(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/.test(val(k)));
         const code = codeKey ? val(codeKey) : '';
         if (!/^\d{4,6}[A-Z]?$/.test(code) || !periodKey) return;
-        const p = val(periodKey).match(/(\d{2,3}\/\d{1,2}\/\d{1,2})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2})/);
+        const p = val(periodKey).match(/(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/);
         const all = keys.map(val).join(' ');
         const mm = all.match(/第.次處置|再次處置/);
         out.push({ code, name: val(keys.find(k => /Name/i.test(k)) || ''), mkt: '上櫃', level: /第二次|第三次|再次/.test(all) ? 2 : 1,
@@ -5178,7 +5184,7 @@ function getDynamicColorTier(rawPct) {
         s.badges = (s.badges || []).filter(b => !b.dsp);
         const d = disposalMap[s.id], n = noticeMap[s.id];
         s.disposal = d || null; s.notice = n || null;
-        if (n && !(d && d.state === 'active')) s.badges.unshift({ text: '注意股', dsp: true, color: 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-500/40 font-bold' });
+        if (n && !d) s.badges.unshift({ text: '注意股', dsp: true, color: 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-500/40 font-bold' });
         if (!d) return;
         if (d.state === 'active') {
           s.badges = s.badges.filter(b => !DISPOSAL_VOL_BADGES.includes(b.text));   // 分盤撮合造成的量縮不是窒息量
