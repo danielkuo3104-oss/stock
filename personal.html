@@ -1702,7 +1702,7 @@
         </div>`);
       if (!pzState.loaded) pzLoad(false).then(() => { const b = document.getElementById('pzTrackBtn'); if (b && pzState.tracks.some(t => t.code === id)) b.innerHTML = '<i class="fa-solid fa-thumbtack mr-1 text-brand-500"></i>已長期追蹤（點擊取消）'; });
     }
-    function pzGoAlert(code) { pzEditAlert = { code, cond: 'gte', stages: [5, 2] }; switchPersonalTab('alerts'); }
+    function pzGoAlert(code) { pzEditAlert = { code, cond: 'gte', levels: [] }; switchPersonalTab('alerts'); }
     function pzGoNote(code) { pzEditNote = { code, type: '觀察' }; switchPersonalTab('notes'); }
     function pzGoTrade(code) { pzEditTrade = { code, side: '買進' }; journalState.manualForm = true; switchPersonalTab('journal'); }
     async function pzToggleTrack(code, fromTab) {
@@ -1721,46 +1721,61 @@
     // 🔔 到價提醒
     // =====================================================================
     const PZ_STAGE_PRESETS = [10, 5, 3, 2, 1];
-    function pzAlertStages() { return (pzEditAlert && Array.isArray(pzEditAlert.stages)) ? pzEditAlert.stages : [5, 2]; }
+    // 分段價位（例如 600、700、800 各自提醒一次）；百分比快選會依目標價換算成價位加入
+    function pzAlertLevels() { return (pzEditAlert && Array.isArray(pzEditAlert.levels)) ? pzEditAlert.levels : []; }
     function pzField(label, inner, cls = '') { return `<label class="flex flex-col gap-1 min-w-0 ${cls}"><span class="text-[10px] font-bold text-slate-500 dark:text-slate-400">${label}</span>${inner}</label>`; }
     function pzWatchSelect(id, value, allowNone, onchange) {
       const ids = userWatchlist.filter(x => x);
       return `<select id="${id}" onchange="${onchange || ''}" class="${pzInput} w-full">${allowNone ? '<option value="">不指定股票</option>' : (ids.length ? '' : '<option value="">（關注清單是空的）</option>')}${ids.map(c => `<option value="${escHtml(c)}" ${c === value ? 'selected' : ''}>${escHtml(c)} ${escHtml(pzName(c))}</option>`).join('')}</select>`;
     }
-    // 多階段預覽：依目標價試算每一階段的觸發價
+    function pzTick(v) {   // 依台股升降單位取整
+      const t = v < 10 ? 0.01 : v < 50 ? 0.05 : v < 100 ? 0.1 : v < 500 ? 0.5 : v < 1000 ? 1 : 5;
+      return Math.round(Math.round(v / t) * t * 100) / 100;
+    }
+    function pzSortLevels(lv, cond) { return Array.from(new Set(lv)).sort((a, b) => cond === 'lte' ? b - a : a - b); }
+    function pzSetLevels(lv) {
+      const v = pzAlertFormValues();
+      pzEditAlert = Object.assign(pzEditAlert || {}, v, { levels: pzSortLevels(lv, v.cond || 'gte').slice(0, 6) });
+      renderPzAlerts();
+    }
+    function pzAddPctLevel(pct) {
+      const v = pzAlertFormValues();
+      if (!(v.price > 0)) { pzToast('請先輸入目標價，再用 % 快選', true); return; }
+      const lv = pzTick(v.cond === 'lte' ? v.price * (1 + pct / 100) : v.price * (1 - pct / 100));
+      if (pzAlertLevels().length >= 6) { pzToast('分段價位最多 6 個', true); return; }
+      pzSetLevels(pzAlertLevels().concat(lv));
+    }
+    function pzAddLevel() {
+      const el = document.getElementById('pzA_level');
+      const lv = Math.round(parseFloat(el.value) * 100) / 100;
+      if (!(lv > 0)) { pzToast('請輸入價位', true); return; }
+      if (pzAlertLevels().length >= 6) { pzToast('分段價位最多 6 個', true); return; }
+      pzSetLevels(pzAlertLevels().concat(lv));
+    }
+    function pzRemoveLevel(lv) { pzSetLevels(pzAlertLevels().filter(x => x !== lv)); }
+    // 預覽：各分段價位與目標價（距目標 %、目前是否已到）
     function pzStagePreview() {
       const el = document.getElementById('pzA_preview'); if (!el) return;
       const price = parseFloat((document.getElementById('pzA_price') || {}).value);
       const cond = (document.getElementById('pzA_cond') || {}).value || 'gte';
       const code = (document.getElementById('pzA_code') || {}).value || '';
       const st = stockMap.get(code);
-      const stages = pzAlertStages().slice().sort((a, b) => b - a);
-      if (!(price > 0)) { el.innerHTML = '<span class="text-slate-400">輸入目標價後會試算各階段的通知價格</span>'; return; }
-      const sym = cond === 'lte' ? '≤' : '≥';
-      const at = pct => cond === 'lte' ? price * (1 + pct / 100) : price * (1 - pct / 100);
-      const fmt = v => Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
       const cur = st ? st.price : null;
-      const reached = pct => cur !== null && (cond === 'lte' ? cur <= at(pct) : cur >= at(pct));
+      const sym = cond === 'lte' ? '≤' : '≥';
+      const fmt = v => Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      const reached = x => cur !== null && (cond === 'lte' ? cur <= x : cur >= x);
+      const levels = pzSortLevels(pzAlertLevels(), cond);
+      const bad = levels.filter(x => price > 0 && (cond === 'lte' ? x < price : x > price));
+      const chip = (x, k) => `<span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border ${reached(x) ? 'border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 dark:border-slate-700'} font-mono text-[11px]">
+          <span class="text-slate-400 font-sans">第 ${k + 1} 段</span> ${sym} <b>${fmt(x)}</b>${price > 0 ? `<span class="text-slate-400 font-sans">距目標 ${((cond === 'lte' ? x - price : price - x) / price * 100).toFixed(1)}%</span>` : ''}
+          <button type="button" onclick="pzRemoveLevel(${x})" class="text-slate-400 hover:text-rose-500" title="移除"><i class="fa-solid fa-xmark"></i></button></span>`;
       el.innerHTML = `<div class="flex flex-wrap items-center gap-1.5">
-        ${stages.map((pct, k) => `<span class="px-2 py-1 rounded-lg border ${reached(pct) ? 'border-amber-500/50 bg-amber-500/10 text-amber-700 dark:text-amber-300' : 'border-slate-200 dark:border-slate-700'} font-mono text-[11px]"><span class="text-slate-400 font-sans">第 ${k + 1} 階・提前 ${pct}%</span> ${sym} <b>${fmt(at(pct))}</b></span><i class="fa-solid fa-angle-right text-slate-300 text-[10px]"></i>`).join('')}
-        <span class="px-2 py-1 rounded-lg border ${cur !== null && (cond === 'lte' ? cur <= price : cur >= price) ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-brand-500/40'} font-mono text-[11px]"><span class="text-slate-400 font-sans">到價</span> ${sym} <b>${fmt(price)}</b></span>
-      </div>
-      ${cur !== null ? `<div class="mt-1 text-[10px] text-slate-500">目前 ${fmt(cur)}，距目標 ${((cond === 'lte' ? cur - price : price - cur) / price * 100).toFixed(2)}%${stages.some(reached) ? '（已在提醒範圍內，下次盤中檢查就會通知）' : ''}</div>` : ''}`;
-    }
-    function pzToggleStage(pct) {
-      const cur = pzAlertStages().slice();
-      const k = cur.indexOf(pct);
-      if (k >= 0) cur.splice(k, 1); else if (cur.length < 4) cur.push(pct); else { pzToast('最多 4 個階段', true); return; }
-      pzEditAlert = Object.assign(pzEditAlert || {}, pzAlertFormValues(), { stages: cur.sort((a, b) => b - a) });
-      renderPzAlerts();
-    }
-    function pzAddCustomStage() {
-      const v = Math.round(parseFloat(prompt('自訂提前百分比（0.1–20）', '4')) * 10) / 10;
-      if (!(v >= 0.1 && v <= 20)) return;
-      const cur = pzAlertStages().filter(x => x !== v);
-      if (cur.length >= 4) { pzToast('最多 4 個階段', true); return; }
-      pzEditAlert = Object.assign(pzEditAlert || {}, pzAlertFormValues(), { stages: cur.concat(v).sort((a, b) => b - a) });
-      renderPzAlerts();
+          ${levels.map(chip).join('<i class="fa-solid fa-angle-right text-slate-300 text-[10px]"></i>')}
+          ${levels.length ? '<i class="fa-solid fa-angle-right text-slate-300 text-[10px]"></i>' : '<span class="text-slate-400">尚未設定分段價位（只在到目標價時通知）</span>'}
+          ${price > 0 ? `<span class="px-2 py-1 rounded-lg border ${reached(price) ? 'border-emerald-500/50 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300' : 'border-brand-500/40'} font-mono text-[11px]"><span class="text-slate-400 font-sans">目標價</span> ${sym} <b>${fmt(price)}</b></span>` : ''}
+        </div>
+        ${bad.length ? `<div class="mt-1.5 text-[10px] text-amber-600">⚠ ${bad.map(fmt).join('、')} 已超過目標價，會比目標價更晚觸發；一般分段價位應介於現價與目標價之間。</div>` : ''}
+        ${cur !== null && price > 0 ? `<div class="mt-1.5 text-[10px] text-slate-500">目前 ${fmt(cur)}，距目標 ${((cond === 'lte' ? cur - price : price - cur) / price * 100).toFixed(2)}%${levels.some(reached) || reached(price) ? '（已有價位達到，下次盤中檢查就會通知）' : ''}</div>` : ''}`;
     }
     function pzAlertFormValues() {
       const g = id => (document.getElementById(id) || {}).value;
@@ -1775,15 +1790,14 @@
       const box = document.getElementById('tabAlerts');
       if (!box || pzNeedToken('tabAlerts')) return;
       if (!pzState.loaded) { box.innerHTML = jnCard(pzStatusHtml() || ''); pzLoad(false); return; }
-      const f = pzEditAlert || { cond: 'gte', stages: [5, 2] };
-      const stages = pzAlertStages();
+      const f = pzEditAlert || { cond: 'gte', levels: [] };
       const list = pzState.alerts.slice().sort((a, b) => a.code.localeCompare(b.code));
-      const stageBtn = pct => `<button type="button" onclick="pzToggleStage(${pct})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition ${stages.includes(pct) ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-200 dark:border-slate-700 text-slate-500'}">${pct}%</button>`;
+      const stageBtn = pct => `<button type="button" onclick="pzAddPctLevel(${pct})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-slate-200 dark:border-slate-700 text-slate-500 hover:border-brand-500 hover:text-brand-600 transition">${f.cond === 'lte' ? '+' : '−'}${pct}%</button>`;
       box.innerHTML = pzCodeDatalist() + pzCard(`
         <div class="flex flex-wrap items-start justify-between gap-3">
           <div>
             <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-bell text-amber-500 mr-1.5"></i>到價提醒</h3>
-            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">盤中每 10 分鐘檢查；可設多個「提前」階段，每進入更接近的一階寄一次，到價再寄一次（每天各一次）。</p>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">盤中每 10 分鐘檢查；可設定多個分段價位（例如 600、700、800），到達每個價位各寄一次，到目標價再寄一次（每天各一次）。</p>
           </div>
           <label class="flex items-center gap-2 cursor-pointer select-none rounded-xl border ${pzState.settings.emailAlerts ? 'border-emerald-500/40 bg-emerald-500/5' : 'border-slate-200 dark:border-slate-700'} px-3 py-2">
             <input type="checkbox" ${pzState.settings.emailAlerts ? 'checked' : ''} onchange="pzSetEmail(this.checked)" class="w-4 h-4 accent-emerald-600">
@@ -1795,13 +1809,16 @@
           <div class="flex items-center justify-between"><span class="text-xs font-black text-slate-700 dark:text-slate-200">${f.id ? '編輯提醒' : '新增提醒'}</span>${pzTierLine('alert', list.length)}</div>
           <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
             ${pzField('股票代號', `${pzCodeInput('pzA_code', f.code, 'pzAlertCodeChanged()').replace('w-28', 'w-full')}<span id="pzA_name" class="text-[10px] text-slate-500 truncate">${escHtml(f.code && stockMap.get(f.code) ? stockMap.get(f.code).name + '・現價 ' + stockMap.get(f.code).price : '')}</span>`)}
-            ${pzField('條件', `<select id="pzA_cond" onchange="pzStagePreview()" class="${pzInput} w-full"><option value="gte" ${f.cond !== 'lte' ? 'selected' : ''}>漲到 ≥ 目標價</option><option value="lte" ${f.cond === 'lte' ? 'selected' : ''}>跌到 ≤ 目標價</option></select>`)}
+            ${pzField('條件', `<select id="pzA_cond" onchange="pzSetLevels(pzAlertLevels())" class="${pzInput} w-full"><option value="gte" ${f.cond !== 'lte' ? 'selected' : ''}>漲到 ≥ 目標價</option><option value="lte" ${f.cond === 'lte' ? 'selected' : ''}>跌到 ≤ 目標價</option></select>`)}
             ${pzField('目標價', `<input id="pzA_price" type="number" step="0.01" min="0" value="${f.price || ''}" oninput="pzStagePreview()" placeholder="例 1000" class="${pzInput} w-full font-mono">`)}
             ${pzField('備註（選填）', `<input id="pzA_note" value="${escHtml(f.note || '')}" placeholder="例：突破前高" class="${pzInput} w-full">`)}
           </div>
           <div class="space-y-1.5">
-            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">提前提醒階段（可多選，最多 4 階；不選＝只在到價時通知）</div>
-            <div class="flex flex-wrap items-center gap-1.5">${PZ_STAGE_PRESETS.map(stageBtn).join('')}${stages.filter(x => !PZ_STAGE_PRESETS.includes(x)).map(stageBtn).join('')}<button type="button" onclick="pzAddCustomStage()" class="${pzBtnGhost}">＋自訂</button></div>
+            <div class="text-[10px] font-bold text-slate-500 dark:text-slate-400">分段價位（到達每個價位各通知一次，最多 6 個；不設＝只在到目標價時通知）</div>
+            <div class="flex flex-wrap items-center gap-2">
+              <div class="flex items-center gap-1.5"><input id="pzA_level" type="number" step="0.01" min="0" placeholder="例 600" onkeydown="if(event.key==='Enter'){event.preventDefault();pzAddLevel()}" class="${pzInput} w-28 font-mono"><button type="button" onclick="pzAddLevel()" class="${pzBtnGhost}">＋加入價位</button></div>
+              <span class="text-[10px] text-slate-400">或依目標價快選</span>${PZ_STAGE_PRESETS.map(stageBtn).join('')}
+            </div>
             <div id="pzA_preview" class="rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 px-3 py-2.5 text-[11px]"></div>
           </div>
           <div id="pzA_unlisted">${f.code ? pzUnlistedHtml(f.code, 'pzA_req') : ''}</div>
@@ -1815,7 +1832,7 @@
           const fmt = v => Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
           const today = pfToday();
           const status = a.lastHit === today ? '<span class="text-emerald-600 font-bold">今日已到價</span>'
-            : (a.lastNear === today ? `<span class="text-amber-600 font-bold">今日已通知（${a.lastNearStage}% 階）</span>` : (a.enabled ? '<span class="text-slate-500">監控中</span>' : '<span class="text-slate-400">已停用</span>'));
+            : (a.notifiedDate === today && (a.notified || []).length ? `<span class="text-amber-600 font-bold">今日已通知 ${a.notified.length} 段</span>` : (a.enabled ? '<span class="text-slate-500">監控中</span>' : '<span class="text-slate-400">已停用</span>'));
           return `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-4 ${a.enabled ? '' : 'opacity-60'}">
             <div class="flex flex-wrap items-center justify-between gap-2">
               <div class="min-w-0"><b class="text-sm">${escHtml(a.name || pzName(a.code) || a.code)}</b> <span class="font-mono text-[10px] text-slate-400">${escHtml(a.code)}</span>${a.note ? ` <span class="text-[10px] text-slate-500">・${escHtml(a.note)}</span>` : ''}</div>
@@ -1825,9 +1842,9 @@
                 <button onclick="pzDelete('deleteAlert','${a.id}')" class="${pzBtnGhost}">刪除</button></div>
             </div>
             <div class="mt-2 flex flex-wrap items-center gap-1.5 font-mono text-[11px]">
-              ${(a.stages || []).map(pct => `<span class="px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-700"><span class="font-sans text-slate-400">${pct}%</span> ${sym} ${fmt(at(pct))}</span>`).join('<i class="fa-solid fa-angle-right text-slate-300 text-[9px]"></i>')}
-              ${(a.stages || []).length ? '<i class="fa-solid fa-angle-right text-slate-300 text-[9px]"></i>' : ''}<span class="px-1.5 py-0.5 rounded border border-brand-500/40"><span class="font-sans text-slate-400">到價</span> ${sym} ${fmt(a.price)}</span>
-              <span class="ml-auto font-sans text-slate-500">現價 <b class="font-mono">${px ?? '--'}</b>${gap === null ? '' : `・還差 <b class="font-mono ${gap <= Math.max(...(a.stages || [0]), 0) ? 'text-amber-600' : ''}">${gap <= 0 ? '已到價' : gap.toFixed(2) + '%'}</b>`}</span>
+              ${(a.levels || []).map(x => { const ok = a.notifiedDate === today && (a.notified || []).includes(x); return `<span class="px-1.5 py-0.5 rounded border ${ok ? 'border-amber-500/50 bg-amber-500/10' : 'border-slate-200 dark:border-slate-700'}">${sym} ${fmt(x)}${ok ? ' <i class="fa-solid fa-check text-amber-600"></i>' : ''}</span>`; }).join('<i class="fa-solid fa-angle-right text-slate-300 text-[9px]"></i>')}
+              ${(a.levels || []).length ? '<i class="fa-solid fa-angle-right text-slate-300 text-[9px]"></i>' : ''}<span class="px-1.5 py-0.5 rounded border ${a.lastHit === today ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-brand-500/40'}"><span class="font-sans text-slate-400">目標</span> ${sym} ${fmt(a.price)}${a.lastHit === today ? ' <i class="fa-solid fa-check text-emerald-600"></i>' : ''}</span>
+              <span class="ml-auto font-sans text-slate-500">現價 <b class="font-mono">${px ?? '--'}</b>${gap === null ? '' : `・距目標 <b class="font-mono">${gap <= 0 ? '已到價' : gap.toFixed(2) + '%'}</b>`}</span>
             </div>
           </div>`;
         }).join('')}</div>` : '<div class="py-6 text-center text-xs text-slate-400">尚未設定任何提醒；也可以在關注卡片的個股詳情中按「到價提醒」</div>'}
@@ -1850,7 +1867,7 @@
       const v = pzAlertFormValues();
       if (!/^[0-9A-Z]{4,6}$/.test(v.code || '')) { pzToast('請輸入正確的股票代號', true); return; }
       if (!(v.price > 0)) { pzToast('請輸入目標價', true); return; }
-      const payload = { id: pzEditAlert && pzEditAlert.id, code: v.code, name: pzName(v.code), cond: v.cond, price: v.price, stages: pzAlertStages(), note: v.note, enabled: pzEditAlert && pzEditAlert.id ? pzEditAlert.enabled !== false : true };
+      const payload = { id: pzEditAlert && pzEditAlert.id, code: v.code, name: pzName(v.code), cond: v.cond, price: v.price, levels: pzAlertLevels(), note: v.note, enabled: pzEditAlert && pzEditAlert.id ? pzEditAlert.enabled !== false : true };
       try {
         const r = await pzPost('saveAlert', payload);
         if (!r.success) { pzToast(r.message || '儲存失敗', true); return; }
@@ -2126,7 +2143,7 @@
       m.innerHTML = `<div class="w-full sm:max-w-2xl bg-white dark:bg-slate-900 rounded-t-3xl sm:rounded-3xl shadow-2xl max-h-[88vh] overflow-y-auto p-5 sm:p-6 space-y-5">
         <div class="flex items-center justify-between"><h3 class="text-base font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-circle-question text-brand-500 mr-1.5"></i>個人化使用說明</h3><button onclick="document.getElementById('pzHelpModal').remove()" class="w-8 h-8 rounded-lg text-slate-400 hover:text-slate-700"><i class="fa-solid fa-xmark"></i></button></div>
         ${sec('fa-star text-amber-400', '關注清單', ['在首頁清單或個股詳情點 ⭐ 加入；卡片會顯示漲跌、十日走勢、量能與新高標籤。', '關注的股票若被列為<b>處置股</b>（橘色）或<b>注意股</b>（淡黃）會在頁首提醒；兩者都是時以處置為準。', '處置期間是分盤撮合、成交量自然變小，系統會暫停「窒息量／量縮」判斷避免誤判。'])}
-        ${sec('fa-bell text-amber-500', '到價提醒', ['到「提醒」分頁輸入代號、條件（漲到 ≥／跌到 ≤）與目標價。', '「提前提醒階段」可多選（例如 5% 與 2%），畫面會直接試算每一階的通知價格：目標 1000、漲到 ≥ 時，5% 階＝950、2% 階＝980。', `需勾選「寄信提醒」才會寄信到你的登入信箱，<b>隨時可以取消勾選關閉</b>；也可單獨停用某一筆。`, '盤中（09:00–13:40）每 10 分鐘檢查一次；每天每進入更接近的一階寄一封，到價再寄一封，同一階不會重複寄。', `用量上限：初級韭菜 5 筆、資深韭菜 20 筆、萬年韭皇無上限（你目前 ${L.alert >= 9999 ? '無上限' : L.alert + ' 筆'}）。`])}
+        ${sec('fa-bell text-amber-500', '到價提醒', ['到「提醒」分頁輸入代號、條件（漲到 ≥／跌到 ≤）與目標價。', '「分段價位」可自行輸入多個價位（例如目標 900，另設 600、700、800），到達每個價位各通知一次；也可用 % 快選依目標價換算（目標 1000、−5% ＝ 950）。', `需勾選「寄信提醒」才會寄信到你的登入信箱，<b>隨時可以取消勾選關閉</b>；也可單獨停用某一筆。`, '盤中（09:00–13:40）每 10 分鐘檢查一次（Yahoo 行情）；同一價位每天只寄一次，一次跨過多個價位會合併成一封。', `用量上限：初級韭菜 5 筆、資深韭菜 20 筆、萬年韭皇無上限（你目前 ${L.alert >= 9999 ? '無上限' : L.alert + ' 筆'}）。`])}
         ${sec('fa-thumbtack text-brand-500', '長期追蹤', ['只能追蹤「關注清單」中的股票：在個股詳情按「長期追蹤」，或到「長期追蹤」分頁從下拉選單挑選。', '每個交易日收盤後自動記錄收盤價、漲跌幅、成交量、最高與最低，存在後端，換裝置也看得到。', '同一檔股票全體會員共用一份紀錄（系統只抓一次），若有人比你早追蹤，你加入後就能看到更早的歷史。', '至少兩天紀錄後顯示走勢圖；取消追蹤不會刪除已記錄的歷史。', `用量上限：初級韭菜 3 檔、資深韭菜 10 檔、萬年韭皇無上限（你目前 ${L.track >= 9999 ? '無上限' : L.track + ' 檔'}）。`])}
         ${sec('fa-pen text-emerald-500', '投資筆記', ['記下觀察、買進理由、賣出檢討、心得或重大事件；股票從關注清單挑選，也可選「不指定股票」寫大盤心得。', '可搜尋、編輯、刪除；建議買進時寫下理由與停損條件，賣出後回頭檢討。'])}
         ${sec('fa-book-open text-indigo-500', '投資日誌', ['<b>預設為手動記帳</b>：按「記一筆交易」輸入日期、代號、買賣、股數、價格；手續費與交易稅會自動試算，可依券商折扣修改。', '以平均成本法計算持股、未實現與已實現損益；每日收盤後自動記錄一次資產淨值，累積成走勢圖。', '已經有自己的投資日誌試算表，可在頁面下方「改用連結」，連結後改讀你的試算表。', '只有你本人登入時看得到你的日誌。'])}
