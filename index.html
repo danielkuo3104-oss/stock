@@ -863,6 +863,7 @@
           <button id="btnMode_pro" onclick="setViewMode('pro')" class="px-2.5 py-1 rounded-lg transition"><i class="fa-solid fa-chart-line mr-1"></i>專業</button>
         </div>
       </div>
+      <div id="watchDspBanner" class="hidden"></div>
 
       <!-- 大盤指數儀表板 -->
       <section id="mainMarketSection" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xl space-y-4 sm:space-y-5">
@@ -1728,7 +1729,7 @@
           msgBox.className = "text-[11px] font-medium text-center text-emerald-500 block";
           msgBox.textContent = "發布成功！已同步於跑馬燈。";
           originalAnnouncements.unshift(msg);
-          document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+          setMarqueeText(originalAnnouncements.join(' ★ '));
           input.value = "";
         } else {
           msgBox.className = "text-[11px] font-medium text-center text-rose-500 block";
@@ -2216,9 +2217,9 @@
       const st = getTodayMarketState();
       if (st.closed) {
         const holidayMsg = `【休市公告】本日台股休市（${st.reason}），盤面維持最近交易日行情。`;
-        document.getElementById('marqueeContainer').textContent = originalAnnouncements.length > 0 ? `${holidayMsg} ★ ${originalAnnouncements.join(' ★ ')}` : holidayMsg;
+        setMarqueeText(originalAnnouncements.length > 0 ? `${holidayMsg} ★ ${originalAnnouncements.join(' ★ ')}` : holidayMsg);
       } else if (originalAnnouncements.length > 0) {
-        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+        setMarqueeText(originalAnnouncements.join(' ★ '));
       }
       try { renderMarketStatusBadge(); } catch (e) { console.warn('狀態徽章失敗', e); }
     }
@@ -2352,7 +2353,7 @@
         }
       }
       if (originalAnnouncements.length > 0) {
-        document.getElementById('marqueeContainer').textContent = originalAnnouncements.join(' ★ ');
+        setMarqueeText(originalAnnouncements.join(' ★ '));
       }
     }
 
@@ -2550,6 +2551,7 @@
 
       attachHighBadges();
       attachDisposalBadges();
+      try { renderWatchDisposalBanner(); } catch (e) {}
       renderHotCards(Array.from(stockMap.values()));
       applyFilters();
       // 個股資料就緒後重繪盤後權值股，讓其可點擊開啟個股詳情
@@ -5175,9 +5177,38 @@ function getDynamicColorTier(rawPct) {
         disposalMeta = { updated: updated || (taipeiTodayStr() + ' ' + String(Math.floor(taipeiMinutesNow() / 60)).padStart(2, '0') + ':' + String(taipeiMinutesNow() % 60).padStart(2, '0')), sources, noticeDate: Object.values(latest).sort().pop() || '' };
       }
       try {
-        if (parsedStocks.length) { attachDisposalBadges(); applyFilters(); renderHotCards(parsedStocks); }
+        if (parsedStocks.length) { attachDisposalBadges(); applyFilters(); renderHotCards(parsedStocks); renderWatchDisposalBanner(); }
         if (currentModalStockId) { const st = parsedStocks.find(x => x.id === String(currentModalStockId)); if (st) renderModalDisposal(st); }
       } catch (e) { console.warn('處置股套用失敗', e); }
+    }
+    // 跑馬燈：前面加上「你的關注」處置／注意提醒
+    let marqueeBaseText = '';
+    function setMarqueeText(text) {
+      marqueeBaseText = text;
+      const el = document.getElementById('marqueeContainer');
+      if (!el) return;
+      const w = watchDisposalSummary();
+      el.textContent = w.length ? `【關注提醒】${w.map(x => x.text).join('、')}${text ? ' ★ ' + text : ''}` : text;
+    }
+    function watchDisposalSummary() {
+      if (!currentUser || currentUser.role === 'guest' || !userWatchlist || !userWatchlist.size) return [];
+      return parsedStocks.filter(s => userWatchlist.has(s.id) && (s.disposal || s.notice)).map(s => {
+        const d = s.disposal;
+        return { s, d, text: `${s.name} ${d ? (d.state === 'active' ? (d.level >= 2 ? '再次處置中' : '處置中') : '即將處置') + ' ' + shortDate(d.start) + '～' + shortDate(d.end) : '注意股'}` };
+      });
+    }
+    function renderWatchDisposalBanner() {
+      const box = document.getElementById('watchDspBanner');
+      if (!box) return;
+      const w = watchDisposalSummary();
+      setMarqueeText(marqueeBaseText || String((document.getElementById('marqueeContainer') || {}).textContent || '').replace(/^【關注提醒】[^★]*(★ )?/, '').trim());
+      if (!w.length) { box.classList.add('hidden'); box.innerHTML = ''; return; }
+      box.classList.remove('hidden');
+      box.innerHTML = `<div class="flex flex-wrap items-center gap-2 rounded-2xl border border-orange-300/60 dark:border-orange-500/30 bg-white dark:bg-slate-900 px-3 py-2 shadow-sm text-[11px]">
+        <span class="font-black text-orange-700 dark:text-orange-400"><i class="fa-solid fa-bell mr-1"></i>你的關注有處置／注意公告</span>
+        ${w.map(x => `<button onclick="openStockModal('${x.s.id}')" class="px-2 py-1 rounded-lg font-bold ${x.d ? 'bg-orange-100 dark:bg-orange-500/15 text-orange-800 dark:text-orange-300' : 'bg-yellow-100 dark:bg-yellow-400/10 text-yellow-800 dark:text-yellow-300'}">${escHtml(x.text)}</button>`).join('')}
+        <a href="personal.html" class="ml-auto text-brand-600 dark:text-brand-500 font-bold">到個人化查看 →</a>
+      </div>`;
     }
     function attachDisposalBadges() {
       parsedStocks.forEach(s => {
