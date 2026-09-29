@@ -756,8 +756,8 @@
   <div id="mainApp" class="flex-1 flex flex-col hidden w-full">
     <div class="sticky top-0 z-40 w-full shadow-sm">
       <header id="mainHeader" class="bg-white/95 dark:bg-slate-900/95 backdrop-blur border-b border-slate-200 dark:border-slate-800 px-3 sm:px-8 py-3 w-full">
-        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3 md:grid md:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] md:gap-x-4">
-          <div class="flex items-center space-x-2 sm:space-x-3 min-w-0">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-y-3">
+          <div class="flex items-center space-x-2 sm:space-x-3">
             <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-xl sm:rounded-2xl bg-gradient-to-tr from-brand-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-brand-500/20 shrink-0">
               <i class="fa-solid fa-chart-line text-white text-base sm:text-lg"></i>
             </div>
@@ -777,7 +777,7 @@
             <a href="javascript:void(0)" onclick="openContactModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition flex items-center space-x-1.5"><i class="fa-regular fa-envelope text-xs"></i><span>聯絡管理員</span></a>
           </nav>
 
-          <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0 md:justify-self-end">
+          <div class="flex items-center space-x-1.5 sm:space-x-3 shrink-0 whitespace-nowrap">
             <button id="btnAdminConsole" onclick="openAdminPanel()" class="px-2 py-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-purple-600 hover:bg-purple-500 text-white transition text-[10px] sm:text-xs font-bold items-center space-x-1 hidden">
               <i class="fa-solid fa-terminal"></i>
               <span class="hidden sm:inline">控制台</span>
@@ -4253,10 +4253,19 @@ function getDynamicColorTier(rawPct) {
     function hasPreData() { return Array.isArray(preMarketItems) && preMarketItems.length > 0; }
     function hasPostData() { return !!(lastPostMarketData && lastPostMarketData.sections && lastPostMarketData.sections.length); }
 
+    function postDataDate() {
+      const d = lastPostMarketData;
+      return d ? (d.tradeDate || normDate(d.updated)) : '';
+    }
     function renderIntel() {
       const auto = getAutoIntelMode();
-      let mode = auto, fallback = false;
-      if (mode === 'pre' && !hasPreData() && hasPostData()) { mode = 'post'; fallback = true; }
+      let mode = auto, fallback = false, postStaleSwitch = false;
+      // 交易日收盤後，盤後總結若還不是今天 → 先顯示盤前快報（今天的盤前比舊的盤後更有參考價值）
+      const preDate = hasPreData() ? normDate((preMarketItems.find(it => it.time) || {}).time || '') : '';
+      if (mode === 'post' && hasPreData() && !getTodayMarketState().closed && postDataDate() !== getTodayMarketState().today && (!postDataDate() || preDate >= postDataDate())) {
+        mode = 'pre'; postStaleSwitch = true;
+      }
+      if (mode === 'pre' && !hasPreData() && hasPostData()) { mode = 'post'; fallback = true; postStaleSwitch = false; }
       else if (mode === 'post' && !hasPostData() && hasPreData()) { mode = 'pre'; fallback = true; }
       intelCurrentMode = mode;
 
@@ -4268,7 +4277,7 @@ function getDynamicColorTier(rawPct) {
       if (chip) {
         chip.classList.remove('hidden');
         chip.className = 'text-[10px] font-medium px-2 py-0.5 rounded-full border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400';
-        chip.textContent = fallback ? '備援顯示' : '依時段自動切換';
+        chip.textContent = postStaleSwitch ? '盤後未更新' : (fallback ? '備援顯示' : '依時段自動切換');
         chip.title = '交易日 13:30 前顯示盤前快報，13:30 後及休市日顯示盤後總結';
       }
 
@@ -4293,7 +4302,8 @@ function getDynamicColorTier(rawPct) {
       }
       intelDataDate = dataDate;
       const note = freshNoteText(dataDate, mode === 'pre');
-      const fbNote = fallback ? (mode === 'post' ? '盤前資料暫無，改顯示盤後總結' : '盤後資料暫無，改顯示盤前快報') : '';
+      const fbNote = postStaleSwitch ? `今日盤後總結尚未更新（最新為 ${shortDate(postDataDate())}），先顯示盤前快報`
+        : (fallback ? (mode === 'post' ? '盤前資料暫無，改顯示盤後總結' : '盤後資料暫無，改顯示盤前快報') : '');
       safeSetHtml('intelMeta', `
         <span class="font-mono">${escHtml(timeText)}</span>
         ${freshBadgeHtml(dataDate, mode === 'pre')}
