@@ -1916,16 +1916,16 @@
           </div>
           ${hist.length >= 2 ? `<div class="grid grid-cols-1 lg:grid-cols-2 gap-3">${chartBox('pz_track_px', '收盤價與最高／最低')}${chartBox('pz_track_vol', '成交量（張）')}</div>` : '<div class="py-6 text-center text-xs text-slate-400">資料累積中：收盤後會自動記錄，至少兩天後顯示走勢圖</div>'}
           ${hist.length ? `<div class="max-h-[280px] overflow-y-auto rounded-xl border border-slate-200 dark:border-slate-800"><table class="w-full text-xs font-mono"><thead class="sticky top-0 bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr><th class="py-1.5 px-2 text-left">日期</th><th class="text-right px-2">收盤</th><th class="text-right px-2">漲跌幅</th><th class="text-right px-2">成交量</th><th class="text-right px-2">最高</th><th class="text-right px-2">最低</th></tr></thead><tbody>
-            ${hist.slice().reverse().map(h => `<tr class="border-t border-slate-100 dark:border-slate-800/60"><td class="py-1 px-2">${h.date}</td><td class="text-right px-2">${h.close}</td><td class="text-right px-2 ${h.pct > 0 ? 'text-stockRed' : (h.pct < 0 ? 'text-stockGreen' : '')}">${isNaN(h.pct) ? '--' : (h.pct > 0 ? '+' : '') + h.pct.toFixed(2) + '%'}</td><td class="text-right px-2">${isNaN(h.vol) ? '--' : h.vol.toLocaleString()}</td><td class="text-right px-2">${isNaN(h.high) ? '--' : h.high}</td><td class="text-right px-2">${isNaN(h.low) ? '--' : h.low}</td></tr>`).join('')}
+            ${hist.slice().reverse().map(h => `<tr class="border-t border-slate-100 dark:border-slate-800/60"><td class="py-1 px-2">${h.date}</td><td class="text-right px-2">${h.close}</td><td class="text-right px-2 ${h.pct > 0 ? 'text-stockRed' : (h.pct < 0 ? 'text-stockGreen' : '')}">${(h.pct === null || h.pct === undefined || isNaN(h.pct)) ? '--' : (h.pct > 0 ? '+' : '') + h.pct.toFixed(2) + '%'}</td><td class="text-right px-2">${(h.vol === null || h.vol === undefined || isNaN(h.vol)) ? '--' : h.vol.toLocaleString()}</td><td class="text-right px-2">${(h.high === null || h.high === undefined || isNaN(h.high)) ? '--' : h.high}</td><td class="text-right px-2">${(h.low === null || h.low === undefined || isNaN(h.low)) ? '--' : h.low}</td></tr>`).join('')}
           </tbody></table></div>` : ''}` : ''}`);
       if (hist.length >= 2) {
         const dates = hist.map(h => h.date);
         lineChart('pz_track_px', dates, [
           { name: '收盤', values: hist.map(h => h.close), color: JN_COLORS.a, area: true },
-          { name: '最高', values: hist.map(h => isNaN(h.high) ? null : h.high), color: '#ef4444', dash: true },
-          { name: '最低', values: hist.map(h => isNaN(h.low) ? null : h.low), color: '#22c55e', dash: true }
+          { name: '最高', values: hist.map(h => (h.high === null || h.high === undefined || isNaN(h.high)) ? null : h.high), color: '#ef4444', dash: true },
+          { name: '最低', values: hist.map(h => (h.low === null || h.low === undefined || isNaN(h.low)) ? null : h.low), color: '#22c55e', dash: true }
         ], v => Number(v).toLocaleString());
-        barChart('pz_track_vol', dates, hist.map(h => isNaN(h.vol) ? 0 : h.vol), v => Number(v).toLocaleString() + ' 張');
+        barChart('pz_track_vol', dates, hist.map(h => (h.vol === null || h.vol === undefined || isNaN(h.vol)) ? 0 : h.vol), v => Number(v).toLocaleString() + ' 張');
         const lg = document.getElementById('pz_track_vol_legend'); if (lg) lg.innerHTML = '';
       }
     }
