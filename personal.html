@@ -417,7 +417,8 @@
         parseStocks(text);
         if (stockMap.size === 0) throw new Error('無個股資料');
         dataLoaded = true;
-        await loadHighs();
+        await Promise.all([loadHighs(), loadDisposal()]);
+        applyDisposal();
       } catch (e) {
         if (dataLoaded) return;   // 已有舊資料則保留畫面
         document.getElementById('dataTimestamp').textContent = '資料讀取失敗';
@@ -558,6 +559,47 @@
     }
 
     // 十日價格回推、累積漲幅、量比與動態標籤（規則與首頁相同）
+    // ---------- 處置股（與首頁相同規則）：處置期間不顯示窒息量／量縮類標籤 ----------
+    let pfDisposal = {};
+    const PF_DSP_VOL = ['窒息量', '量縮價跌', '量縮價漲', '持續量縮'];
+    async function loadDisposal() {
+      try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), 15000);
+        let j;
+        try {
+          const res = await fetch(BACKEND_API_URL + '?action=disposal&_t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
+          j = await res.json();
+        } finally { clearTimeout(timer); }
+        if (!j || !j.ok || !Array.isArray(j.items)) return;
+        const today = pfToday(), map = {};
+        j.items.forEach(it => {
+          if (!it.code || !it.end || it.end < today) return;
+          const state = it.start <= today ? 'active' : 'upcoming';
+          const rank = x => (x.state === 'active' ? 10 : 0) + (x.level || 1);
+          const cand = { ...it, state };
+          if (!map[it.code] || rank(cand) > rank(map[it.code])) map[it.code] = cand;
+        });
+        pfDisposal = map;
+      } catch (e) {}
+    }
+    function applyDisposal() {
+      stockMap.forEach(s => {
+        s.badges = (s.badges || []).filter(b => !b.dsp);
+        const d = pfDisposal[s.id];
+        s.disposal = d || null;
+        if (!d) return;
+        const tip = `${d.measure || ''} ${pfShort(d.start)}～${pfShort(d.end)}${d.reason ? '・' + d.reason : ''}`;
+        if (d.state === 'active') {
+          s.badges = s.badges.filter(b => !PF_DSP_VOL.includes(b.text));
+          s.badges.unshift({ text: d.level >= 2 ? '再次處置' : '處置', dsp: true, tip,
+            color: d.level >= 2 ? 'bg-rose-700 text-white border border-rose-500 font-black' : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/40 font-bold' });
+        } else {
+          s.badges.unshift({ text: '即將處置', dsp: true, tip, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold' });
+        }
+      });
+    }
+
     function computeDerived(s) {
       const h = s.tenDayHistory;
       const prices = new Array(h.length);
