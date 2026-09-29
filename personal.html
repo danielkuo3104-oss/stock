@@ -559,43 +559,66 @@
     }
 
     // 十日價格回推、累積漲幅、量比與動態標籤（規則與首頁相同）
-    // ---------- 處置股（與首頁相同規則）：處置期間不顯示窒息量／量縮類標籤 ----------
-    let pfDisposal = {};
+    // ---------- 處置股／注意股（與首頁相同規則）：處置期間不顯示窒息量／量縮類標籤 ----------
+    let pfDisposal = {}, pfNotice = {};
     const PF_DSP_VOL = ['窒息量', '量縮價跌', '量縮價漲', '持續量縮'];
+    function pfRoc(t) {
+      t = String(t || '').trim();
+      let m = t.match(/^(\d{3,4})(\d{2})(\d{2})$/);
+      if (m) return `${+m[1] < 1000 ? +m[1] + 1911 : m[1]}-${m[2]}-${m[3]}`;
+      m = t.match(/(\d{2,4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
+      return m ? `${+m[1] < 1000 ? +m[1] + 1911 : m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
+    }
+    async function pfJson(url, ms) {
+      const ctl = new AbortController(); const timer = setTimeout(() => ctl.abort(), ms);
+      try { const r = await fetch(url, { signal: ctl.signal, cache: 'no-store' }); if (!r.ok) throw new Error(r.status); return await r.json(); } finally { clearTimeout(timer); }
+    }
     async function loadDisposal() {
-      try {
-        const ctl = new AbortController();
-        const timer = setTimeout(() => ctl.abort(), 15000);
-        let j;
-        try {
-          const res = await fetch(BACKEND_API_URL + '?action=disposal&_t=' + Date.now(), { signal: ctl.signal, cache: 'no-store' });
-          j = await res.json();
-        } finally { clearTimeout(timer); }
-        if (!j || !j.ok || !Array.isArray(j.items)) return;
-        const today = pfToday(), map = {};
-        j.items.forEach(it => {
-          if (!it.code || !it.end || it.end < today) return;
-          const state = it.start <= today ? 'active' : 'upcoming';
-          const rank = x => (x.state === 'active' ? 10 : 0) + (x.level || 1);
-          const cand = { ...it, state };
-          if (!map[it.code] || rank(cand) > rank(map[it.code])) map[it.code] = cand;
+      let items = [], notices = [], src = {};
+      try { const j = await pfJson(BACKEND_API_URL + '?action=disposal&_t=' + Date.now(), 20000); if (j && Array.isArray(j.items)) { items = j.items; notices = j.notices || []; src = j.sources || {}; } } catch (e) {}
+      const ok = k => String(src[k] || '').indexOf('ok') === 0;
+      if (!ok('tpexDisposal')) try {
+        (await pfJson('https://www.tpex.org.tw/openapi/v1/tpex_disposal_information', 10000)).forEach(rec => {
+          const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim(), all = keys.map(val).join(' ');
+          const code = val(keys.find(k => /^(Code|SecuritiesCompanyCode)$/i.test(k)) || '');
+          const pk = keys.find(k => /\d{2,3}\/\d{1,2}\/\d{1,2}\s*[～~\-－至]\s*\d{2,3}\/\d{1,2}\/\d{1,2}/.test(val(k)));
+          if (!/^\d{4,6}[A-Z]?$/.test(code) || !pk) return;
+          const p = val(pk).match(/(\d{2,3}\/\d{1,2}\/\d{1,2})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2})/);
+          const mm = all.match(/第.次處置|再次處置/);
+          items.push({ code, level: /第二次|第三次|再次/.test(all) ? 2 : 1, measure: mm ? mm[0] : '處置', start: pfRoc(p[1]), end: pfRoc(p[2]), mkt: '上櫃' });
         });
-        pfDisposal = map;
       } catch (e) {}
+      if (!ok('tpexNotice')) try {
+        (await pfJson('https://www.tpex.org.tw/openapi/v1/tpex_trading_warning_information', 10000)).forEach(rec => {
+          const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim();
+          const code = val(keys.find(k => /^(Code|SecuritiesCompanyCode)$/i.test(k)) || '');
+          if (/^\d{4}[A-Z]?$/.test(code)) notices.push({ code, mkt: '上櫃', date: pfRoc(val(keys.find(k => /Date/i.test(k)) || '')), reason: val(keys.find(k => /Information|Reason/i.test(k)) || '') });
+        });
+      } catch (e) {}
+      const today = pfToday(), map = {};
+      items.forEach(it => {
+        if (!it.code || !it.end || it.end < today) return;
+        const cand = { ...it, state: it.start <= today ? 'active' : 'upcoming' };
+        const rank = x => (x.state === 'active' ? 10 : 0) + (x.level || 1);
+        if (!map[it.code] || rank(cand) > rank(map[it.code])) map[it.code] = cand;
+      });
+      const latest = {}; notices.forEach(n => { if (n.date && (!latest[n.mkt] || n.date > latest[n.mkt])) latest[n.mkt] = n.date; });
+      const nmap = {}; notices.forEach(n => { if (n.code && (!n.date || n.date === latest[n.mkt])) nmap[n.code] = n; });
+      pfDisposal = map; pfNotice = nmap;
     }
     function applyDisposal() {
       stockMap.forEach(s => {
         s.badges = (s.badges || []).filter(b => !b.dsp);
-        const d = pfDisposal[s.id];
-        s.disposal = d || null;
+        const d = pfDisposal[s.id], n = pfNotice[s.id];
+        s.disposal = d || null; s.notice = n || null;
+        if (n && !(d && d.state === 'active')) s.badges.unshift({ text: '注意股', dsp: true, color: 'bg-yellow-400/20 text-yellow-700 dark:text-yellow-300 border border-yellow-500/40 font-bold' });
         if (!d) return;
-        const tip = `${d.measure || ''} ${pfShort(d.start)}～${pfShort(d.end)}${d.reason ? '・' + d.reason : ''}`;
         if (d.state === 'active') {
           s.badges = s.badges.filter(b => !PF_DSP_VOL.includes(b.text));
-          s.badges.unshift({ text: d.level >= 2 ? '再次處置' : '處置', dsp: true, tip,
+          s.badges.unshift({ text: d.level >= 2 ? '再次處置' : '處置', dsp: true,
             color: d.level >= 2 ? 'bg-rose-700 text-white border border-rose-500 font-black' : 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/40 font-bold' });
         } else {
-          s.badges.unshift({ text: '即將處置', dsp: true, tip, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold' });
+          s.badges.unshift({ text: '即將處置', dsp: true, color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/40 font-bold' });
         }
       });
     }
