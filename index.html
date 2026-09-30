@@ -2256,6 +2256,7 @@
 
       document.getElementById('marketPrevClose').textContent = prevClose.toFixed(2);
       indexCloseRef = { close: closePrice, date: sheetIndexDate() };
+      sheetCloseRef = closePrice > 0 ? { close: closePrice, date: sheetIndexDate() } : null;
       document.getElementById('marketIndex').textContent = closePrice.toFixed(2);
 
       const isUp = changeVal > 0;
@@ -3831,12 +3832,22 @@ function getDynamicColorTier(rawPct) {
     }
 
     // 以即時加權覆蓋大盤卡（成交金額、漲跌家數仍用試算表）
+    let sheetCloseRef = null;
     function applyLiveIndex() {
       const tx = liveState.ok && liveState.data && liveState.data.taiex;
       if (!tx || !(tx.price > 0)) return;
       const sheetDate = sheetIndexDate();
       const liveDate = normDate(tx.time);
       if (sheetDate && liveDate && liveDate < sheetDate) return;   // 即時資料比試算表舊就不覆蓋
+      // 昨收核對：試算表正好是「前一交易日」收盤時，以試算表為準（即時來源曾把好幾天前的收盤當昨收）
+      if (sheetCloseRef && sheetCloseRef.close > 0 && liveDate && sheetCloseRef.date && sheetCloseRef.date < liveDate
+          && prevTradingDay(liveDate) === sheetCloseRef.date && Math.abs(tx.prevClose - sheetCloseRef.close) > 1) {
+        console.warn('即時昨收 ' + tx.prevClose + ' 與試算表 ' + sheetCloseRef.date + ' 收盤 ' + sheetCloseRef.close + ' 不同，改用試算表');
+        tx.prevClose = sheetCloseRef.close;
+        tx.change = Math.round((tx.price - tx.prevClose) * 100) / 100;
+        tx.pct = Math.round(tx.change / tx.prevClose * 10000) / 100;
+        tx.prevFixed = true;
+      }
       const col = tx.change > 0 ? 'text-stockRed' : (tx.change < 0 ? 'text-stockGreen' : 'text-slate-400');
       const chgTxt = (tx.change > 0 ? '+' : '') + tx.change.toFixed(2);
       const pctTxt = `(${tx.pct > 0 ? '+' : ''}${tx.pct.toFixed(2)}%)`;
@@ -4738,12 +4749,13 @@ function getDynamicColorTier(rawPct) {
         return;
       }
       const last = data[data.length - 1];
-      if (badge) badge.innerHTML = last.live ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">盤中即時 ${last.liveTime || ''}</span>` : freshBadgeHtml(last.date);
+      const liveDone = last.live && (last.liveTime || '') >= '13:30';   // 13:30 後即時棒就是今日收盤
+      if (badge) badge.innerHTML = last.live ? `<span class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">${liveDone ? '今日收盤（即時）' : '盤中即時 ' + (last.liveTime || '')}</span>` : freshBadgeHtml(last.date);
       // 盤中即時棒：成交金額只是「到目前為止」，以已開盤時間比例推估全日量再比較（僅供參考）
       let est = null;
       if (last.live && last.liveTime) {
         const [hh, mm] = last.liveTime.split(':').map(Number), el = Math.min(Math.max(hh * 60 + mm - 540, 1), 270);
-        est = el < 270 ? last.val / (el / 270) : last.val;
+        est = el < 270 ? last.val / (el / 270) : null;
       }
       const ratio = last.vma20 ? (est || last.val) / last.vma20 : null;
       const ratioLabel = ratio === null ? '' : (ratio >= 1.2 ? '量增' : (ratio <= 0.8 ? '量縮' : '持平'));
@@ -4760,7 +4772,7 @@ function getDynamicColorTier(rawPct) {
         return;
       }
       statsRow.innerHTML = [
-        last.live ? item(`成交 盤中 ${last.liveTime || ''}`, fmtYi(last.val) + '億', est && est !== last.val ? `推估全日約 ${fmtYi(est)} 億` : '') : item(`成交 ${shortDate(last.date)}`, fmtYi(last.val) + '億', last.dod === null ? '' : `${last.dod >= 0 ? '▲' : '▼'}${Math.abs(last.dod).toFixed(1)}%`),
+        last.live ? item(liveDone ? `成交 ${shortDate(last.date)}` : `成交 盤中 ${last.liveTime || ''}`, fmtYi(last.val) + '億', est && est !== last.val ? `推估全日約 ${fmtYi(est)} 億` : '') : item(`成交 ${shortDate(last.date)}`, fmtYi(last.val) + '億', last.dod === null ? '' : `${last.dod >= 0 ? '▲' : '▼'}${Math.abs(last.dod).toFixed(1)}%`),
         item('5日均量', fmtYi(last.vma5), '', 'hidden sm:inline-flex'),
         item('20日均量', fmtYi(last.vma20), '', 'hidden sm:inline-flex'),
         item(est ? '量比（推估）' : '量比', ratio === null ? '--' : ratio.toFixed(2) + 'x', ratioLabel),
@@ -5022,7 +5034,7 @@ function getDynamicColorTier(rawPct) {
       if (cross) { cross.setAttribute('x1', cx); cross.setAttribute('x2', cx); cross.setAttribute('visibility', 'visible'); }
       const chgCls = d.chg === null ? 'text-slate-300' : (d.chg > 0 ? 'text-red-400' : (d.chg < 0 ? 'text-green-400' : 'text-slate-300'));
       tip.innerHTML = `
-        <div class="font-bold text-slate-200 mb-1">${d.date}${d.live ? ` <span class="text-emerald-400">盤中 ${d.liveTime || ''}</span>` : ''}</div>
+        <div class="font-bold text-slate-200 mb-1">${d.date}${d.live ? ` <span class="text-emerald-400">${(d.liveTime || '') >= '13:30' ? '即時收盤' : '盤中 ' + (d.liveTime || '')}</span>` : ''}</div>
         ${d.c !== null ? `
         <div class="grid grid-cols-2 gap-x-3">
           <span>開 ${fmtPt(d.o)}</span><span>高 ${fmtPt(d.h)}</span>
