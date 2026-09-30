@@ -51,7 +51,10 @@
     .large-font { font-size: 1.15rem !important; }
     .large-font .stock-price { font-size: 1.35rem !important; }
     .large-font .stock-name { font-size: 1.25rem !important; }
+    /* 💡 簡易模式（與首頁共用設定）：隱藏族群選股 */
+    html.mode-simple .pro-only { display: none !important; }
   </style>
+  <script>try { if (localStorage.getItem('sp_view_mode') === 'simple') document.documentElement.classList.add('mode-simple'); } catch (e) {}</script>
 </head>
 <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans antialiased transition-colors duration-200">
 
@@ -83,7 +86,7 @@
 
         <nav class="hidden md:flex items-center space-x-6 text-sm">
           <a href="index.html" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-house text-xs"></i><span>首頁</span></a>
-          <a href="index.html#sector" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
+          <a href="index.html#sector" class="pro-only text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group text-xs"></i><span>族群選股</span></a>
           <a href="personal.html" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-user-gear text-xs"></i><span>個人化</span></a>
         </nav>
 
@@ -107,7 +110,7 @@
 
       <div class="flex md:hidden items-center justify-center gap-8 mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 text-xs w-full">
         <a href="index.html" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-house"></i><span>首頁</span></a>
-        <a href="index.html#sector" class="text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
+        <a href="index.html#sector" class="pro-only text-slate-600 dark:text-slate-400 hover:text-brand-500 transition flex items-center space-x-1.5"><i class="fa-solid fa-layer-group"></i><span>族群選股</span></a>
         <a href="personal.html" class="text-brand-500 font-bold flex items-center space-x-1.5"><i class="fa-solid fa-user-gear"></i><span>個人化</span></a>
       </div>
     </header>
@@ -1889,7 +1892,7 @@
       renderJournal();
       if (journalState.divOpen) setTimeout(() => { const el = document.getElementById(code ? 'jnDivAmt' : 'jnDivForm'); if (el) { el.scrollIntoView({ block: 'center', behavior: 'smooth' }); if (code) el.focus(); } }, 50);
     }
-    function jnPickDivStock(code) { journalState.divForm.code = code; journalState.divFlash = null; renderJournal(); setTimeout(() => { const el = document.getElementById('jnDivAmt'); if (el) el.focus(); }, 30); }
+    function jnPickDivStock(code) { journalState.divForm.code = code; journalState.divFlash = null; journalState.divFormula = null; renderJournal(); setTimeout(() => { const el = document.getElementById('jnDivAmt'); if (el) el.focus(); }, 30); }
     // 各檔登記進度：最後登記到哪個配息日、今年登記幾筆
     function jnDivProgress(holdings) {
       const logs = jnDivLogs().filter(d => !d.status), year = jnTodayIso().slice(0, 4);
@@ -1931,6 +1934,12 @@
           ${lab('發放日', `<input type="date" value="${escHtml(f.date)}" onchange="journalState.divForm.date=this.value; renderJournal()" class="${inp}">`)}
           ${lab('備註', `<input type="text" value="${escHtml(f.note)}" oninput="journalState.divForm.note=this.value" placeholder="例如 Q2 季配" maxlength="100" class="${inp}">`)}
         </div>
+        ${journalState.divFormula ? (() => { const x = journalState.divFormula; return `<div class="text-[11px] rounded-lg border border-amber-300/70 dark:border-amber-500/30 bg-amber-50 dark:bg-amber-500/10 px-3 py-2 space-y-1.5">
+          <div class="font-bold text-amber-700 dark:text-amber-400"><i class="fa-solid fa-square-root-variable mr-1"></i>${escHtml(x.stock)} 的「總配息」（${escHtml(x.cell)}）是公式，所以沒有直接覆蓋</div>
+          <div class="font-mono text-[10px] break-all bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded px-2 py-1">${escHtml(x.formula)}</div>
+          <div class="text-slate-600 dark:text-slate-300">可以把這筆接在公式最後面：<code class="font-mono text-brand-600 dark:text-brand-400 break-all">${escHtml(x.formula)}+${escHtml(String(x.amount))}</code>，原本的計算保留，撤銷時會拿掉這段。<br><span class="text-slate-500">若這個公式本身已經會自動加總配息（例如從別的欄位加總），請不要附加，改在原本的地方登記，避免重複計算。</span></div>
+          <div class="flex justify-end gap-2"><button onclick="journalState.divFormula=null; renderJournal()" class="px-3 py-1 rounded-lg border border-slate-300 dark:border-slate-700">不要</button>
+            <button onclick="jnSubmitDividend('append')" class="px-3 py-1 rounded-lg font-bold bg-amber-500 hover:bg-amber-400 text-white">附加到公式並登記</button></div></div>`; })() : ''}
         ${dup ? `<div class="text-[11px] text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-500/10 border border-amber-200/70 dark:border-amber-500/20 rounded-lg px-3 py-1.5"><i class="fa-solid fa-triangle-exclamation mr-1"></i>${escHtml(h.name)} 在 ${escHtml(dup.date)} 已經登記過 ${jnFmt(dup.amount)} 元（${escHtml(dup.time)}），確定要再登記一筆嗎？</div>` : ''}
         <div class="flex flex-wrap items-center justify-between gap-2">
           <span class="text-[10px] text-slate-500">${h ? `目前總配息 <b class="font-mono">${jnFmt(h.dividend)}</b>・持有 ${jnFmt(h.shares)} 股・${last ? `<span class="text-brand-600 dark:text-brand-400">上次登記：配息日 <b>${escHtml(last.date)}</b> 金額 <b class="font-mono">${jnFmt(last.amount)}</b>（${escHtml(last.time)} 登記）</span>` : '<span class="text-amber-600 dark:text-amber-400">這檔還沒有登記紀錄</span>'}` : '先選擇股票'}</span>
@@ -1940,17 +1949,20 @@
           </div>
         </div></div>`;
     }
-    async function jnSubmitDividend() {
+    async function jnSubmitDividend(formulaMode) {
       if (journalState.saving) return;
       const f = journalState.divForm, amt = Number(f.amount);
       if (!f.code || !isFinite(amt) || !amt) { journalState.divFlash = null; journalState.writeMsg = { ok: false, text: '請選擇股票並輸入配息金額' }; renderJournal(); return; }
       const h = (journalState.data.holdings || []).find(x => x.code === f.code);
       const dup = jnDivLogs().find(d => d.code === f.code && d.date === f.date && !d.status);
-      if (!confirm(`${dup ? '⚠ 這天已經登記過一筆 ' + jnFmt(dup.amount) + ' 元！\n\n' : ''}確定登記 ${h ? h.name : f.code} 配息 ${jnFmt(amt)} 元（${f.date}）？\n總配息 ${jnFmt(h && h.dividend)} → ${jnFmt(((h && h.dividend) || 0) + amt)}`)) return;
-      journalState.saving = true; journalState.divFlash = null; renderJournal();
+      if (!formulaMode && !confirm(`${dup ? '⚠ 這天已經登記過一筆 ' + jnFmt(dup.amount) + ' 元！\n\n' : ''}確定登記 ${h ? h.name : f.code} 配息 ${jnFmt(amt)} 元（${f.date}）？\n總配息 ${jnFmt(h && h.dividend)} → ${jnFmt(((h && h.dividend) || 0) + amt)}`)) return;
+      journalState.saving = true; journalState.divFlash = null; journalState.divFormula = null; renderJournal();
       try {
-        const r = await journalPost({ action: 'addDividend', email: currentUser.email, token: currentUser.token, code: f.code, amount: amt, date: f.date, note: f.note, force: !!dup }, 120000);
-        if (r.success) {
+        const r = await journalPost({ action: 'addDividend', email: currentUser.email, token: currentUser.token, code: f.code, amount: amt, date: f.date, note: f.note, force: !!dup, formulaMode: formulaMode || '' }, 120000);
+        if (!r.success && r.code === 'FORMULA') {
+          journalState.divFormula = { formula: r.formula || '', cell: r.cell || '', stock: r.stock || f.code, amount: amt };
+          journalState.writeMsg = null;
+        } else if (r.success) {
           (journalState.data.holdings || []).forEach(x => { if (x.code === f.code) { x.dividend = r.after; if (x.totalPlDiv !== null && x.totalPlDiv !== undefined) x.totalPlDiv += amt; } });
           if (r.entry) journalState.data.dividends = [r.entry].concat(journalState.data.dividends || []);
           journalState.divNewId = r.entry ? r.entry.id : null;
