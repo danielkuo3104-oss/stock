@@ -1212,6 +1212,23 @@
       return Math.round(price / tick) * tick;
     }
 
+    // 💡 漲跌停判斷：依昨收算出真正的漲停／跌停價（台股 10%，依價位級距取整），成交價等於該價才算
+    function twTick(p) { return p < 10 ? 0.01 : p < 50 ? 0.05 : p < 100 ? 0.1 : p < 500 ? 0.5 : p < 1000 ? 1 : 5; }
+    function twLimitState(price, change) {
+      if (!(price > 0) || !change) return null;
+      const prev = price - change;
+      if (!(prev > 0)) return null;
+      const up = prev * 1.1, dn = prev * 0.9;
+      const upP = Math.floor(up / twTick(up) + 1e-9) * twTick(up), dnP = Math.ceil(dn / twTick(dn) - 1e-9) * twTick(dn);
+      if (change > 0 && Math.abs(price - upP) < twTick(price) / 2) return 'up';
+      if (change < 0 && Math.abs(price - dnP) < twTick(price) / 2) return 'down';
+      return null;
+    }
+    // 漲停反紅、跌停反綠（底色＋白字）
+    function limitPriceCls(s) {
+      return s && s.isLimitUp ? 'bg-limitUp !text-white px-1.5 py-0.5 rounded' : (s && s.isLimitDown ? 'bg-limitDown !text-white px-1.5 py-0.5 rounded' : '');
+    }
+
     function formatTickPrice(price) {
       if (price < 10) return price.toFixed(2);
       if (price < 50) return price.toFixed(2);
@@ -1276,7 +1293,7 @@
       const colorClass = isUp ? 'text-stockRed' : (isDown ? 'text-stockGreen' : 'text-slate-800 dark:text-slate-200');
 
       document.getElementById('modalStockPrice').textContent = stock.price.toFixed(2);
-      document.getElementById('modalStockPrice').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
+      document.getElementById('modalStockPrice').className = `text-base sm:text-lg font-black font-mono ${colorClass} ${limitPriceCls(stock)}`;
 
       document.getElementById('modalStockChange').textContent = (stock.change >= 0 ? '+' : '') + stock.change.toFixed(2);
       document.getElementById('modalStockChange').className = `text-base sm:text-lg font-black font-mono ${colorClass}`;
@@ -2450,8 +2467,9 @@
 
         if (id && id !== '-' && id !== '--') {
           const pctNum = parseFloat(pctStr.replace('%', '')) || 0;
-          const isLimitUp = (pctNum >= 9.5 && change > 0);
-          const isLimitDown = (pctNum <= -9.5 && change < 0);
+          const lim = twLimitState(price, change);
+          const isLimitUp = lim === 'up' || (lim === null && pctNum >= 9.9 && change > 0);
+          const isLimitDown = lim === 'down' || (lim === null && pctNum <= -9.9 && change < 0);
           const sharedGroupChange = (groupMap[rawGroup] && groupMap[rawGroup].groupChange !== '-') ? groupMap[rawGroup].groupChange : (row[9] || '0.00%');
 
           if (!stockMultiGroupMap[id]) stockMultiGroupMap[id] = [];
@@ -3085,7 +3103,7 @@ function getDynamicColorTier(rawPct) {
               </div>
             </td>
             <td class="py-2.5 px-3 text-right font-black ${priceColor} text-xs sm:text-sm">
-              ${stock.price.toFixed(stock.price >= 100 ? 1 : 2)}
+              <span class="${limitPriceCls(stock)}">${stock.price.toFixed(stock.price >= 100 ? 1 : 2)}</span>
             </td>
             <td class="py-2.5 px-3 text-right font-bold ${priceColor} text-xs">
               ${formattedChange}
@@ -3210,7 +3228,7 @@ function getDynamicColorTier(rawPct) {
                   <span class="text-[10px] text-slate-400 font-mono">${s.id}</span>
                 </div>
                 <div class="flex items-baseline space-x-2 mt-1">
-                  <span class="text-xl font-black font-mono ${priceColor}">${s.price.toFixed(2)}</span>
+                  <span class="text-xl font-black font-mono ${priceColor} ${limitPriceCls(s)}">${s.price.toFixed(2)}</span>
                   <span class="text-xs font-bold font-mono ${priceColor}">${formattedChange} (${formattedPct})</span>
                 </div>
               </div>
@@ -3311,7 +3329,7 @@ function getDynamicColorTier(rawPct) {
                 <span class="font-mono text-[10px] font-black px-1.5 py-0.5 rounded shadow-sm ${heatTier.badge}">${formattedPct}</span>
               </div>
               <div class="my-auto py-0.5">
-                <div class="text-sm font-black font-mono ${priceColor}">${node.price.toFixed(2)}</div>
+                <div class="text-sm font-black font-mono ${priceColor}"><span class="${limitPriceCls(node)}">${node.price.toFixed(2)}</span></div>
                 <div class="text-[9px] font-bold font-mono ${priceColor}">(${formattedChange})</div>
               </div>
               <div class="text-[9px] text-slate-400 font-mono border-t border-slate-200/40 dark:border-slate-800/40 pt-0.5">
@@ -3333,7 +3351,7 @@ function getDynamicColorTier(rawPct) {
               </div>
 
               <div class="my-auto py-1">
-                <span class="text-base sm:text-lg font-black font-mono ${priceColor}">${node.price.toFixed(2)}</span>
+                <span class="text-base sm:text-lg font-black font-mono ${priceColor} ${limitPriceCls(node)}">${node.price.toFixed(2)}</span>
                 <span class="text-[10px] font-bold font-mono ml-1 ${priceColor}">(${formattedChange})</span>
               </div>
 
@@ -4310,6 +4328,7 @@ function getDynamicColorTier(rawPct) {
       try { preMarketItems = pre.status === 'fulfilled' ? parsePreMarket(pre.value) : null; } catch (e) { preMarketItems = null; }
       try { lastPostMarketData = post.status === 'fulfilled' ? parsePostMarket(post.value) : null; } catch (e) { lastPostMarketData = null; }
       try { marketVolumeBase = vol.status === 'fulfilled' ? parseVolumeSeries(vol.value) : []; } catch (e) { marketVolumeBase = []; }
+      try { patchVolumeFromPostMarket(marketVolumeBase, lastPostMarketData); } catch (e) { console.warn('盤後報告補 K 線失敗', e); }
       marketVolumeSeries = withLiveKlineBar(marketVolumeBase);
 
       try { renderIntel(); } catch (e) { console.warn('市場情報繪製失敗', e); safeSetHtml('intelView', emptyStateHtml('市場情報暫時無法顯示', true)); }
@@ -4643,6 +4662,21 @@ function getDynamicColorTier(rawPct) {
       });
       computeKlineIndicators(arr);
       return arr;
+    }
+
+    // 量能紀錄該日缺開高低收時，以盤後報告「大盤指數趨勢」的加權那列補上（後端 updateTaiexOHLC 會正式寫回試算表）
+    function patchVolumeFromPostMarket(arr, post) {
+      if (!arr.length || !post || !post.tradeDate) return;
+      const sec = post.sections.find(x => x.title.includes('大盤指數'));
+      const row = sec && sec.rows.find(r => (r[0] || '').includes('加權'));
+      if (!sec || !row || !sec.header) return;
+      const col = k => sec.header.findIndex(h => (h || '').includes(k));
+      const o = parseLooseNum(row[col('開盤')]), h = parseLooseNum(row[col('最高')]), l = parseLooseNum(row[col('最低')]), c = parseLooseNum(row[col('收盤')]);
+      if (![o, h, l, c].every(x => x !== null && x > 1000)) return;
+      const p = arr.find(x => x.date === post.tradeDate);
+      if (!p || p.c !== null) return;
+      p.o = o; p.h = Math.max(h, o, c); p.l = Math.min(l, o, c); p.c = c; p.fromReport = true;
+      computeKlineIndicators(arr);
     }
 
     // 盤中：即時加權比量能紀錄新一天時，補一根「今日即時」K 棒（需有開高低與成交金額）；缺資料就不補，並在統計列說明
@@ -5223,11 +5257,20 @@ function getDynamicColorTier(rawPct) {
       else {
         const today = taipeiTodayStr();
         const map = {};
+        const byCode = {};
         items.forEach(it => {
           if (!it.code || !it.end || it.end < today) return;              // 已結束
-          const cand = { ...it, state: it.start <= today ? 'active' : 'upcoming' };
-          const rank = x => (x.state === 'active' ? 10 : 0) + (x.level || 1);
-          if (!map[it.code] || rank(cand) > rank(map[it.code])) map[it.code] = cand;
+          (byCode[it.code] = byCode[it.code] || []).push({ ...it, state: it.start <= today ? 'active' : 'upcoming' });
+        });
+        // 同一檔有多筆（例如處置中又公告「再次處置」）：以最新公告那筆為主，期間從目前這次的起日接到新公告的迄日
+        Object.keys(byCode).forEach(code => {
+          const L = byCode[code].sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : (a.level || 1) - (b.level || 1)));
+          const act = L.filter(x => x.state === 'active').pop(), newest = L[L.length - 1];
+          if (act && newest !== act && newest.state === 'upcoming') {
+            map[code] = { ...newest, state: 'active', level: Math.max(2, newest.level || 1, act.level || 1), start: act.start, end: newest.end,
+              measure: (/第.次|再次/.test(newest.measure || '') ? newest.measure : '再次處置') + '（已公告，' + newest.start.slice(5).replace('-', '/') + ' 起）',
+              chain: { current: act, next: newest } };
+          } else map[code] = act || newest;
         });
         // 注意股：各市場取最新公告日
         const latest = {};
