@@ -556,8 +556,8 @@
           note1: row[12] ? row[12].trim() : '',
           note2: row[13] ? row[13].trim() : '',
           turnover: volume * 1000 * price,
-          isLimitUp: pctNum >= 9.5 && change > 0,
-          isLimitDown: pctNum <= -9.5 && change < 0,
+          isLimitUp: pfLimitState(price, change) === 'up' || (pfLimitState(price, change) === null && pctNum >= 9.9 && change > 0),
+          isLimitDown: pfLimitState(price, change) === 'down' || (pfLimitState(price, change) === null && pctNum <= -9.9 && change < 0),
           tenDayHistory, tenDayVol, dataDate
         };
         computeDerived(stock);
@@ -609,11 +609,20 @@
         });
       } catch (e) {}
       const today = pfToday(), map = {};
+      const byCode = {};
       items.forEach(it => {
-        if (!it.code || !it.end || it.end < today) return;
-        const cand = { ...it, state: it.start <= today ? 'active' : 'upcoming' };
-        const rank = x => (x.state === 'active' ? 10 : 0) + (x.level || 1);
-        if (!map[it.code] || rank(cand) > rank(map[it.code])) map[it.code] = cand;
+        if (!it.code || !it.end || it.end < today) return;              // 已結束
+        (byCode[it.code] = byCode[it.code] || []).push({ ...it, state: it.start <= today ? 'active' : 'upcoming' });
+      });
+      // 同一檔有多筆（例如處置中又公告「再次處置」）：以最新公告那筆為主，期間從目前這次的起日接到新公告的迄日
+      Object.keys(byCode).forEach(code => {
+        const L = byCode[code].sort((a, b) => (a.start < b.start ? -1 : a.start > b.start ? 1 : (a.level || 1) - (b.level || 1)));
+        const act = L.filter(x => x.state === 'active').pop(), newest = L[L.length - 1];
+        if (act && newest !== act && newest.state === 'upcoming') {
+          map[code] = { ...newest, state: 'active', level: Math.max(2, newest.level || 1, act.level || 1), start: act.start, end: newest.end,
+            measure: (/第.次|再次/.test(newest.measure || '') ? newest.measure : '再次處置') + '（已公告，' + newest.start.slice(5).replace('-', '/') + ' 起）',
+            chain: { current: act, next: newest } };
+        } else map[code] = act || newest;
       });
       const latest = {}; notices.forEach(n => { if (n.date && (!latest[n.mkt] || n.date > latest[n.mkt])) latest[n.mkt] = n.date; });
       const nmap = {}; notices.forEach(n => { if (n.code && (!n.date || n.date === latest[n.mkt])) nmap[n.code] = n; });
@@ -861,6 +870,17 @@
     function colOf(v) { return v > 0 ? 'text-stockRed' : (v < 0 ? 'text-stockGreen' : 'text-slate-500 dark:text-slate-400'); }
     function fmtHD(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? d.replace(/-/g, '/') : (d ? '日期補查中' : '--'); }
 
+    // 漲跌停：依昨收算出真正的漲停／跌停價（10%、依價位級距取整），成交價等於該價才算
+    function pfTick(p) { return p < 10 ? 0.01 : p < 50 ? 0.05 : p < 100 ? 0.1 : p < 500 ? 0.5 : p < 1000 ? 1 : 5; }
+    function pfLimitState(price, change) {
+      if (!(price > 0) || !change) return null;
+      const prev = price - change; if (!(prev > 0)) return null;
+      const up = prev * 1.1, dn = prev * 0.9;
+      const upP = Math.floor(up / pfTick(up) + 1e-9) * pfTick(up), dnP = Math.ceil(dn / pfTick(dn) - 1e-9) * pfTick(dn);
+      if (change > 0 && Math.abs(price - upP) < pfTick(price) / 2) return 'up';
+      if (change < 0 && Math.abs(price - dnP) < pfTick(price) / 2) return 'down';
+      return null;
+    }
     function openStockDetail(id) {
       const s = stockMap.get(id);
       if (!s) return;
@@ -963,7 +983,7 @@
         </div>
 
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          ${tile('收盤價', `<span class="${col}">${fmtNum(s.price)}</span>`)}
+          ${tile('收盤價', `<span class="${s.isLimitUp ? 'bg-limitUp text-white px-1.5 rounded' : (s.isLimitDown ? 'bg-limitDown text-white px-1.5 rounded' : col)}">${fmtNum(s.price)}</span>`)}
           ${tile('漲跌', `<span class="${col}">${s.change >= 0 ? '+' : ''}${s.change.toFixed(2)}</span>`)}
           ${tile('漲跌幅', `<span class="${col}">${escHtml(pctTxt)}</span>`)}
           ${tile('成交量', Math.round(s.volume).toLocaleString(), '張')}
@@ -1270,7 +1290,7 @@
             ${seg('range', journalState.range, [[20, '20日'], [60, '60日'], [120, '120日'], [0, '全期']], 'setJournalRange')}
           </div>
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
-            ${chartBox('jc_nav', '資產淨值與成本', '淨值與成本之間的色帶＝未實現損益（藍：淨值高於成本；灰：低於成本）')}
+            ${chartBox('jc_nav', '資產淨值與成本', '通道：兩線之間的色帶＝未實現損益；可切換只看市值、只看成本或損益走勢')}
             ${chartBox('jc_roi', '累計報酬率（含息 vs 不含息）')}
             ${chartBox('jc_bench', '策略績效 vs 加權指數', '以每日損益 ÷ 前日淨值串接的時間加權報酬，區間起點歸零')}
             ${chartBox('jc_daily', '每日損益變動')}
@@ -1317,7 +1337,7 @@
 
     function chartBox(id, title, note = '', html = false) {
       return `<div class="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl p-3 min-w-0">
-        <div class="flex flex-wrap items-center justify-between gap-2 mb-1"><h3 class="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">${title}</h3><div class="flex flex-wrap items-center justify-end gap-2"><div id="${id}_tools"></div><div id="${id}_legend" class="flex flex-wrap justify-end gap-x-2 text-[10px]"></div></div></div>
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-1"><h3 id="${id}_title" class="text-[11px] sm:text-xs font-bold text-slate-700 dark:text-slate-200">${title}</h3><div class="flex flex-wrap items-center justify-end gap-2"><div id="${id}_tools"></div><div id="${id}_legend" class="flex flex-wrap justify-end gap-x-2 text-[10px]"></div></div></div>
         ${note ? `<p class="text-[9px] text-slate-400 mb-1">${note}</p>` : ''}
         <div id="${id}" class="relative w-full ${html ? '' : 'h-[190px] sm:h-[210px]'}"></div>
         <div id="${id}_note" class="empty:hidden mt-2 flex flex-wrap gap-1.5"></div>
@@ -1412,13 +1432,39 @@
       const ok = v => v !== null && v !== undefined && !isNaN(v);
       const pp = v => ok(v) ? (v > 0 ? '+' : '') + v.toFixed(2) + '%' : '--';   // 百分點差
 
-      // 1) 資產淨值與成本：通道圖（兩線之間填色）
-      lineChart('jc_nav', dates, [
+      // 1) 資產淨值與成本：通道（兩線之間填色）／只看市值／只看成本／損益走勢
+      const nv = journalState.navView || 'band';
+      setChartTools('jc_nav', jnSeg(nv, [['band', '通道'], ['value', '市值'], ['cost', '成本'], ['pl', '損益']], 'setNavView'));
+      const plArr = H.map(h => ok(h.tv) && ok(h.tCost) ? h.tv - h.tCost : null);
+      if (nv === 'band') lineChart('jc_nav', dates, [
         { name: '總淨值', values: H.map(h => h.tv), color: JN_COLORS.a, width: 2.2 },
         { name: '庫存成本', values: H.map(h => h.tCost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }
-      ], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, bandColors: [JN_COLORS.a, '#94a3b8'], endGap: d => [d >= 0 ? '未實現' : '未實現', (d >= 0 ? '+' : '') + axisLabel(d)], extraTip: i => { const d = ok(H[i].tv) && ok(H[i].tCost) ? H[i].tv - H[i].tCost : null; return `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(d)}</b></div>`; } });
+      ], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, bandColors: [JN_COLORS.a, '#94a3b8'], endGap: d => ['未實現', (d >= 0 ? '+' : '') + axisLabel(d)], extraTip: i => `<div class="border-t border-slate-700 mt-0.5 pt-0.5">獲利 <b class="${plArr[i] >= 0 ? 'text-red-400' : 'text-green-400'}">${jnSigned(plArr[i])}</b></div>` });
+      else if (nv === 'value') lineChart('jc_nav', dates, [{ name: '總淨值（市值）', values: H.map(h => h.tv), color: JN_COLORS.a, width: 2.2, area: true }], v => jnFmt(v), false, { tight: true, dots: true });
+      else if (nv === 'cost') lineChart('jc_nav', dates, [{ name: '庫存成本', values: H.map(h => h.tCost), color: '#64748b', width: 2, area: true }], v => jnFmt(v), false, { tight: true, dots: true });
+      else {
+        const pv = journalState.plView || 'un';
+        const rz = jnRealizedSeries(J, dates);
+        const arr = pv === 'un' ? plArr : pv === 'rz' ? rz.values : plArr.map((v, i) => v === null || rz.values[i] === null ? null : v + rz.values[i]);
+        const label = pv === 'un' ? '未實現損益（淨值−成本）' : pv === 'rz' ? '累計已實現損益' : '總損益（未實現＋已實現）';
+        lineChart('jc_nav', dates, [{ name: label, values: arr, color: '#64748b', width: 2 }], v => jnSigned(v), false, { band: [0, null], zero: true, dots: true, bandColors: ['#ef4444', '#22c55e'],
+          extraTip: i => pv === 'sum' ? `<div class="border-t border-slate-700 mt-0.5 pt-0.5 text-slate-300">未實現 ${jnSigned(plArr[i])}・已實現 ${jnSigned(rz.values[i])}</div>` : '' });
+        const sub = document.getElementById('jc_nav_tools');
+        if (sub) sub.insertAdjacentHTML('beforeend', `<div class="mt-1 flex justify-end">${jnSeg(pv, [['un', '未實現'], ['rz', '已實現'], ['sum', '加總']], 'setPlView')}</div>`);
+        journalState._rzNote = rz;
+      }
       const profit = ok(L.tPl) ? L.tPl : (ok(L.tv) && ok(L.tCost) ? L.tv - L.tCost : null);
       const profit0 = ok(F.tPl) ? F.tPl : (ok(F.tv) && ok(F.tCost) ? F.tv - F.tCost : null);
+      if (nv === 'pl' && journalState._rzNote) {
+        const rz = journalState._rzNote, lastRz = rz.values[rz.values.length - 1], firstRz = rz.values.find(v => v !== null);
+        setChartNote('jc_nav', [
+          ['未實現', jnSigned(profit), jnCol(profit)],
+          ['已實現（累計）', jnSigned(lastRz), jnCol(lastRz)],
+          ['加總', jnSigned((profit || 0) + (lastRz || 0)), jnCol((profit || 0) + (lastRz || 0))],
+          H.length > 1 && lastRz !== null && firstRz !== null ? ['區間已實現', jnSigned(lastRz - firstRz), jnCol(lastRz - firstRz)] : null,
+          rz.estimated ? ['已實現走勢', '依交易紀錄推算', 'text-slate-500'] : null
+        ]);
+      } else
       setChartNote('jc_nav', [
         ['當前獲利', jnSigned(profit), jnCol(profit)],
         ['報酬率', jnPct(ok(L.tRoi) ? L.tRoi : (profit !== null && L.tCost ? profit / L.tCost * 100 : null)), jnCol(profit)],
@@ -1448,7 +1494,7 @@
       const iArr = H.map(h => (h.idx && idx0) ? (h.idx / idx0 - 1) * 100 : null);
       lineChart('jc_bench', dates, [
         { name: '我的策略', values: sArr, color: JN_COLORS.a },
-        { name: '加權指數', values: iArr, color: JN_COLORS.muted, dash: true }
+        { name: '加權指數', values: iArr, color: '#8b5cf6', width: 1.8 }
       ], v => v.toFixed(1) + '%', true);
       const sL = sArr[sArr.length - 1], iL = [...iArr].reverse().find(ok);
       setChartNote('jc_bench', [
@@ -1498,14 +1544,48 @@
       ] : []);
 
       renderAllocChart();
-      const contrib = (J.holdings || []).filter(h => h.totalPlDiv !== null && h.totalPlDiv !== 0);
-      contribChart('jc_contrib', contrib);
-      const cl = contrib.filter(h => !(h.shares > 0));
-      setChartNote('jc_contrib', contrib.length ? [
-        ['合計含息損益', jnSigned(sum(contrib.map(h => h.totalPlDiv))), jnCol(sum(contrib.map(h => h.totalPlDiv)))],
-        cl.length ? ['已出清 ' + cl.length + ' 檔', jnSigned(sum(cl.map(h => h.totalPlDiv))), jnCol(sum(cl.map(h => h.totalPlDiv)))] : null
+      renderContribChart();
+    }
+    // 損益貢獻：含息（總損益＋配息）／不含息（總損益）切換
+    function renderContribChart() {
+      const J = journalState.data; if (!J) return;
+      const withDiv = journalState.contribMode !== 'nodiv', key = withDiv ? 'totalPlDiv' : 'totalPl';
+      setChartTools('jc_contrib', jnSeg(withDiv ? 'div' : 'nodiv', [['div', '含息'], ['nodiv', '不含息']], 'setContribMode'));
+      const t = document.getElementById('jc_contrib_title'); if (t) t.textContent = withDiv ? '損益貢獻（含息總損益）' : '損益貢獻（不含息總損益）';
+      const items = (J.holdings || []).filter(h => h[key] !== null && h[key] !== undefined && h[key] !== 0).map(h => ({ ...h, totalPlDiv: h[key] }));
+      contribChart('jc_contrib', items);
+      const sum = a => a.reduce((x, y) => x + y, 0), cl = items.filter(h => !(h.shares > 0));
+      setChartNote('jc_contrib', items.length ? [
+        [withDiv ? '合計含息損益' : '合計損益（不含息）', jnSigned(sum(items.map(h => h.totalPlDiv))), jnCol(sum(items.map(h => h.totalPlDiv)))],
+        cl.length ? ['已出清 ' + cl.length + ' 檔', jnSigned(sum(cl.map(h => h.totalPlDiv))), jnCol(sum(cl.map(h => h.totalPlDiv)))] : null,
+        !withDiv ? ['股息另計', jnSigned(sum((J.holdings || []).map(h => h.dividend || 0))), 'text-stockRed'] : null
       ] : []);
     }
+    function setContribMode(v) { journalState.contribMode = v; renderContribChart(); }
+    function setPlView(v) { journalState.plView = v; if (journalState.data) renderJournalCharts(journalState.data); }
+    // 累計已實現損益走勢：紀錄中心沒有逐日的已實現欄，改由交易紀錄以平均成本法逐日推算，
+    //   最後一天對齊日誌的「已了結」合計（差額視為早於紀錄的交易或稅費差異，整條平移）
+    function jnRealizedSeries(J, dates) {
+      const trades = (J.trades || []).filter(t => t.date && t.shares > 0 && t.price > 0).slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (jnIsBuy(a) ? -1 : 1));
+      const pos = {}, daily = [];
+      let cum = 0;
+      trades.forEach(t => {
+        const p = pos[t.code] = pos[t.code] || { sh: 0, cost: 0 };
+        if (jnIsBuy(t)) { p.sh += t.shares; p.cost += t.shares * t.price + (t.fee || 0); }
+        else if (p.sh > 0) {
+          const n = Math.min(t.shares, p.sh), avg = p.cost / p.sh;
+          cum += n * t.price - (t.fee || 0) - avg * n;
+          p.cost -= avg * n; p.sh -= n;
+        }
+        daily.push([t.date, cum]);
+      });
+      let k = 0, cur = 0;
+      const values = dates.map(d => { while (k < daily.length && daily[k][0] <= d) { cur = daily[k][1]; k++; } return cur; });
+      const sheetTotal = jnRealized(J.holdings || [], 'total').total;
+      const off = values.length && isFinite(sheetTotal) ? sheetTotal - cum : 0;
+      return { values: values.map(v => Math.round(v + off)), estimated: true, offset: off };
+    }
+    function setNavView(v) { journalState.navView = v; if (journalState.data) renderJournalCharts(journalState.data); }
     function setDailyView(v) { journalState.dailyView = v; if (journalState.data) renderJournalCharts(journalState.data); }
 
     // 持股現值配置：全部 / ETF / 個股，「其他」可展開
@@ -1859,15 +1939,68 @@
         <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
           <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-lightbulb text-brand-500"></i>買賣原因統計</h2>
           <div class="flex items-center gap-2">
+            <button onclick="journalState.reasonEditor=!journalState.reasonEditor; renderJournal()" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border ${journalState.reasonEditor ? 'bg-brand-600 text-white border-brand-600' : 'border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300'}"><i class="fa-solid fa-list-check mr-1"></i>管理原因選項</button>
             ${jnSeg(sc === 'all' ? 'all' : 'one', [['all', '綜合'], ['one', '個別']], 'jnReasonMode')}
             ${sc !== 'all' || journalState.reasonScopeOne ? `<select onchange="setReasonScope(this.value)" class="bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px] max-w-[10rem]">
               ${codes.map(c => `<option value="${escHtml(c.code)}" ${c.code === sc ? 'selected' : ''}>${escHtml(c.name)} ${escHtml(c.code)}</option>`).join('')}</select>` : ''}
           </div>
         </div>
         ${!lists || (!lists.buy.length && !lists.sell.length) ? `<p class="text-[10px] text-slate-400 mb-2"><i class="fa-solid fa-circle-info mr-1"></i>${lists ? '讀不到日誌「資料中心」G2／H2 的下拉選單，編輯時改為自行輸入。' : '按右上角「重新讀取」可載入「資料中心」G2（買入）／H2（賣出）的原因選單。'}</p>` : ''}
+        ${journalState.reasonEditor ? jnReasonEditorHtml(J) : ''}
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">${block('buy', group('buy'))}${block('sell', group('sell'))}</div>
         ${pendingHtml}
         <p class="mt-2 text-[10px] text-slate-400">交易紀錄的原因標籤可直接點擊修改，會寫回你的日誌（需共用為「編輯者」）。</p>`;
+    }
+    // ---------- 管理原因選項（寫回資料中心 G2／H2 的下拉選單）----------
+    function jnReasonEditorHtml(J) {
+      const L = J.reasonLists || { buy: [], sell: [] }, trades = J.trades || [];
+      const col = side => {
+        const list = (L[side] || []).filter(x => x !== JN_UNFILLED);
+        return `<div class="min-w-0">
+          <div class="text-xs font-bold mb-1.5 ${side === 'buy' ? 'text-stockRed' : 'text-stockGreen'}">${side === 'buy' ? '買入原因（資料中心 G2）' : '賣出原因（資料中心 H2）'}</div>
+          <div class="flex flex-wrap gap-1.5 mb-2">
+            ${list.map(x => { const n = trades.filter(t => t.reason === x).length, ex = escHtml(x).replace(/'/g, '&#39;'); return `<span class="inline-flex items-center gap-1 pl-2 pr-1 py-0.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-[11px]">
+              ${escHtml(x)}<span class="text-[9px] text-slate-400 font-mono">${n}</span>
+              <button title="改名" onclick="jnReasonRename('${side}', this.dataset.v)" data-v="${ex}" class="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-brand-500"><i class="fa-solid fa-pen text-[9px]"></i></button>
+              <button title="刪除" onclick="jnReasonRemove('${side}', this.dataset.v)" data-v="${ex}" class="w-5 h-5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-rose-500"><i class="fa-solid fa-xmark text-[10px]"></i></button></span>`; }).join('') || '<span class="text-[11px] text-slate-400">尚無選項</span>'}
+          </div>
+          <div class="flex gap-1.5"><input id="jnNewReason_${side}" type="text" maxlength="40" placeholder="新增${side === 'buy' ? '買入' : '賣出'}原因" onkeydown="if(event.key==='Enter')jnReasonAdd('${side}')" class="flex-1 min-w-0 bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px]">
+            <button onclick="jnReasonAdd('${side}')" ${journalState.saving ? 'disabled' : ''} class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-brand-600 hover:bg-brand-500 text-white disabled:opacity-50">新增</button></div>
+        </div>`;
+      };
+      return `<div class="mb-4 rounded-xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/50 dark:bg-brand-500/5 p-3 space-y-2">
+        <div class="text-[10px] text-slate-500">修改會直接寫回你日誌的下拉選單（需共用為「編輯者」）。改名時，交易紀錄裡用舊名稱的原因會一起改；刪除只移除選項，既有交易保留原本的原因。數字＝目前使用的交易筆數。</div>
+        ${!J.reasonLists ? '<div class="text-[11px] text-amber-600">尚未載入原因清單，請先按右上角「重新讀取」。</div>' : `<div class="grid grid-cols-1 md:grid-cols-2 gap-4">${col('buy')}${col('sell')}</div>`}
+      </div>`;
+    }
+    async function jnReasonListOp(side, op, value, newValue) {
+      if (journalState.saving) return;
+      journalState.saving = true; journalState.writeMsg = { ok: true, text: '更新原因選項中…' }; renderJournal();
+      try {
+        const r = await journalPost({ action: 'editReasonList', email: currentUser.email, token: currentUser.token, side, op, value, newValue }, 90000);
+        if (r.success) {
+          journalState.data.reasonLists = journalState.data.reasonLists || { buy: [], sell: [] };
+          journalState.data.reasonLists[side] = r.list;
+          if (op === 'rename') (journalState.data.trades || []).forEach(t => { if (t.reason === value) t.reason = newValue; });
+          journalState.writeMsg = { ok: true, text: r.message };
+        } else journalState.writeMsg = { ok: false, code: r.code, text: r.message || '更新失敗' };
+      } catch (e) { journalState.writeMsg = { ok: false, text: '連線失敗：' + ((e && e.message) || e) }; }
+      journalState.saving = false; renderJournal();
+    }
+    function jnReasonAdd(side) {
+      const el = document.getElementById('jnNewReason_' + side), v = (el && el.value || '').trim();
+      if (!v) return;
+      jnReasonListOp(side, 'add', v);
+    }
+    function jnReasonRename(side, v) {
+      const nv = (prompt(`把「${v}」改成：`, v) || '').trim();
+      if (!nv || nv === v) return;
+      jnReasonListOp(side, 'rename', v, nv);
+    }
+    function jnReasonRemove(side, v) {
+      const n = ((journalState.data || {}).trades || []).filter(t => t.reason === v).length;
+      if (!confirm(`刪除選項「${v}」？${n ? `\n目前有 ${n} 筆交易使用它，這些紀錄會保留原本的原因。` : ''}`)) return;
+      jnReasonListOp(side, 'remove', v);
     }
     function jnReasonMode(v) {
       if (v === 'all') { journalState.reasonScope = 'all'; journalState.reasonScopeOne = false; }
