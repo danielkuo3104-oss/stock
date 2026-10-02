@@ -1292,11 +1292,11 @@
           <div class="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4">
             ${chartBox('jc_nav', '資產淨值與成本', '通道：兩線之間的色帶＝未實現損益；可切換只看市值、只看成本或損益走勢')}
             ${chartBox('jc_roi', '累計報酬率（含息 vs 不含息）')}
-            ${chartBox('jc_bench', '策略績效 vs 加權指數', '以每日損益 ÷ 前日淨值串接的時間加權報酬，區間起點歸零')}
+            ${chartBox('jc_bench', '策略績效 vs 加權指數', '時間加權報酬，區間起點歸零；色帶＝超額報酬（紅：贏過大盤、綠：落後）。兩線太接近時切到「超額」看差距')}
             ${chartBox('jc_daily', '每日損益變動')}
             ${chartBox('jc_split', '個股 vs ETF 含息報酬率')}
             ${chartBox('jc_cost', '個股 vs ETF 成本趨勢')}
-            ${chartBox('jc_alloc', '持股現值配置', '', true)}
+            ${chartBox('jc_alloc', '持股現況配置', '', true)}
             ${chartBox('jc_contrib', '損益貢獻（含息總損益）', '', true)}
           </div>
         `)}
@@ -1492,10 +1492,20 @@
       }
       const idx0 = H.find(h => h.idx)?.idx;
       const iArr = H.map(h => (h.idx && idx0) ? (h.idx / idx0 - 1) * 100 : null);
+      const bv = journalState.benchView || 'cmp';
+      setChartTools('jc_bench', jnSeg(bv, [['cmp', '對比'], ['ex', '超額']], 'setBenchView'));
+      if (bv === 'ex') {
+        const exArr = sArr.map((v, i) => ok(v) && ok(iArr[i]) ? v - iArr[i] : null);
+        lineChart('jc_bench', dates, [{ name: '超額報酬（策略−加權）', values: exArr, color: '#64748b', width: 2 }], v => (v >= 0 ? '+' : '') + v.toFixed(2) + '%', true,
+          { band: [0, null], zero: true, dots: true, bandColors: ['#ef4444', '#22c55e'],
+            extraTip: i => `<div class="border-t border-slate-700 mt-0.5 pt-0.5 text-slate-300">策略 ${jnPct(sArr[i])}・加權 ${jnPct(iArr[i])}</div>` });
+      } else
       lineChart('jc_bench', dates, [
-        { name: '我的策略', values: sArr, color: JN_COLORS.a },
-        { name: '加權指數', values: iArr, color: '#8b5cf6', width: 1.8 }
-      ], v => v.toFixed(1) + '%', true);
+        { name: '我的策略', values: sArr, color: JN_COLORS.a, width: 2.2 },
+        { name: '加權指數', values: iArr, color: '#f97316', width: 1.6, dash: true, dashArray: '5 3' }
+      ], v => v.toFixed(1) + '%', true, { band: [0, 1], bandColors: ['#ef4444', '#22c55e'], dots: true,
+        endGap: d => ['超額', (d >= 0 ? '+' : '') + d.toFixed(2) + '%'],
+        extraTip: i => { const d = ok(sArr[i]) && ok(iArr[i]) ? sArr[i] - iArr[i] : null; return d === null ? '' : `<div class="border-t border-slate-700 mt-0.5 pt-0.5">超額報酬 <b class="${d >= 0 ? 'text-red-400' : 'text-green-400'}">${(d >= 0 ? '+' : '') + d.toFixed(2)}%</b></div>`; } });
       const sL = sArr[sArr.length - 1], iL = [...iArr].reverse().find(ok);
       setChartNote('jc_bench', [
         ['策略增益', pp(ok(iL) ? sL - iL : null), jnCol(ok(iL) ? sL - iL : 0)],
@@ -1585,21 +1595,38 @@
       const off = values.length && isFinite(sheetTotal) ? sheetTotal - cum : 0;
       return { values: values.map(v => Math.round(v + off)), estimated: true, offset: off };
     }
+    function setBenchView(v) { journalState.benchView = v; if (journalState.data) renderJournalCharts(journalState.data); }
     function setNavView(v) { journalState.navView = v; if (journalState.data) renderJournalCharts(journalState.data); }
     function setDailyView(v) { journalState.dailyView = v; if (journalState.data) renderJournalCharts(journalState.data); }
 
     // 持股現值配置：全部 / ETF / 個股，「其他」可展開
     function renderAllocChart() {
       const J = journalState.data; if (!J) return;
-      const view = journalState.allocView;
-      setChartTools('jc_alloc', jnSeg(view, [['all', '全部'], ['etf', 'ETF'], ['stock', '個股']], 'setAllocView'));
-      const items = (J.holdings || []).filter(h => h.shares > 0 && (view === 'all' || h.type === view))
-        .map(h => ({ ...h, val: h.value || h.price * h.shares || 0 })).sort((a, b) => b.val - a.val);
-      donutChart('jc_alloc', items, { split: view === 'all', more: journalState.allocMore });
-      const tot = items.reduce((a, h) => a + h.val, 0);
-      const top3 = items.slice(0, 3).reduce((a, h) => a + h.val, 0);
-      setChartNote('jc_alloc', tot ? [['總現值', jnFmt(tot)], ['檔數', items.length], ['前三大集中度', (top3 / tot * 100).toFixed(1) + '%']] : []);
+      const view = journalState.allocView, metric = journalState.allocMetric || 'value';
+      setChartTools('jc_alloc', `<div class="flex flex-wrap justify-end gap-1.5">${jnSeg(metric, [['value', '現值'], ['pl', '未實現損益'], ['div', '配息']], 'setAllocMetric')}${jnSeg(view, [['all', '全部'], ['etf', 'ETF'], ['stock', '個股']], 'setAllocView')}</div>`);
+      const pick = h => view === 'all' || h.type === view;
+      let items, opts, note;
+      if (metric === 'value') {
+        items = (J.holdings || []).filter(h => h.shares > 0 && pick(h)).map(h => ({ ...h, val: h.value || h.price * h.shares || 0 })).sort((a, b) => b.val - a.val);
+        const tot = items.reduce((a, h) => a + h.val, 0), top3 = items.slice(0, 3).reduce((a, h) => a + h.val, 0);
+        opts = { split: view === 'all', more: journalState.allocMore, showAmt: false };
+        note = tot ? [['總現值', jnFmt(tot)], ['檔數', items.length], ['前三大集中度', (top3 / tot * 100).toFixed(1) + '%']] : [];
+      } else if (metric === 'pl') {
+        // 未實現損益佔比：以「絕對值」決定扇形大小，虧損的以負號、綠字標示
+        items = (J.holdings || []).filter(h => h.shares > 0 && pick(h) && h.unrealized).map(h => ({ ...h, val: Math.abs(h.unrealized), signed: h.unrealized })).sort((a, b) => b.signed - a.signed);
+        const net = items.reduce((a, h) => a + h.signed, 0), gain = items.filter(h => h.signed > 0), loss = items.filter(h => h.signed < 0);
+        opts = { split: false, more: journalState.allocMore, showAmt: true, signedCol: true, centerLabel: '未實現合計', centerVal: net };
+        note = items.length ? [['未實現合計', jnSigned(net), jnCol(net)], ['獲利 ' + gain.length + ' 檔', jnSigned(gain.reduce((a, h) => a + h.signed, 0)), 'text-stockRed'], loss.length ? ['虧損 ' + loss.length + ' 檔', jnSigned(loss.reduce((a, h) => a + h.signed, 0)), 'text-stockGreen'] : null] : [];
+      } else {
+        items = (J.holdings || []).filter(h => h.dividend > 0 && pick(h)).map(h => ({ ...h, val: h.dividend })).sort((a, b) => b.val - a.val);
+        const tot = items.reduce((a, h) => a + h.val, 0), cl = items.filter(h => !(h.shares > 0));
+        opts = { split: view === 'all', more: journalState.allocMore, showAmt: true, centerLabel: '累計配息', centerVal: tot };
+        note = tot ? [['累計配息', jnFmt(tot)], ['檔數', items.length], cl.length ? ['含已出清 ' + cl.length + ' 檔', jnFmt(cl.reduce((a, h) => a + h.val, 0))] : null] : [];
+      }
+      donutChart('jc_alloc', items, opts);
+      setChartNote('jc_alloc', note);
     }
+    function setAllocMetric(v) { journalState.allocMetric = v; journalState.allocMore = false; renderAllocChart(); }
     function setAllocView(v) { journalState.allocView = v; journalState.allocMore = false; renderAllocChart(); }
     function toggleAllocMore() { journalState.allocMore = !journalState.allocMore; renderAllocChart(); }
 
@@ -1756,9 +1783,11 @@
       if (!total) { el.innerHTML = '<div class="py-8 text-center text-[11px] text-slate-400">暫無持股</div>'; return; }
       const top = items.slice(0, 8);
       const rest = items.slice(8).reduce((a, h) => a + h.val, 0);
-      const parts = top.map((h, i) => ({ name: h.name, code: h.code, val: h.val, color: DONUT_COLORS[i], type: h.type }));
+      const parts = top.map((h, i) => ({ name: h.name, code: h.code, val: h.val, signed: h.signed, color: DONUT_COLORS[i], type: h.type }));
       const restItems = items.slice(8);
-      if (rest > 0) parts.push({ name: '其他（' + restItems.length + ' 檔）', code: '', val: rest, color: DONUT_COLORS[8], other: true });
+      if (rest > 0) parts.push({ name: '其他（' + restItems.length + ' 檔）', code: '', val: rest, signed: restItems.reduce((a, h) => a + (h.signed !== undefined ? h.signed : h.val), 0), color: DONUT_COLORS[8], other: true });
+      const sv = p => p.signed !== undefined ? p.signed : p.val;   // 顯示用（可為負，例如虧損中的未實現）
+      const amt = p => opts.showAmt ? `<span class="font-mono text-[10px] ${opts.signedCol ? jnCol(sv(p)) : 'text-slate-400'} mr-1.5">${opts.signedCol ? jnSigned(sv(p)) : jnFmt(sv(p))}</span>` : '';
       const etfV = items.filter(h => h.type === 'etf').reduce((a, h) => a + h.val, 0);
       const R = 62, r = 40, C = 74;
       let ang = -Math.PI / 2, arcs = '';
@@ -1772,16 +1801,16 @@
       });
       el.innerHTML = `<div class="flex flex-col sm:flex-row items-center gap-3">
         <svg width="148" height="148" viewBox="0 0 148 148" class="shrink-0">${arcs}
-          <text x="${C}" y="${C - 4}" text-anchor="middle" font-size="9" class="fill-slate-500 dark:fill-slate-400">總現值</text>
-          <text x="${C}" y="${C + 10}" text-anchor="middle" font-size="12" font-weight="800" font-family="ui-monospace,monospace" class="fill-slate-900 dark:fill-slate-100">${axisLabel(total)}</text></svg>
+          <text x="${C}" y="${C - 4}" text-anchor="middle" font-size="9" class="fill-slate-500 dark:fill-slate-400">${opts.centerLabel || '總現值'}</text>
+          <text x="${C}" y="${C + 10}" text-anchor="middle" font-size="12" font-weight="800" font-family="ui-monospace,monospace" class="${opts.centerVal !== undefined && opts.signedCol ? (opts.centerVal >= 0 ? 'fill-red-500' : 'fill-green-500') : 'fill-slate-900 dark:fill-slate-100'}">${opts.centerVal !== undefined ? (opts.signedCol && opts.centerVal > 0 ? '+' : '') + axisLabel(opts.centerVal) : axisLabel(total)}</text></svg>
         <div class="flex-1 w-full space-y-1">
           <div class="${opts.split ? 'flex' : 'hidden'} items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mb-1">
             <span>個股 ${(100 - etfV / total * 100).toFixed(1)}%</span>
             <div class="flex-1 h-1.5 rounded-full overflow-hidden flex bg-slate-200 dark:bg-slate-800"><div class="bg-amber-500" style="width:${100 - etfV / total * 100}%"></div><div class="bg-teal-600" style="width:${etfV / total * 100}%"></div></div>
             <span>ETF ${(etfV / total * 100).toFixed(1)}%</span>
           </div>
-          ${parts.map(p => `<div ${p.other ? 'onclick="toggleAllocMore()"' : ''} class="flex items-center justify-between gap-2 text-[11px] ${p.other ? 'cursor-pointer rounded hover:bg-slate-100 dark:hover:bg-slate-900' : ''}"><span class="flex items-center gap-1.5 min-w-0"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${p.color}"></span><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(p.name)}</span>${p.other ? `<span class="text-[10px] text-brand-600 dark:text-brand-400 shrink-0">${opts.more ? '收合 ▲' : '查看 ▼'}</span>` : ''}</span><span class="font-mono text-slate-500 dark:text-slate-400 shrink-0">${(p.val / total * 100).toFixed(1)}%</span></div>`).join('')}
-          ${opts.more && restItems.length ? `<div class="mt-1 ml-4 pl-2 border-l-2 border-slate-200 dark:border-slate-800 space-y-0.5 max-h-40 overflow-y-auto">${restItems.map(h => `<div class="flex items-center justify-between gap-2 text-[10px]"><span class="truncate text-slate-600 dark:text-slate-300">${escHtml(h.name)} <span class="font-mono text-slate-400">${escHtml(h.code)}</span></span><span class="font-mono text-slate-500 shrink-0">${jnFmt(h.val)}・${(h.val / total * 100).toFixed(1)}%</span></div>`).join('')}</div>` : ''}
+          ${parts.map(p => `<div ${p.other ? 'onclick="toggleAllocMore()"' : ''} class="flex items-center justify-between gap-2 text-[11px] ${p.other ? 'cursor-pointer rounded hover:bg-slate-100 dark:hover:bg-slate-900' : ''}"><span class="flex items-center gap-1.5 min-w-0"><span class="w-2.5 h-2.5 rounded-sm shrink-0" style="background:${p.color}"></span><span class="truncate text-slate-700 dark:text-slate-200">${escHtml(p.name)}</span>${p.other ? `<span class="text-[10px] text-brand-600 dark:text-brand-400 shrink-0">${opts.more ? '收合 ▲' : '查看 ▼'}</span>` : ''}</span><span class="shrink-0">${amt(p)}<span class="font-mono text-slate-500 dark:text-slate-400">${(sv(p) < 0 ? '−' : '') + (p.val / total * 100).toFixed(1)}%</span></span></div>`).join('')}
+          ${opts.more && restItems.length ? `<div class="mt-1 ml-4 pl-2 border-l-2 border-slate-200 dark:border-slate-800 space-y-0.5 max-h-40 overflow-y-auto">${restItems.map(h => `<div class="flex items-center justify-between gap-2 text-[10px]"><span class="truncate text-slate-600 dark:text-slate-300">${escHtml(h.name)} <span class="font-mono text-slate-400">${escHtml(h.code)}</span></span><span class="font-mono shrink-0 ${opts.signedCol ? jnCol(sv(h)) : 'text-slate-500'}">${opts.signedCol ? jnSigned(sv(h)) : jnFmt(sv(h))}・${(sv(h) < 0 ? '−' : '') + (h.val / total * 100).toFixed(1)}%</span></div>`).join('')}</div>` : ''}
         </div></div>`;
       const leg = document.getElementById(id + '_legend'); if (leg) leg.innerHTML = '';
     }
