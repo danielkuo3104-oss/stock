@@ -589,25 +589,7 @@
     async function loadDisposal() {
       let items = [], notices = [], src = {};
       try { const j = await pfJson(BACKEND_API_URL + '?action=disposal&_t=' + Date.now(), 20000); if (j && Array.isArray(j.items)) { items = j.items; notices = j.notices || []; src = j.sources || {}; } } catch (e) {}
-      const ok = k => String(src[k] || '').indexOf('ok') === 0;
-      if (!ok('tpexDisposal')) try {
-        (await pfJson('https://www.tpex.org.tw/openapi/v1/tpex_disposal_information', 10000)).forEach(rec => {
-          const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim(), all = keys.map(val).join(' ');
-          const code = val(keys.find(k => /^(Code|SecuritiesCompanyCode)$/i.test(k)) || '');
-          const pk = keys.find(k => /(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/.test(val(k)));
-          if (!/^\d{4,6}[A-Z]?$/.test(code) || !pk) return;
-          const p = val(pk).match(/(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/);
-          const mm = all.match(/第.次處置|再次處置/);
-          items.push({ code, level: /第二次|第三次|再次/.test(all) ? 2 : 1, measure: mm ? mm[0] : '處置', start: pfRoc(p[1]), end: pfRoc(p[2]), mkt: '上櫃' });
-        });
-      } catch (e) {}
-      if (!ok('tpexNotice')) try {
-        (await pfJson('https://www.tpex.org.tw/openapi/v1/tpex_trading_warning_information', 10000)).forEach(rec => {
-          const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim();
-          const code = val(keys.find(k => /^(Code|SecuritiesCompanyCode)$/i.test(k)) || '');
-          if (/^\d{4}[A-Z]?$/.test(code)) notices.push({ code, mkt: '上櫃', date: pfRoc(val(keys.find(k => /Date/i.test(k)) || '')), reason: val(keys.find(k => /Information|Reason/i.test(k)) || '') });
-        });
-      } catch (e) {}
+      // 櫃買 OpenAPI 不允許瀏覽器跨網域讀取（CORS）→ 只用後端資料，不在瀏覽器直連
       const today = pfToday(), map = {};
       const byCode = {};
       items.forEach(it => {
