@@ -1314,6 +1314,8 @@
           ${jnDividendLogHtml(J)}
         `)}
 
+        <div id="pzDcaBox"></div>
+
         ${jnCard(jnReasonCard(J))}
 
         ${jnCard(`
@@ -1333,6 +1335,7 @@
         </div>`;
 
       renderTradeList();
+      try { if (typeof pzRenderDca === 'function') pzRenderDca(); } catch (e) { console.warn('定期定額繪製失敗', e); }
       requestAnimationFrame(() => renderJournalCharts(J));
     }
 
@@ -2922,6 +2925,7 @@
       if (nav.length >= 2) lineChart('pz_nav', nav.map(n => n.date), [{ name: '淨值', values: nav.map(n => n.value), color: JN_COLORS.a }, { name: '成本', values: nav.map(n => n.cost), color: '#64748b', dash: true, dashArray: '4 3', width: 1.6 }], v => jnFmt(v), false, { band: [0, 1], gradient: true, tight: true, dots: true, bandColors: [JN_COLORS.a, '#94a3b8'], endGap: d => ['未實現', (d >= 0 ? '+' : '') + axisLabel(d)] });
       else { const el = document.getElementById('pz_nav'); if (el) el.innerHTML = '<div class="h-full flex items-center justify-center text-[11px] text-slate-400">資料累積中</div>'; }
       donutChart('pz_alloc', open.map(h => ({ name: h.name, code: h.code, val: h.value ?? h.cost, type: /^00/.test(h.code) ? 'etf' : 'stock' })));
+      box.insertAdjacentHTML('beforeend', '<div id="pzDcaBox"></div>'); pzRenderDca();
     }
     function pzTradeCalc(fromInput) {
       const code = (document.getElementById('pzJ_code') || {}).value || '';
@@ -2976,6 +2980,139 @@
         ${sec('fa-envelope text-rose-500', '股票沒有收錄？', ['輸入不在收錄清單的代號時，會出現已填好內容的申請信，按「寄給管理員申請收錄」即可。', '未收錄的股票仍可記帳與設到價提醒（後端直接查證交所），只是網頁上無法顯示即時價格與標籤，日誌市值暫以成本計算。'])}
         <p class="text-[10px] text-slate-400">所有資料僅供個人紀錄參考，不構成投資建議。</p>
       </div>`;
+    }
+
+
+
+    // =====================================================================
+    // 💰 定期定額：開始／結束日、每月多個扣款日與金額；後端每天收盤後依價格自動寫入
+    // =====================================================================
+    let pzDcaEdit = null, pzDcaBusy = false;
+    function pzRenderDca() {
+      const box = document.getElementById('pzDcaBox'); if (!box) return;
+      if (!pzState.loaded) { box.innerHTML = jnCard('<div class="py-6 text-center text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-1"></i>讀取定期定額設定…</div>'); pzLoad(false).then(() => pzRenderDca()); return; }
+      box.innerHTML = pzDcaHtml();
+    }
+    function pzDcaTargetText() {
+      return (typeof journalState !== 'undefined' && journalState.data && !journalState.manual) ? '寫入你的<b>投資日誌</b>（需共用為「編輯者」；比最後一筆舊的會依日期插入）' : '寫入<b>手動記帳</b>';
+    }
+    function pzDcaNext(o) {
+      const today = pfToday();
+      if (o.end && o.end < today) return '';
+      const cands = [];
+      for (let k = 0; k < 3; k++) {
+        const d = new Date(today + 'T12:00:00+08:00'); d.setUTCDate(1); d.setUTCMonth(d.getUTCMonth() + k);
+        const y = d.getUTCFullYear(), m = d.getUTCMonth() + 1, last = new Date(Date.UTC(y, m, 0)).getUTCDate();
+        o.slots.forEach(([day, amt]) => { const iso = y + '-' + String(m).padStart(2, '0') + '-' + String(Math.min(day, last)).padStart(2, '0'); if (iso >= today && iso >= o.start && (!o.end || iso <= o.end)) cands.push([iso, amt]); });
+      }
+      cands.sort((a, b) => a[0] < b[0] ? -1 : 1);
+      return cands[0] ? cands[0][0] + '（' + Number(cands[0][1]).toLocaleString() + ' 元）' : '';
+    }
+    function pzDcaHtml() {
+      const plans = pzState.dca || [], logs = (pzState.dcaLog || []).slice().reverse();
+      const f2 = v => Number(v).toLocaleString('en-US', { maximumFractionDigits: 2 });
+      const list = plans.map(o => {
+        const L = logs.filter(x => x.plan === o.id && /^已寫入/.test(x.status || ''));
+        const inv = L.reduce((a, x) => a + x.shares * x.price + (x.fee || 0), 0), sh = L.reduce((a, x) => a + x.shares, 0);
+        const nm = o.name || pzName(o.code) || o.code;
+        return `<div class="rounded-2xl border border-slate-200 dark:border-slate-800 p-3 sm:p-4 ${o.enabled ? '' : 'opacity-60'} space-y-2">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="min-w-0"><b class="text-sm">${escHtml(nm)}</b> <span class="font-mono text-[10px] text-slate-400">${escHtml(o.code)}</span>
+              <span class="ml-1 text-[10px] px-1.5 rounded ${o.enabled ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-slate-200 dark:bg-slate-800 text-slate-500'}">${o.enabled ? '扣款中' : '已暫停'}</span></div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="pzDcaToggle('${o.id}')" class="${pzBtnGhost}">${o.enabled ? '暫停' : '恢復'}</button>
+              <button onclick="pzDcaEdit=JSON.parse(JSON.stringify(pzState.dca.find(x=>x.id==='${o.id}'))); pzRenderDca()" class="${pzBtnGhost}">編輯</button>
+              <button onclick="pzDcaDelete('${o.id}')" class="${pzBtnGhost}">刪除</button></div>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-600 dark:text-slate-300">
+            <span>每月 ${o.slots.map(([d, a]) => `<b>${d} 日</b> ${Number(a).toLocaleString()} 元`).join('・')}</span>
+            <span>期間 ${escHtml(o.start)} ～ ${o.end ? escHtml(o.end) : '無限期'}</span>
+            <span>手續費 ${f2(o.fee)} 元・以${o.basis === 'open' ? '開盤價' : '收盤價'}計</span>
+          </div>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono">
+            <span class="text-slate-500">已扣 <b class="text-slate-800 dark:text-slate-100">${L.length}</b> 次</span>
+            <span class="text-slate-500">累計投入 <b class="text-slate-800 dark:text-slate-100">${Math.round(inv).toLocaleString()}</b> 元</span>
+            <span class="text-slate-500">累計 <b class="text-slate-800 dark:text-slate-100">${sh.toLocaleString()}</b> 股${sh ? `・均價 ${f2((inv) / sh)}` : ''}</span>
+            ${o.enabled && pzDcaNext(o) ? `<span class="text-brand-600 dark:text-brand-400 font-sans">下次扣款 ${pzDcaNext(o)}</span>` : ''}
+          </div>
+          ${o.msg ? `<div class="text-[10px] ${/失敗|尚未/.test(o.msg) ? 'text-amber-600 dark:text-amber-400' : 'text-slate-400'}">${escHtml(o.msg)}</div>` : ''}
+        </div>`;
+      }).join('');
+      const recent = logs.slice(0, 15);
+      return pzCard(`
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-black text-slate-900 dark:text-slate-100"><i class="fa-solid fa-calendar-check text-brand-500 mr-1.5"></i>定期定額</h3>
+            <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">設定開始日（可設結束日，預設無限期）、每月扣款日與金額（可多個時段）。每天收盤後自動依當天價格算出股數並${pzDcaTargetText()}；扣款日遇假日順延到下一個交易日。未收錄的股票會特別抓取當天價格；同一扣款日只會寫入一次。<br><b>自動補齊</b>：過去漏掉的扣款日（開始日設在過去、新增扣款日、當天抓不到價格）會在下次執行時補上；已寫入但之後在日誌裡找不到的（例如被誤刪）也會自動補回。不想被補回請暫停或刪除該方案。</p>
+          </div>
+          <div class="flex gap-2">
+            ${plans.length ? `<button onclick="pzDcaRun()" ${pzDcaBusy ? 'disabled' : ''} class="${pzBtnGhost} !py-2">${pzDcaBusy ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>執行中' : '<i class="fa-solid fa-play mr-1"></i>立即執行（補齊到今天）'}</button>` : ''}
+            ${pzDcaEdit ? '' : `<button onclick="pzDcaEdit={code:'',start:pfToday(),end:'',slots:[[6,3000]],fee:1,basis:'close',enabled:true}; pzRenderDca()" class="${pzBtn}">＋新增方案</button>`}
+          </div>
+        </div>
+        ${pzDcaEdit ? pzDcaFormHtml() : ''}
+        ${list ? `<div class="space-y-3">${list}</div>` : (pzDcaEdit ? '' : '<div class="py-4 text-center text-xs text-slate-400">尚未設定定期定額</div>')}
+        ${recent.length ? `<details class="text-[11px]"><summary class="cursor-pointer font-bold text-slate-600 dark:text-slate-300 select-none">最近扣款紀錄（${logs.length} 筆）</summary>
+          <div class="mt-2 overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800"><table class="w-full whitespace-nowrap">
+            <thead class="bg-slate-100 dark:bg-slate-950 text-[10px] text-slate-500"><tr><th class="py-1.5 px-2 text-left">成交日</th><th class="px-2 text-left">股票</th><th class="px-2 text-right">價格</th><th class="px-2 text-right">股數</th><th class="px-2 text-right">扣款</th><th class="px-2 text-left">狀態</th></tr></thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/60 font-mono">${recent.map(x => `<tr><td class="py-1 px-2">${escHtml(x.date)}${x.slot !== x.date ? `<span class="text-[9px] text-slate-400 font-sans">（${escHtml(x.slot.slice(5))} 順延）</span>` : ''}</td><td class="px-2 font-sans">${escHtml(x.name || pzName(x.code) || x.code)} <span class="text-slate-400 font-mono">${escHtml(x.code)}</span></td><td class="px-2 text-right">${f2(x.price)}</td><td class="px-2 text-right">${x.shares}</td><td class="px-2 text-right">${Number(x.amount).toLocaleString()}</td><td class="px-2 font-sans ${/已寫入/.test(x.status) ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500'}">${escHtml(x.target && x.target !== '-' ? x.target + '・' : '')}${escHtml(x.status)}</td></tr>`).join('')}</tbody></table></div></details>` : ''}
+      `);
+    }
+    function pzDcaFormHtml() {
+      const f = pzDcaEdit, days = Array.from({ length: 31 }, (_, i) => i + 1);
+      return `<div class="rounded-2xl border border-brand-200 dark:border-brand-500/30 bg-brand-50/40 dark:bg-brand-500/5 p-3 sm:p-4 space-y-3">
+        <div class="text-xs font-black text-slate-700 dark:text-slate-200">${f.id ? '編輯方案' : '新增方案'}</div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          ${pzField('股票代號', `${pzCodeInput('pzD_code', f.code, "pzDcaEdit.code=this.value; document.getElementById('pzD_name').textContent=pzName(this.value)||''").replace('w-28', 'w-full')}<span id="pzD_name" class="text-[10px] text-slate-500 truncate">${escHtml(pzName(f.code) || '')}</span>`)}
+          ${pzField('開始日期', `<input type="date" value="${escHtml(f.start)}" onchange="pzDcaEdit.start=this.value" class="${pzInput} w-full">`)}
+          ${pzField('結束日期（選填）', `<div class="flex gap-1"><input type="date" value="${escHtml(f.end || '')}" onchange="pzDcaEdit.end=this.value" class="${pzInput} w-full min-w-0"><button type="button" onclick="pzDcaEdit.end=''; pzRenderDca()" class="${pzBtnGhost} shrink-0" title="清除＝無限期">無限</button></div><span class="text-[10px] text-slate-400">${f.end ? '' : '目前：無限期'}</span>`)}
+          ${pzField('手續費／價格', `<div class="flex gap-1"><input type="number" min="0" step="1" value="${escHtml(String(f.fee))}" oninput="pzDcaEdit.fee=this.value" class="${pzInput} w-16 font-mono" title="每次扣款手續費（元）"><select onchange="pzDcaEdit.basis=this.value" class="${pzInput} w-full min-w-0"><option value="close" ${f.basis !== 'open' ? 'selected' : ''}>收盤價</option><option value="open" ${f.basis === 'open' ? 'selected' : ''}>開盤價</option></select></div>`)}
+        </div>
+        <div class="space-y-1.5">
+          <div class="text-[10px] font-bold text-slate-500">每月扣款日與金額（可設定多個時段，例如 6、16、26 日）</div>
+          ${f.slots.map((sl, k) => `<div class="flex items-center gap-2">
+            <span class="text-[11px] text-slate-500">每月</span>
+            <select onchange="pzDcaEdit.slots[${k}][0]=+this.value" class="${pzInput} w-20">${days.map(d => `<option ${d === sl[0] ? 'selected' : ''}>${d}</option>`).join('')}</select>
+            <span class="text-[11px] text-slate-500">日，扣</span>
+            <input type="number" min="100" step="100" value="${sl[1]}" oninput="pzDcaEdit.slots[${k}][1]=+this.value" class="${pzInput} w-28 font-mono"><span class="text-[11px] text-slate-500">元</span>
+            ${f.slots.length > 1 ? `<button type="button" onclick="pzDcaEdit.slots.splice(${k},1); pzRenderDca()" class="${pzBtnGhost}">移除</button>` : ''}
+          </div>`).join('')}
+          ${f.slots.length < 6 ? `<button type="button" onclick="pzDcaEdit.slots.push([Math.min(28,(pzDcaEdit.slots.slice(-1)[0]||[0])[0]+10),3000]); pzRenderDca()" class="${pzBtnGhost}">＋加一個扣款日</button>` : ''}
+          <div class="text-[10px] text-slate-400">股數＝（扣款金額 − 手續費）÷ 當天價格，無條件捨去；29～31 日遇到小月會改在月底。</div>
+        </div>
+        <label class="flex items-center gap-2 text-[11px]"><input type="checkbox" ${f.enabled !== false ? 'checked' : ''} onchange="pzDcaEdit.enabled=this.checked" class="w-4 h-4 accent-brand-600">啟用（取消勾選＝暫停扣款）</label>
+        <div class="flex justify-end gap-2"><button onclick="pzDcaEdit=null; pzRenderDca()" class="${pzBtnGhost}">取消</button><button onclick="pzDcaSave()" class="${pzBtn}">${f.id ? '儲存修改' : '建立方案'}</button></div>
+      </div>`;
+    }
+    async function pzDcaSave() {
+      const f = pzDcaEdit; if (!f) return;
+      f.code = (document.getElementById('pzD_code') || {}).value || f.code;
+      if (!/^[0-9A-Z]{4,6}$/.test(String(f.code || '').toUpperCase())) { pzToast('請輸入股票代號', true); return; }
+      try {
+        const r = await pzPost('saveDca', { id: f.id, code: f.code.toUpperCase(), name: pzName(f.code.toUpperCase()) || f.name || '', start: f.start, end: f.end || '', slots: f.slots, fee: f.fee, basis: f.basis, enabled: f.enabled !== false });
+        if (!r.success) { pzToast(r.message || '儲存失敗', true); return; }
+        pzToast(f.id ? '已更新方案' : '已建立方案；開始日早於今天的扣款可按「立即執行」補齊');
+        pzDcaEdit = null; await pzLoad(true); pzRenderDca();
+      } catch (e) { pzToast(e.message, true); }
+    }
+    async function pzDcaToggle(id) {
+      const o = (pzState.dca || []).find(x => x.id === id); if (!o) return;
+      try { const r = await pzPost('saveDca', Object.assign({}, o, { enabled: !o.enabled })); if (!r.success) { pzToast(r.message || '失敗', true); return; } await pzLoad(true); pzRenderDca(); } catch (e) { pzToast(e.message, true); }
+    }
+    async function pzDcaDelete(id) {
+      if (!confirm('刪除這個定期定額方案？已寫入日誌的交易不會被刪除。')) return;
+      try { await pzPost('deleteDca', { id }); await pzLoad(true); pzRenderDca(); } catch (e) { pzToast(e.message, true); }
+    }
+    async function pzDcaRun() {
+      if (pzDcaBusy) return;
+      pzDcaBusy = true; pzRenderDca();
+      try {
+        const r = await pzPost('runDca', {}, 180000);
+        pzToast(r.message || (r.success ? '完成' : '執行失敗'), !r.success);
+        await pzLoad(true);
+        if (r.written > 0 && typeof journalState !== 'undefined' && journalState.data && !journalState.manual) pzToast('已寫入投資日誌，按日誌右上角「重新讀取」即可看到新交易');
+      } catch (e) { pzToast(e.message, true); }
+      pzDcaBusy = false; pzRenderDca();
     }
   </script>
 </body>
