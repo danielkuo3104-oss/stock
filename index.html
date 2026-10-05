@@ -4181,7 +4181,7 @@ function getDynamicColorTier(rawPct) {
         const tpexBad = ['tpexDisposal', 'tpexNotice'].some(k => String(src[k] || '').indexOf('ok') !== 0);
         rows.push({ key: 'disposal', label: '處置・注意股', src: disposalStatus === 'ok' ? `證交所／櫃買公告・處置中 ${nAct} 檔・注意股 ${Object.keys(noticeMap).length} 檔` : '暫時無法取得',
           date: disposalMeta ? normDate(disposalMeta.updated) : '', time: disposalMeta ? String(disposalMeta.updated || '').slice(11, 16) : '', expectToday: true,
-          extra: tpexBad ? '上櫃公告讀取失敗（櫃買擋 Google 主機，瀏覽器直連也未成功），上櫃股的處置／注意標記可能不完整' : '' });
+          extra: tpexBad ? '上櫃公告暫時無法取得（櫃買暫時擋後端主機，稍後自動重試），上櫃股的處置／注意標記可能不完整' : '' });
       }
       rows.forEach(r => { r.f = freshLabel(r.date, r.expectToday); });
       return rows;
@@ -5189,45 +5189,7 @@ function getDynamicColorTier(rawPct) {
     let disposalStatus = 'none';   // none | ok | error
     let disposalMeta = null;
     const DISPOSAL_VOL_BADGES = ['窒息量', '量縮價跌', '量縮價漲', '持續量縮'];
-    const TPEX_DSP_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_disposal_information';
-    const TPEX_NOTICE_URL = 'https://www.tpex.org.tw/openapi/v1/tpex_trading_warning_information';
 
-    // ---- 解析（與後端「處置股.gs」相同規則，供瀏覽器直連櫃買時使用）----
-    function dspRocJs(t) {
-      t = String(t || '').trim();
-      let m = t.match(/^(\d{3,4})(\d{2})(\d{2})$/);
-      if (m) return `${+m[1] < 1000 ? +m[1] + 1911 : m[1]}-${m[2]}-${m[3]}`;
-      m = t.match(/(\d{2,4})[\/.\-](\d{1,2})[\/.\-](\d{1,2})/);
-      return m ? `${+m[1] < 1000 ? +m[1] + 1911 : m[1]}-${m[2].padStart(2, '0')}-${m[3].padStart(2, '0')}` : '';
-    }
-    function dspIntervalJs(text) { const m = String(text || '').match(/約每[一二三四五六七八九十0-9]{1,3}分鐘撮合一次/g); return m ? m[m.length - 1].replace('撮合一次', '撮合') : ''; }
-    function parseTpexDisposal(arr) {
-      const out = [];
-      (arr || []).forEach(rec => {
-        const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim();
-        const codeKey = keys.find(k => /^(Code|SecuritiesCompanyCode|StockCode|SecuritiesCode)$/i.test(k));
-        const periodKey = keys.find(k => /(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/.test(val(k)));
-        const code = codeKey ? val(codeKey) : '';
-        if (!/^\d{4,6}[A-Z]?$/.test(code) || !periodKey) return;
-        const p = val(periodKey).match(/(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})\s*[～~\-－至]\s*(\d{2,3}\/\d{1,2}\/\d{1,2}|\d{7,8})/);
-        const all = keys.map(val).join(' ');
-        const mm = all.match(/第.次處置|再次處置/);
-        out.push({ code, name: val(keys.find(k => /Name/i.test(k)) || ''), mkt: '上櫃', level: /第二次|第三次|再次/.test(all) ? 2 : 1,
-          measure: mm ? mm[0] : '處置', start: dspRocJs(p[1]), end: dspRocJs(p[2]), reason: val(keys.find(k => /Reason/i.test(k)) || ''), interval: dspIntervalJs(all) });
-      });
-      return out;
-    }
-    function parseTpexNotice(arr) {
-      const out = [];
-      (arr || []).forEach(rec => {
-        const keys = Object.keys(rec), val = k => String(rec[k] ?? '').trim();
-        const code = val(keys.find(k => /^(Code|SecuritiesCompanyCode|StockCode)$/i.test(k)) || '');
-        if (!/^\d{4}[A-Z]?$/.test(code)) return;
-        out.push({ code, name: val(keys.find(k => /Name/i.test(k)) || ''), mkt: '上櫃', date: dspRocJs(val(keys.find(k => /Date/i.test(k)) || '')),
-          count: val(keys.find(k => /NumberOf|Count|Accumulat/i.test(k)) || ''), reason: val(keys.find(k => /Information|Reason|Info/i.test(k)) || '') });
-      });
-      return out;
-    }
     async function fetchJsonTimeout(url, ms) {
       const ctl = new AbortController();
       const timer = setTimeout(() => ctl.abort(), ms);
@@ -5242,16 +5204,8 @@ function getDynamicColorTier(rawPct) {
         const j = await fetchJsonTimeout(LIVE_API_URL + (LIVE_API_URL.includes('?') ? '&' : '?') + 'action=disposal&_t=' + Date.now(), 20000);
         if (j && Array.isArray(j.items)) { items = j.items; notices = j.notices || []; sources = j.sources || {}; updated = j.updated || ''; }
       } catch (e) {}
-      // 後端（Google 主機）常被櫃買擋 → 改由使用者的瀏覽器直接讀櫃買 OpenAPI
+      // 櫃買 OpenAPI 不允許瀏覽器跨網域讀取（CORS），只能由後端讀；讀不到時僅在資料狀態中標示，不再於瀏覽器直連
       const okSrc = k => String(sources[k] || '').indexOf('ok') === 0;
-      if (!okSrc('tpexDisposal')) {
-        try { const a = parseTpexDisposal(await fetchJsonTimeout(TPEX_DSP_URL, 10000)); items = items.concat(a); sources.tpexDisposal = 'ok(瀏覽器 ' + a.length + ')'; }
-        catch (e) { sources.tpexDisposal = (sources.tpexDisposal || '') + '｜瀏覽器也無法讀取'; }
-      }
-      if (!okSrc('tpexNotice')) {
-        try { const a = parseTpexNotice(await fetchJsonTimeout(TPEX_NOTICE_URL, 10000)); notices = notices.concat(a); sources.tpexNotice = 'ok(瀏覽器 ' + a.length + ')'; }
-        catch (e) { sources.tpexNotice = (sources.tpexNotice || '') + '｜瀏覽器也無法讀取'; }
-      }
       const anyOk = Object.keys(sources).some(okSrc);
       if (!anyOk && !items.length) { disposalStatus = 'error'; disposalMeta = { updated, sources }; }
       else {
