@@ -1913,7 +1913,7 @@
           }
           finalizeLogin(remember);
         } else {
-          showAuthMsg(result.message || '帳號未開通或密碼不符', true);
+          showAuthMsg(result.message || ('登入失敗，後端回應：' + rawText.slice(0, 150)), true);   // 沒有訊息時顯示原始回應，方便排查
         }
       } catch (err) {
         // 不再自動離線登入（會拿不到憑證、關注清單也是空的，造成「一直重新登入」循環）
