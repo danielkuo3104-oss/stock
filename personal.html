@@ -1254,12 +1254,13 @@
       const cur = hist.length ? hist[hist.length - 1] : null;
       const lastDate = cur ? cur.date : '';
       const RZ = jnRealized(J.holdings || [], scope);
+      const LV = jnLiveUnrealized(J, scope, cur, k);   // 庫存損益以「目前持股」逐檔加總為準（與圖表一致）
       const kpi = cur ? [
         tile('總淨值', jnFmt(cur[k.v]), `<span class="text-slate-400">資料日 ${lastDate.slice(5).replace('-', '/')}</span>`),
         tile('今日損益', `<span class="${jnCol(cur[k.day])}">${jnSigned(cur[k.day])}</span>`, cur[k.v] ? `<span class="${jnCol(cur[k.day])}">${jnPct(cur[k.day] / (cur[k.v] - cur[k.day]) * 100)}</span>` : ''),
-        tile('庫存成本', jnFmt(cur[k.cost]), ''),
-        tile('庫存損益', `<span class="${jnCol(cur[k.pl])}">${jnSigned(cur[k.pl])}</span>`, `<span class="${jnCol(cur[k.roi])}">報酬率 ${jnPct(cur[k.roi])}</span>`),
-        tile('含息報酬', `<span class="${jnCol(cur[k.plDiv])}">${jnSigned(cur[k.plDiv])}</span>`, `<span class="${jnCol(cur[k.roiDiv])}">含息報酬率 ${jnPct(cur[k.roiDiv])}</span>`),
+        tile('庫存成本', jnFmt(LV.cost), ''),
+        tile('庫存損益', `<span class="${jnCol(LV.pl)}">${jnSigned(LV.pl)}</span>`, `<span class="${jnCol(LV.roi)}">報酬率 ${jnPct(LV.roi)}</span>`),
+        tile('含息報酬', `<span class="${jnCol(LV.plDiv)}">${jnSigned(LV.plDiv)}</span>`, `<span class="${jnCol(LV.roiDiv)}">含息報酬率 ${jnPct(LV.roiDiv)}</span>`),
         tile('累計股息', jnFmt(cur[k.div]), ''),
         tile('已了結損益', `<span class="${jnCol(RZ.total)}">${jnSigned(RZ.total)}</span>`, `<span class="text-slate-400">含股息 </span><span class="${jnCol(RZ.total + RZ.div)}">${jnSigned(RZ.total + RZ.div)}</span>`)
       ].join('') : '<div class="col-span-full text-xs text-slate-400">紀錄中心沒有資料</div>';
@@ -1320,7 +1321,7 @@
             <h2 class="text-sm sm:text-base font-bold text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-receipt text-brand-500"></i>交易紀錄 <span class="text-xs font-normal text-slate-400">${(J.trades || []).length} 筆</span></h2>
             <div class="flex items-center gap-2">
               <input type="text" value="${escHtml(journalState.tradeQuery)}" oninput="journalState.tradeQuery=this.value; journalState.tradeLimit=30; renderTradeList()" placeholder="搜尋股名/代號/原因" class="w-36 sm:w-48 bg-slate-50 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1 text-[11px]">
-              ${seg('tf', journalState.tradeFilter, [['all', '全部'], ['買入', '買入'], ['賣出', '賣出']], 'setTradeFilter')}
+              ${seg('tf', journalState.tradeFilter, [['all', '全部'], ['買入', '買入'], ['賣出', '賣出'], ['配股', '配股']], 'setTradeFilter')}
             </div>
           </div>
           <div id="tradeListBox"></div>
@@ -1396,14 +1397,14 @@
       if (!trades.length) return '<div class="py-4 text-center text-[11px] text-slate-400">沒有符合的交易紀錄</div>';
       return `<div class="divide-y divide-slate-100 dark:divide-slate-800/60 ${compact ? '' : 'rounded-xl border border-slate-200 dark:border-slate-800'}">
         ${trades.map(t => {
-          const buy = t.side.indexOf('買') >= 0;
-          return `<div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 py-1.5 text-[11px]">
+          const gift = jnIsGift(t), buy = !gift && t.side.indexOf('買') >= 0;
+          return `<div class="flex flex-wrap items-center gap-x-3 gap-y-0.5 px-2 py-1.5 text-[11px] ${gift ? 'bg-sky-50/60 dark:bg-sky-500/5' : ''}">
             <span class="font-mono text-slate-400 w-20 shrink-0">${escHtml(t.date)}</span>
-            <span class="px-1.5 rounded text-[10px] font-bold ${buy ? 'bg-red-500/10 text-stockRed' : 'bg-green-500/10 text-stockGreen'}">${escHtml(t.side || '-')}</span>
+            <span class="px-1.5 rounded text-[10px] font-bold ${gift ? 'bg-sky-500/15 text-sky-600 dark:text-sky-400' : buy ? 'bg-red-500/10 text-stockRed' : 'bg-green-500/10 text-stockGreen'}">${escHtml(t.side || '-')}</span>
             ${compact ? '' : `<span class="font-bold text-slate-800 dark:text-slate-100">${escHtml(t.name)}</span><span class="text-[10px] text-slate-400 font-mono">${escHtml(t.code)}</span>`}
-            <span class="font-mono">${jnFmt(t.shares)} 股 @ ${jnFmt(t.price, 2)}</span>
-            <span class="font-mono text-slate-400 hidden sm:inline">≈ ${jnFmt((t.shares || 0) * (t.price || 0))} 元${t.fee ? `・費 ${jnFmt(t.fee)}` : ''}</span>
-            ${jnReasonChip(t)}
+            ${gift ? `<span class="font-mono text-sky-700 dark:text-sky-300">＋${jnFmt(t.shares)} 股（無償配發，成本 0）</span>${t.fee ? `<span class="font-mono text-slate-400 hidden sm:inline">費 ${jnFmt(t.fee)}</span>` : ''}` : `<span class="font-mono">${jnFmt(t.shares)} 股 @ ${jnFmt(t.price, 2)}</span>
+            <span class="font-mono text-slate-400 hidden sm:inline">≈ ${jnFmt((t.shares || 0) * (t.price || 0))} 元${t.fee ? `・費 ${jnFmt(t.fee)}` : ''}</span>`}
+            ${gift ? '' : jnReasonChip(t)}
             ${t.note && t.note !== '-合併計入-' ? `<span class="text-slate-500 dark:text-slate-400 truncate">${escHtml(t.note)}</span>` : ''}
           </div>`;
         }).join('')}</div>`;
@@ -1414,7 +1415,8 @@
       if (!box || !journalState.data) return;
       const q = journalState.tradeQuery.trim().toLowerCase();
       let list = (journalState.data.trades || []);
-      if (journalState.tradeFilter !== 'all') list = list.filter(t => t.side.indexOf(journalState.tradeFilter) >= 0);
+      if (journalState.tradeFilter === '配股') list = list.filter(jnIsGift);
+      else if (journalState.tradeFilter !== 'all') list = list.filter(t => !jnIsGift(t) && t.side.indexOf(journalState.tradeFilter) >= 0);
       if (q) list = list.filter(t => (t.name + t.code + t.reason + t.note).toLowerCase().includes(q));
       const shown = list.slice(0, journalState.tradeLimit);
       box.innerHTML = tradeRowsHtml(shown, false) + (list.length > shown.length
@@ -1453,7 +1455,8 @@
         if (sub) sub.insertAdjacentHTML('beforeend', `<div class="mt-1 flex justify-end">${jnSeg(pv, [['un', '未實現'], ['rz', '已實現'], ['sum', '加總']], 'setPlView')}</div>`);
         journalState._rzNote = rz;
       }
-      const profit = ok(L.tPl) ? L.tPl : (ok(L.tv) && ok(L.tCost) ? L.tv - L.tCost : null);
+      const LVt = jnLiveUnrealized(J, 'total', L, { cost: 'tCost', pl: 'tPl', roi: 'tRoi', plDiv: 'tPlDiv', roiDiv: 'tRoiDiv', div: 'tDiv' });
+      const profit = ok(LVt.pl) ? LVt.pl : (ok(L.tPl) ? L.tPl : (ok(L.tv) && ok(L.tCost) ? L.tv - L.tCost : null));
       const profit0 = ok(F.tPl) ? F.tPl : (ok(F.tv) && ok(F.tCost) ? F.tv - F.tCost : null);
       if (nv === 'pl' && journalState._rzNote) {
         const rz = journalState._rzNote, lastRz = rz.values[rz.values.length - 1], firstRz = rz.values.find(v => v !== null);
@@ -1576,12 +1579,12 @@
     // 累計已實現損益走勢：紀錄中心沒有逐日的已實現欄，改由交易紀錄以平均成本法逐日推算，
     //   最後一天對齊日誌的「已了結」合計（差額視為早於紀錄的交易或稅費差異，整條平移）
     function jnRealizedSeries(J, dates) {
-      const trades = (J.trades || []).filter(t => t.date && t.shares > 0 && t.price > 0).slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (jnIsBuy(a) ? -1 : 1));
+      const trades = (J.trades || []).filter(t => t.date && t.shares > 0 && (t.price > 0 || jnIsGift(t))).slice().sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : (jnIsBuy(a) ? -1 : 1));
       const pos = {}, daily = [];
       let cum = 0;
       trades.forEach(t => {
         const p = pos[t.code] = pos[t.code] || { sh: 0, cost: 0 };
-        if (jnIsBuy(t)) { p.sh += t.shares; p.cost += t.shares * t.price + (t.fee || 0); }
+        if (jnIsBuy(t)) { p.sh += t.shares; p.cost += jnIsGift(t) ? (t.fee || 0) : t.shares * t.price + (t.fee || 0); }   // 配股：股數增加、成本不變（攤低均價）
         else if (p.sh > 0) {
           const n = Math.min(t.shares, p.sh), avg = p.cost / p.sh;
           cum += n * t.price - (t.fee || 0) - avg * n;
@@ -1834,6 +1837,16 @@
     // =====================================================================
     // 已了結損益（含已出清與部分賣出）
     // =====================================================================
+    // 目前持股逐檔加總的未實現損益／成本（持股表、圖表用的同一套數字）；拿不到時退回紀錄中心當日那列
+    function jnLiveUnrealized(J, scope, cur, k) {
+      const act = (J.holdings || []).filter(h => h.shares > 0 && (scope === 'total' || (scope === 'etf' ? h.type === 'etf' : h.type === 'stock')));
+      const ok = v => v !== null && v !== undefined && !isNaN(v);
+      const fb = cur ? { cost: cur[k.cost], pl: cur[k.pl], roi: cur[k.roi], plDiv: cur[k.plDiv], roiDiv: cur[k.roiDiv], live: false } : { cost: null, pl: null, roi: null, plDiv: null, roiDiv: null, live: false };
+      if (!act.length || !act.every(h => ok(h.unrealized) && ok(h.cost))) return fb;
+      const pl = act.reduce((a, h) => a + h.unrealized, 0), cost = act.reduce((a, h) => a + h.cost, 0);
+      const div = cur && ok(cur[k.plDiv]) && ok(cur[k.pl]) ? cur[k.plDiv] - cur[k.pl] : (cur ? cur[k.div] || 0 : 0);
+      return { cost, pl, roi: cost ? pl / cost * 100 : null, plDiv: pl + div, roiDiv: cost ? (pl + div) / cost * 100 : null, live: true };
+    }
     function jnRealized(holdings, scope) {
       const list = holdings.filter(h => scope === 'total' || (scope === 'etf' ? h.type === 'etf' : h.type === 'stock'))
         .map(h => ({ ...h, rz: h.realized !== null && h.realized !== undefined ? h.realized : (!(h.shares > 0) ? (h.totalPl || 0) : 0) }))
@@ -1868,7 +1881,8 @@
         <button onclick="journalState.writeMsg=null; renderJournal()" class="shrink-0 opacity-60 hover:opacity-100"><i class="fa-solid fa-xmark"></i></button></div>`;
     }
     const jnTradeKey = t => t.sheet + '|' + t.row + '|' + t.col;
-    const jnIsBuy = t => String(t.side || '').indexOf('賣') < 0;
+    const jnIsBuy = t => String(t.side || '').indexOf('賣') < 0;   // 配股也算「增加持股」
+    const jnIsGift = t => /配股|股票股利|配發|股利/.test(String(t.side || ''));   // 配股：0 成本增加股數，不需要買賣原因
     const JN_UNFILLED = '尚未填寫';
     function jnReasonOptions(t) {
       const L = (journalState.data && journalState.data.reasonLists) || {};
@@ -1918,8 +1932,9 @@
       const priceOf = {}; (J.holdings || []).forEach(h => { if (h.price > 0) priceOf[h.code] = h.price; });
       const codes = []; trades.forEach(t => { if (!codes.some(c => c.code === t.code)) codes.push({ code: t.code, name: t.name }); });
       const sc = journalState.reasonScope !== 'all' && !codes.some(c => c.code === journalState.reasonScope) ? 'all' : journalState.reasonScope;
-      const pool = sc === 'all' ? trades : trades.filter(t => t.code === sc);
-      const pending = trades.filter(t => t.reason === JN_UNFILLED);
+      const real = trades.filter(t => !jnIsGift(t));   // 配股不需要買賣原因，不列入統計
+      const pool = sc === 'all' ? real : real.filter(t => t.code === sc);
+      const pending = real.filter(t => t.reason === JN_UNFILLED);
       const group = side => {
         const m = {};
         pool.filter(t => (side === 'buy') === jnIsBuy(t) && t.reason && t.reason !== JN_UNFILLED).forEach(t => {
@@ -2383,10 +2398,20 @@
       try { const mh = pzPortfolio().holdings.find(h => h.code === code && h.shares > 0); if (mh) return { shares: mh.shares, avg: mh.avg, src: '手動記帳' }; } catch (e) {}
       return null;
     }
+    // 投資日誌只在打開該分頁時才讀取；試算需要時在背景先讀（後端有快取，通常很快）
+    function pzEnsureJournal() {
+      if (typeof journalState === 'undefined' || journalState.loaded || journalState.loading || !currentUser || !currentUser.token) return null;
+      return loadJournal(false);
+    }
     function pzCalcPickCode(code) {
       const c = pzCalcState(); c.code = (code || '').trim().toUpperCase();
       const h = c.code ? pzHoldingFor(c.code) : null;
-      if (h) { c.shares = String(h.shares); c.avg = String(Math.round(h.avg * 100) / 100); c.src = h.src; } else c.src = '';
+      if (h) { c.shares = String(h.shares); c.avg = String(Math.round(h.avg * 100) / 100); c.src = h.src; }
+      else if (c.code && typeof journalState !== 'undefined' && !journalState.loaded && currentUser && currentUser.token) {
+        c.src = 'loading';
+        const want = c.code, pr = pzEnsureJournal() || new Promise(r => { const t = setInterval(() => { if (journalState.loaded) { clearInterval(t); r(); } }, 300); setTimeout(() => { clearInterval(t); r(); }, 160000); });
+        pr.then(() => { if (pzCalc && pzCalc.code === want && document.getElementById('pzCalcBox')) pzCalcPickCode(want); });
+      } else c.src = '';
       const box = document.getElementById('pzCalcBox');
       if (box) {
         box.innerHTML = pzCalcHtml();
@@ -2477,7 +2502,7 @@
           </div>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-          ${pzField('股票代號', `${pzCodeInput('pzC_code', c.code, 'pzCalcPickCode(this.value)').replace('w-28', 'w-full')}<span class="text-[10px] truncate ${c.src ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">${c.src ? '已帶入' + c.src + '持股' : (c.code ? '查無持股，請手動輸入' : '輸入代號自動帶入持股')}</span>`)}
+          ${pzField('股票代號', `${pzCodeInput('pzC_code', c.code, 'pzCalcPickCode(this.value)').replace('w-28', 'w-full')}<span class="text-[10px] truncate ${c.src && c.src !== 'loading' ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-400'}">${c.src === 'loading' ? '<i class="fa-solid fa-spinner fa-spin mr-1"></i>讀取投資日誌中…' : c.src ? '已帶入' + c.src + '持股' : (c.code ? '查無持股，請手動輸入' : '輸入代號自動帶入持股')}</span>`)}
           ${pzField('持有股數', `<input type="number" min="0" step="1" value="${escHtml(c.shares)}" oninput="pzCalcSet('shares', this.value)" placeholder="例 1000" class="${inp}">`)}
           ${pzField('成本均價', `<input type="number" min="0" step="0.01" value="${escHtml(c.avg)}" oninput="pzCalcSet('avg', this.value)" placeholder="例 512.5" class="${inp}">`)}
           ${pzField('目標', `<div class="flex gap-1"><select onchange="pzCalcSet('mode', this.value)" class="${pzInput} w-20 shrink-0"><option value="pct" ${c.mode === 'pct' ? 'selected' : ''}>報酬%</option><option value="amt" ${c.mode === 'amt' ? 'selected' : ''}>損益元</option></select><input type="number" step="any" value="${escHtml(c.target)}" oninput="pzCalcSet('target', this.value)" placeholder="${c.mode === 'pct' ? '例 15 或 −8' : '例 50000 或 −20000'}" class="${inp} min-w-0"></div>`)}
@@ -2578,6 +2603,7 @@
       const box = document.getElementById('tabAlerts');
       if (!box || pzNeedToken('tabAlerts')) return;
       if (!pzState.loaded) { box.innerHTML = jnCard(pzStatusHtml() || ''); pzLoad(false); return; }
+      try { pzEnsureJournal(); } catch (e) {}   // 背景預讀投資日誌，目標價試算可直接帶入持股
       const f = pzEditAlert || { cond: 'gte', levels: [] };
       const list = pzState.alerts.slice().sort((a, b) => a.code.localeCompare(b.code));
       const stageBtn = pct => `<button type="button" onclick="pzAddPctLevel(${pct})" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-slate-200 dark:border-slate-700 text-slate-500 hover:border-brand-500 hover:text-brand-600 transition">${f.cond === 'lte' ? '+' : '−'}${pct}%</button>`;
